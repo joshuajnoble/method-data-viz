@@ -1,46 +1,62 @@
-import marimo
+import marimo as mo
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import matplotlib.dates as mdates
+import matplotlib.ticker as ticker
 
 __generated_with = "0.19.7"
-app = marimo.App()
+app = mo.App()
 
 
 @app.cell
 def _():
     import marimo as mo
+    import pandas as pd
 
+    @mo.cache
+    def get_superstore():
+        superstore = pd.read_csv("superstore.csv")
+        superstore['Order Date'] = pd.to_datetime(superstore['Order Date'])
+        return superstore
+    
     return (mo,)
 
+@app.cell
+def _():
+    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import matplotlib.dates as mdates
+    import matplotlib.ticker as ticker
+    import matplotlib.dates as mdates
 
-@app.cell(hide_code=True)
+    return (plt,)
+
+@app.cell(get_superstore)
 def _(mo):
-    mo.md("""
-    marimo knows how your cells are related, and can automatically update
-    outputs like a spreadsheet. This eliminates hidden state and hidden bugs, accelerates data exploration,
-    and makes it possible for marimo to run your notebooks as scripts and web apps.
-    For expensive notebooks, you can [turn this
-    behavior off](https://docs.marimo.io/guides/expensive_notebooks/) via the notebook footer.
 
-    Try updating the values of variables below and see what happens! You can also try deleting a cell.
-    """)
-    return
+    ss = get_superstore()
+
+    daily_sales = (
+        ss.groupby("Order Date", as_index=False).agg(Sales=("Sales", "sum"))
+    )
+    daily_sales["Order Date"] = pd.to_datetime(daily_sales["Order Date"])
 
 
-@app.cell
-def _():
-    x = 0
-    return (x,)
+    fig = plt.subplots(figsize=(10, 5))
+    ax = sns.lineplot(data=daily_sales, x="Order Date", y='Sales')
 
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
 
-@app.cell
-def _():
-    y = 1
-    return
+    # TODO: improve styling
+    ax.set_title('Daily Sales')
+    ax.set_ylabel('Total Sales in $USD')
 
+    ax.tick_params(axis='x', labelrotation=45)
 
-@app.cell
-def _(x):
-    x
-    return
+    ax
 
 
 if __name__ == "__main__":
