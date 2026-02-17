@@ -16,7 +16,9 @@ def _():
 
     @mo.cache
     def get_superstore():
-        superstore = pd.read_csv("superstore.csv")
+
+        path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
+        superstore = pd.read_csv(path_to_csv)
         superstore['Order Date'] = pd.to_datetime(superstore['Order Date'])
         return superstore
     
@@ -57,7 +59,7 @@ def _(mo):
     ax.tick_params(axis='x', labelrotation=45)
 
     ax
-
+g
 
 if __name__ == "__main__":
     app.run()
