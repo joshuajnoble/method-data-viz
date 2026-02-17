@@ -26,12 +26,18 @@ def _():
     return (mo,)
 
 @app.cell
-def _():
+async def _():
     import matplotlib.pyplot as plt
     import matplotlib.pyplot as plt
     import matplotlib.dates as mdates
     import matplotlib.ticker as ticker
     import matplotlib.dates as mdates
+
+    import micropip
+
+    await micropip.install("seaborn")
+
+    import seaborn as sns
 
     return (plt,)
 
@@ -46,8 +52,8 @@ def _(mo):
     daily_sales["Order Date"] = pd.to_datetime(daily_sales["Order Date"])
 
 
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(daily_sales["Order Date"], daily_sales['Sales'])
+    fig = plt.subplots(figsize=(10, 5))
+    ax = sns.lineplot(daily_sales, x="Order Date", y='Sales')
 
     ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
