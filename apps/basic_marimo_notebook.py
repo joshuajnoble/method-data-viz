@@ -29,7 +29,6 @@ def _():
 def _():
     import matplotlib.pyplot as plt
     import matplotlib.pyplot as plt
-    import seaborn as sns
     import matplotlib.dates as mdates
     import matplotlib.ticker as ticker
     import matplotlib.dates as mdates
@@ -47,8 +46,8 @@ def _(mo):
     daily_sales["Order Date"] = pd.to_datetime(daily_sales["Order Date"])
 
 
-    fig = plt.subplots(figsize=(10, 5))
-    ax = sns.lineplot(data=daily_sales, x="Order Date", y='Sales')
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(daily_sales["Order Date"], daily_sales['Sales'])
 
     ax.xaxis.set_major_locator(mdates.AutoDateLocator(minticks=5, maxticks=10))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
@@ -60,7 +59,6 @@ def _(mo):
     ax.tick_params(axis='x', labelrotation=45)
 
     ax
-g
 
 if __name__ == "__main__":
     app.run()
