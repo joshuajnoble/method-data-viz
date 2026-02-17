@@ -17,7 +17,8 @@ def _():
     @mo.cache
     def get_superstore():
 
-        path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
+        #path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
         superstore = pd.read_csv(path_to_csv)
         superstore['Order Date'] = pd.to_datetime(superstore['Order Date'])
         return superstore
