@@ -102,10 +102,5 @@ def _():
     chart
     return chart
 
-@app.cell
-def _(mo):
-    # Basic hyperlink
-    mo.md("[Reactive Plots](reactive_plots.html)")
-
 if __name__ == "__main__":
     app.run()
