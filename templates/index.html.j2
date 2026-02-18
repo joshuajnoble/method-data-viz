@@ -89,46 +89,107 @@
 <body class="font-sans max-w-2xl mx-auto p-8 leading-relaxed">    
     <header>
       <div class="container">
-        <img src="https://raw.githubusercontent.com/marimo-team/marimo/main/docs/_static/marimo-logotype-thick.svg" alt="marimo Logo" class="logo">
-        <h1>marimo WebAssembly + GitHub Pages Template</h1>
-        <p class="subtitle">Interactive Python notebooks exported to WebAssembly and deployed to GitHub Pages</p>
+        <h1>Data Visualization Principles</h1>
+        <p class="subtitle">What is visualizing data?</p>
       </div>
     </header>
 
     <main class="container">
-
-    {% if notebooks %}
-    <h2 class="section-title">Notebooks</h2>
-    <p>Interactive notebooks in edit mode - you can modify and experiment with the code</p>
-    <div class="cards">
-      {% for notebook in notebooks %}
-      <!-- {{ notebook.display_name }} Notebook -->
-      <div class="card">
-        <div class="card-header">{{ notebook.display_name }}</div>
-        <div class="card-body">
-          <a href="{{ notebook.html_path }}" class="card-link">Open Notebook</a>
-        </div>
+      <div>
+        <h1>Be clear about what you're showing</h1>
+        <p>Labels, units, filters, views</p>
+        <ul>
+          <li>Labels</li>
+          <li>units</li>
+          <li>filters</li>
+          <li>Purpose</li>
+        </ul>
       </div>
-      {% endfor %}
-    </div>
-    {% endif %}
 
-    {% if apps %}
-    <h2 class="section-title">Apps</h2>
-    <p>Interactive applications in run mode - code is hidden for a clean user interface</p>
-    <div class="cards">
-      {% for app in apps %}
-      <!-- {{ app.display_name }} App -->
-      <div class="card">
-        <div class="card-header app">{{ app.display_name }}</div>
-        <div class="card-body">
-          <a href="{{ app.html_path }}" class="card-link app">Open App</a>
-        </div>
+      <div>
+        <h1>Accuracy Matters</h1>
+        <p>Make sure your data are correct</p>
+        <ul>
+          <li>Don’t guess at ratios/charts</li>
+          <li>Know your underlying data</li>
+          <li>Double check your data</li>
+        </ul>
       </div>
-      {% endfor %}
-    </div>
-    {% endif %}
-  </main>
+
+      <div>
+        <h1>Everything can encode data</h1>
+        <p>Combinations to represent different layers of data</p>
+        <ul>
+          <li>Color</li>
+          <li>Shape</li>
+          <li>Size</li>
+          <li>Motion</li>
+          <li>Sound</li>
+        </ul>
+      </div>
+
+      <div>
+      <h3>4. Visualizations should fit the data</h3>
+      <p><em>Use the right visualization for the kind of data that you’re working with</em></p>
+      <ul>
+        <li>Events – Scatterplot</li>
+        <li>Counts – Bar charts, histogram</li>
+        <li>Proportions – Stacked bar, pie</li>
+        <li>Time series – Line charts</li>
+      </ul>
+      </div>
+
+      <div>
+      <h3>5. Keep the Context Clear</h3>
+      <p><em>Always keep a sign of the data filters/manipulations that have been applied</em></p>
+      <ul>
+        <li>Filters</li>
+        <li>Sorts</li>
+        <li>Types</li>
+      </ul>
+      </div>
+
+      <div>
+      <h3>6. Choose Scales Wisely</h3>
+      <p><em>A scale should show the range of all possible values and relative/relevant values</em></p>
+      <ul>
+        <li>Color scales</li>
+        <li>Time scales</li>
+        <li>Geo-ranges</li>
+      </ul>
+      </div>
+
+      <div>
+      <h3>7. Dashboards are not Reports</h3>
+      <p><em>A report offers a snapshot, a dashboard helps a user build their own snapshot.</em></p>
+      <ul>
+        <li>Reports are read, dashboards are used</li>
+        <li>The primary task for the dashboard should be immediately apparent</li>
+        <li>If there are multiple tasks, filters should persist between them as much as possible</li>
+      </ul>
+      </div>
+
+      <div>
+      <h3>8. Give the reader a headline</h3>
+      <p><em>The big number is all that most users will read</em></p>
+      <ul>
+        <li>A big number should be essential, actionable, and relevant to decisions</li>
+        <li>Top and left within each component</li>
+        <li>Support numbers with graphs or context</li>
+      </ul>
+      </div>
+
+      <div>
+      <h3>9. Scan then read</h3>
+      <p><em>Prioritize the headline, lead in to the story</em></p>
+      <ul>
+        <li>Headlines should always be actionable</li>
+        <li>Use the z-pattern</li>
+        <li>Use tasks to balance density of visualizations with density of data</li>
+      </ul>
+      </div>
+      
+    </main>
 
     <footer>
       <div class="container">
