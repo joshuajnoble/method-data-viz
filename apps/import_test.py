@@ -33,13 +33,25 @@ async def _():
     import matplotlib.ticker as ticker
     import matplotlib.dates as mdates
 
+    import altair as alt
+
     import micropip
 
     await micropip.install("seaborn")
+    await micropip.install("altair")
 
     import seaborn as sns
 
     return (plt,)
+
+@app.cell
+def _():
+    mo.md(
+        """
+        # Loading a CSV file and using an imported library to render static charts.
+        """
+    )
+    return
 
 @app.cell(get_superstore)
 def _(mo):
@@ -65,6 +77,30 @@ def _(mo):
     ax.tick_params(axis='x', labelrotation=45)
 
     ax
+
+@app.cell
+def _():
+    mo.md(
+        """
+        # Rendering an Altair chart
+        """
+    )
+    return
+
+@app.cell
+def _():
+
+    # Create interactive chart
+    chart = mo.ui.altair_chart(
+        (
+            alt.Chart(daily_sales)
+            .mark_circle()
+            .encode(x="Order Date", y='Sales', size=alt.value(100), color=alt.value("steelblue"))
+            .properties(height=400, title="Interactive Scatter Plot")
+        )
+    )
+    chart
+    return chart
 
 if __name__ == "__main__":
     app.run()
