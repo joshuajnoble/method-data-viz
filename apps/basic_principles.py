@@ -174,7 +174,7 @@ def _(mo):
     mo.md(
         """
         ## Filters
-        Adding filters makes comparing across a stacked bar chart easier but it's important to always help the user keep track of what is selected.
+        Adding filters makes comparing across a stacked bar chart easier but always visually help the user keep track of what is selected.
         """
     )
 
