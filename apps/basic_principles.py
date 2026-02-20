@@ -113,7 +113,6 @@ def _(mo):
             alt.value("#4e8ae9"),     # highlight a bar with green.
             alt.value('lightgrey')   # And grey for the rest of the bars
         ),
-        #tooltip=[alt.Tooltip('Year:N', title='Anno'), alt.Tooltip('Value', format=',', title='Immatricolazioni')]     
     ).properties(
         width=600,  # Set the width to 600 pixels
         height=400  # Set the height to 400 pixels
@@ -142,7 +141,6 @@ def _(mo):
         alt.X('year:N', title='Year'),
         color='Segment',
         xOffset='Segment'
-        #tooltip=[alt.Tooltip('year:N', title='Year'), alt.Tooltip('Value', format=',', title='sales')]     
     ).properties(
         width=500,  # Set the width to 600 pixels
         height=400  # Set the height to 400 pixels
