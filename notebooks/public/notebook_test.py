@@ -1,3 +1,9 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "marimo",
+# ]
+# ///
 import marimo as mo
 import pandas as pd
 import matplotlib.pyplot as plt

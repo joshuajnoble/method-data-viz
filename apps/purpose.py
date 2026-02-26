@@ -1,3 +1,9 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "marimo",
+# ]
+# ///
 import marimo as mo
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -18,13 +24,28 @@ def _():
     cell_width = 800
 
     @mo.cache
-    def get_superstore():
+    def get_yearly():
 
-        #path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
-        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
-        superstore = pd.read_csv(path_to_csv)
-        superstore['Order Date'] = pd.to_datetime(superstore['Order Date'])
-        return superstore
+        path_to_csv = mo.notebook_location() / "public" / "yearly_sales.csv"
+        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+        yearly_by_segment = pd.read_csv(path_to_csv)
+        return yearly_by_segment
+
+    @mo.cache
+    def get_yearly_by_segment():
+
+        path_to_csv = mo.notebook_location() / "public" / "yearly_sales_by_segment.csv"
+        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+        yearly_by_segment = pd.read_csv(path_to_csv)
+        return yearly_by_segment
+    
+    @mo.cache
+    def get_weekly_by_segment():
+
+        path_to_csv = mo.notebook_location() / "public" / "weekly_sales_by_segment.csv"
+        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+        weekly_sales_by_segment = pd.read_csv(path_to_csv)
+        return weekly_sales_by_segment
     
     return (mo,)
 
@@ -62,10 +83,7 @@ def _():
 @app.cell()
 def _(mo):
 
-    ss = get_superstore()
-
-    yearly_sales = ss.groupby(ss["Order Date"].dt.year)["Sales"].sum()
-    sales = pd.DataFrame({"year":ss["Order Date"].dt.year.unique(), "sales":yearly_sales})
+    sales = get_yearly()
 
     alt.Chart(sales).mark_bar().encode(
         alt.Y('sales'),
@@ -148,13 +166,7 @@ def _():
 @app.cell()
 def _(mo):
 
-    yearly_sales_by_segment = (
-        ss.groupby([pd.Grouper(key="Order Date", freq="YE"), "Segment"], as_index=False).agg(sales=("Sales", "sum"))
-    )
-    yearly_sales_by_segment["Order Date"] = pd.to_datetime(yearly_sales_by_segment["Order Date"])
-    yearly_sales_by_segment['year'] = yearly_sales_by_segment["Order Date"].dt.year
-
-    yearly_sales_by_segment['truncated'] = yearly_sales_by_segment['sales']/1_000_000
+    yearly_sales_by_segment = get_yearly_by_segment()
 
 
     alt.Chart(yearly_sales_by_segment).mark_line(point=True).encode(
@@ -183,21 +195,15 @@ def _():
 @app.cell()
 def _(mo):
 
-    weekly_sales_by_segment = (
-        ss.groupby([pd.Grouper(key="Order Date", freq="W-MON"), "Segment"], as_index=False).agg(sales=("Sales", "sum"))
-    )
-    weekly_sales_by_segment["Order Date"] = pd.to_datetime(weekly_sales_by_segment["Order Date"])
-    #weekly_sales_by_segment['week'] = weekly_sales_by_segment["Order Date"].dt.week
-
-    weekly_sales_by_segment['truncated'] = weekly_sales_by_segment['sales']/1_000
-    weekly_sales_by_segment['truncated'] = weekly_sales_by_segment['truncated'].round()
+    weekly_sales_by_segment = get_weekly_by_segment()
 
     # Create a selection that chooses the nearest point & selects based on x-value
     nearest = alt.selection_point(nearest=True, on="pointerover", fields=["Order Date"], empty=False)
 
     # The basic line
     line = alt.Chart(weekly_sales_by_segment).mark_line().encode(
-        x="Order Date",
+        #x="Order Date:O",
+        x=alt.X('Order Date:T', axis=alt.Axis(tickCount=2, format="%Y-%m-%d", labelAngle=-45)),
         y=alt.Y('truncated:Q', axis=alt.Axis(labelExpr='"$"+datum.value+"K"'), title="Weekly Sales in USD"),
         color="Segment:N",
         opacity=alt.value(0.5)

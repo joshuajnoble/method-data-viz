@@ -1,3 +1,9 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "marimo",
+# ]
+# ///
 import marimo as mo
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,7 +12,7 @@ import matplotlib.dates as mdates
 import matplotlib.ticker as ticker
 
 __generated_with = "0.19.7"
-app = mo.App()
+app = mo.App(width="medium")
 
 
 @app.cell
