@@ -1,3 +1,11 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "marimo>=0.20.2",
+#     "plotly",
+#     "pandas",
+# ]
+# ///
 import marimo
 
 __generated_with = "0.20.2"
@@ -7,15 +15,21 @@ with app.setup(hide_code=True):
     # imports
     import plotly.express as px
     import pandas as pd
-    import matplotlib.pyplot as plt
     import marimo as mo
     import plotly.io as pio
 
     # set plotly default template and disable mode bar
     pio.templates.default = "plotly_white"
     pio.templates["plotly_white"].layout.margin = dict(t=0, b=0)
-    for renderer_name in pio.renderers.default.split('+'):
-        pio.renderers[renderer_name].config['displayModeBar'] = False
+    for renderer_name in pio.renderers.default.split("+"):
+        renderer_name = renderer_name.strip()
+        if not renderer_name:
+            continue
+        if renderer_name not in pio.renderers:
+            continue
+        renderer = pio.renderers[renderer_name]
+        if hasattr(renderer, "config") and renderer.config is not None:
+            renderer.config["displayModeBar"] = False
 
 
 @app.cell(hide_code=True)
