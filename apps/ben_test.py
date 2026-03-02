@@ -1,7 +1,7 @@
 import marimo
 
 __generated_with = "0.20.2"
-app = marimo.App(width="medium")
+app = marimo.App()
 
 with app.setup(hide_code=True):
     # imports
@@ -59,9 +59,11 @@ def _():
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
-    mo.callout(mo.md("<u>The slider below</u> 👇 changes the number of categories shown in the charts following. Experiment with which chart type might be the most effective for the **number of categories** as they relate to the **goal of the visual representation**. How might you focus the experience on showing **intra-year comparisons** vs. **individual trends**?"))
+    mo.md(r"""
+    > <u>The slider below</u> 👇 changes the number of categories shown in the charts following. Experiment with which chart type might be the most effective for the **number of categories** as they relate to the **goal of the visual representation**. How might you focus the experience on showing **intra-year comparisons** vs. **individual trends**?
+    """)
     return
 
 
@@ -80,11 +82,16 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(chart_slider):
+def callout_barchart(chart_slider):
+    # callout styles
+    _info_style = {"padding": "1rem", "margin": "1rem", "border-radius": "0.5rem", "border": "1px solid var(--sky-8)", "background-color": "var(--sky-2)", "box-shadow": "4px 4px 0px 0px var(--sky-7)"}
+    _danger_style = {"padding": "1rem", "margin": "1rem", "border-radius": "0.5rem", "border": "1px solid var(--red-9)", "background-color": "var(--red-2)", "box-shadow": "4px 4px 0px 0px var(--red-8)"}
+
+    # callout
     _message_by_range = [
-        {"min": 1, "max": 3, "message": "This number of categories is typically manageable in a **grouped bar chart**. It focuses on **intra-year comparisons** while still allowing for some comparison across years. **Small multiples** will also work well for this number of categories and can help to emphasize **individual trends**."},
-        {"min": 4, "max": 7, "message": "This number of categories is great for a **small multiples chart** and showing **individual trends** while still allowing for comparison across categories. It's on the higher end for a **grouped bar chart** and can introduce visual overwhelm."},
-        {"min": 8, "max": float("inf"), "message": "This number of categories will introduce **visual overwhelm with either chart type**. If you need more than 7 categories, try **consolidating categories or providing a table view instead.**"},
+        {"min": 1, "max": 3, "message": mo.md("**1-3**: This number of categories is typically manageable in a **grouped bar chart**. It focuses on **intra-year comparisons** while still allowing for some comparison across years. **Small multiples** will also work well for this number of categories and can help to emphasize **individual trends**.").style(_info_style)},
+        {"min": 4, "max": 7, "message": mo.md("**4-7**: This number of categories is great for a **small multiples chart** and showing **individual trends** while still allowing for comparison across categories. It's on the higher end for a **grouped bar chart** and can introduce visual overwhelm.").style(_info_style)},
+        {"min": 8, "max": float("inf"), "message": mo.md("**8+**: This number of categories will introduce **visual overwhelm with either chart type**. If you need more than 7 categories, try **consolidating categories or providing a table view instead.**").style(_danger_style)},
     ]
 
     _message = next(
@@ -93,14 +100,14 @@ def _(chart_slider):
         if item["min"] <= chart_slider.value <= item["max"]
     )
 
-    mo.md(_message)
+    _message
     return
 
 
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    ### **Category Sales by Year** (Grouped Bar Chart)
+    ### **Grouped Bar Chart** (Category Sales by Year)
     """)
     return
 
@@ -155,7 +162,7 @@ def _(chart_slider, segment_year_sales_df):
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    ### **Yearly Sales by Category** (Small Multiples)
+    ### **Small Multiples** (Yearly Sales by Category)
     """)
     return
 
@@ -241,9 +248,28 @@ def _():
 
 @app.cell
 def _(chart_slider):
-    fig_switch = mo.ui.switch(value=False, label="Highlight a category")
-    mo.hstack([chart_slider,fig_switch],justify="center",gap=5)
+    mo.center(chart_slider)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### **Overlapping** (Yearly Sales by Category)
+    """)
+    return
+
+
+@app.cell
+def _():
+    fig_switch = mo.ui.switch(value=False, label="*Highlighting a single category within many overlapping lines can focus the story.*")
     return (fig_switch,)
+
+
+@app.cell
+def _(fig_switch):
+    fig_switch
+    return
 
 
 @app.cell(hide_code=True)
@@ -312,6 +338,14 @@ def _(categories, category_colors, fig_switch, filtered_category_sales_df):
     # Cell B: choose which already-prepared figure to show
     _selected_line_fig = line_highlight_fig if fig_switch.value else line_all_categories_fig
     _selected_line_fig
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### **Small Multiples** (Category Sales by Year)
+    """)
     return
 
 
