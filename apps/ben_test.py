@@ -3,7 +3,8 @@ import marimo
 __generated_with = "0.20.2"
 app = marimo.App(width="medium")
 
-with app.setup:
+with app.setup(hide_code=True):
+    # imports
     import plotly.express as px
     import pandas as pd
     import matplotlib.pyplot as plt
@@ -12,9 +13,19 @@ with app.setup:
 
     # set plotly default template and disable mode bar
     pio.templates.default = "plotly_white"
-    #pio.templates["plotly_white"].layout.margin = dict(t=0, b=0)
+    pio.templates["plotly_white"].layout.margin = dict(t=0, b=0)
     for renderer_name in pio.renderers.default.split('+'):
         pio.renderers[renderer_name].config['displayModeBar'] = False
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    # Comparing Multiple Groups
+
+    The focus of this section is to address the most effective ways to compare multiple groups and the specific story you're trying to tell with the data.
+    """)
+    return
 
 
 @app.cell(hide_code=True)
@@ -37,42 +48,70 @@ def _():
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
+    ## Vertical Bar Charts
+
     Consider a vertical bar chart of many categories. Depending on what story you're looking to tell, there are usually two ways to group the bars.
 
-    **Grouped or Clustered Bar Chart**: In this format, bars representing different categories are placed side by side for each group (e.g., year). This allows for easy comparison of categories within the same group while still getting a sense for overall trend. However, if there are too many categories, it can become visually overwhelming and difficult to interpret.
+    **Grouped or Clustered Bar Chart**: In this format, bars representing different categories are placed side by side for each group (e.g., year). This allows for easy *comparison of categories within the same group/cluster* while still getting a sense for the overall trend. However, if there are too many categories, it can become *visually overwhelming* and difficult to interpret.
 
-    **Small Multiples**: In this format, each category gets its own individual chart (or subplot) that shares the same axes. This allows for easier comparison of trends across categories without the visual clutter of a grouped bar chart. However, it can be more difficult to compare values across categories since they are not visually grouped together. Tip: consider adding darker axis lines to allow easier comparison across groups.
-
-    The slider below modifies the number of categories shown in the charts. Experiment with which chart type might be the most effective for the number of categories shown as they related to the goal of the visual (showing **intra-year comparisons** vs. **individual trends**).
+    **Small Multiples**: In this format, each category gets its own individual chart (or subplot) that shares the same axes. This allows for *easier comparison of trends across categories* without the visual clutter of a grouped bar chart. However, it can be more difficult to compare values across categories since they are not visually grouped together. Tip: consider adding darker axis lines to allow easier comparison across groups.
     """)
     return
 
 
 @app.cell
 def _():
-    mo.callout("Consider keeping the number of categories to a maximum of 7 or 8 to reduce visual overwhelm. If you need more try consolidating categories or providing a table view instead.", "warn")
+    mo.callout(mo.md("<u>The slider below</u> 👇 changes the number of categories shown in the charts following. Experiment with which chart type might be the most effective for the **number of categories** as they relate to the **goal of the visual representation**. How might you focus the experience on showing **intra-year comparisons** vs. **individual trends**?"))
     return
 
 
 @app.cell(hide_code=True)
 def _():
-    segment_slider = mo.ui.slider(
+    chart_slider = mo.ui.slider(
         start=1,
         stop=10,
-        value=5,
+        value=3,
         label="Number of categories",
+        show_value = True,
     )
-    segment_slider
-    return (segment_slider,)
+
+    mo.center(chart_slider)
+    return (chart_slider,)
 
 
 @app.cell(hide_code=True)
-def _(segment_slider, segment_year_sales_df):
+def _(chart_slider):
+    _message_by_range = [
+        {"min": 1, "max": 3, "message": "This number of categories is typically manageable in a **grouped bar chart**. It focuses on **intra-year comparisons** while still allowing for some comparison across years. **Small multiples** will also work well for this number of categories and can help to emphasize **individual trends**."},
+        {"min": 4, "max": 7, "message": "This number of categories is great for a **small multiples chart** and showing **individual trends** while still allowing for comparison across categories. It's on the higher end for a **grouped bar chart** and can introduce visual overwhelm."},
+        {"min": 8, "max": float("inf"), "message": "This number of categories will introduce **visual overwhelm with either chart type**. If you need more than 7 categories, try **consolidating categories or providing a table view instead.**"},
+    ]
+
+    _message = next(
+        item["message"]
+        for item in _message_by_range
+        if item["min"] <= chart_slider.value <= item["max"]
+    )
+
+    mo.md(_message)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### **Category Sales by Year** (Grouped Bar Chart)
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(chart_slider, segment_year_sales_df):
     top_subcats = (
         segment_year_sales_df.groupby("Category", as_index=False)["Sales"]
         .sum()
         .sort_values("Sales", ascending=False)
-        .head(segment_slider.value)["Category"]
+        .head(chart_slider.value)["Category"]
     )
 
     filtered_segment_year_sales_df = segment_year_sales_df[
@@ -88,15 +127,41 @@ def _(segment_slider, segment_year_sales_df):
     )
 
     _year_ticks = sorted(filtered_segment_year_sales_df["Year"].unique())
-    bar_fig.update_xaxes(tickmode="array", tickvals=_year_ticks, ticktext=_year_ticks)
-    bar_fig.update_yaxes(tickformat="$,.0f")
-    bar_fig.update_layout(xaxis_title=None, yaxis_title=None,legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0))
+    bar_fig.update_xaxes(
+        tickmode="array",
+        tickvals=_year_ticks,
+        ticktext=_year_ticks
+    )
+    bar_fig.update_yaxes(tickformat="$,.0f", gridcolor="rgba(0, 0, 0, 0.15)",
+        gridwidth=1.1)
+    bar_fig.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            title = "",
+            xanchor="left",
+            x=0,
+            font=dict(size=14),
+        ),
+        height=400,
+    )
     bar_fig
     return
 
 
 @app.cell(hide_code=True)
-def _(segment_slider, segment_year_sales_df):
+def _():
+    mo.md(r"""
+    ### **Yearly Sales by Category** (Small Multiples)
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(chart_slider, segment_year_sales_df):
     from plotly.subplots import make_subplots
     import plotly.graph_objects as go
 
@@ -108,7 +173,7 @@ def _(segment_slider, segment_year_sales_df):
         segment_year_sales_df_with_year_cat.groupby("Category", as_index=False)["Sales"]
         .sum()
         .sort_values("Sales", ascending=False)
-        .head(segment_slider.value)["Category"]
+        .head(chart_slider.value)["Category"]
     )
 
     filtered_category_sales_df = segment_year_sales_df_with_year_cat[
@@ -148,9 +213,12 @@ def _(segment_slider, segment_year_sales_df):
                 col=_col_idx,
             )
 
-    category_sales_subplots_fig.update_yaxes(tickformat="$,.0f", title="")
+    category_sales_subplots_fig.update_yaxes(tickformat="$,.0f", title="", gridcolor="rgba(0, 0, 0, 0.15)",gridwidth=1.05)
     category_sales_subplots_fig.update_xaxes(title="")
-    category_sales_subplots_fig.update_layout(barmode="group", showlegend=False)
+    category_sales_subplots_fig.update_layout(barmode="group",
+                                              showlegend=False,
+                                              margin = dict(t=30),
+                                              height=400)
     category_sales_subplots_fig.update_annotations(font_size=14)
     category_sales_subplots_fig
     return (
@@ -165,13 +233,21 @@ def _(segment_slider, segment_year_sales_df):
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
+    ## Line Charts
     Similarly, consider a line chart of the same information. How does the choice between a single line chart with all categories vs. small multiples of line charts affect your ability to compare trends across categories and within categories? Does the number of categories shown change which chart type is more effective for the story you're trying to tell?
     """)
     return
 
 
+@app.cell
+def _(chart_slider):
+    fig_switch = mo.ui.switch(value=False, label="Highlight a category")
+    mo.hstack([chart_slider,fig_switch],justify="center",gap=5)
+    return (fig_switch,)
+
+
 @app.cell(hide_code=True)
-def _(filtered_category_sales_df):
+def _(categories, category_colors, fig_switch, filtered_category_sales_df):
     line_all_categories_fig = px.line(
         filtered_category_sales_df,
         x="Year",
@@ -182,8 +258,60 @@ def _(filtered_category_sales_df):
     )
     line_all_categories_fig.update_yaxes(tickformat="$,.0f",rangemode="tozero")
     line_all_categories_fig.update_xaxes(title="")
-    line_all_categories_fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0))
-    line_all_categories_fig
+    line_all_categories_fig.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            title = "",
+            xanchor="left",
+            x=0,
+            font=dict(size=14),
+        ),
+        height=400,
+    )
+
+
+
+
+    first_category = categories[0] if len(categories) > 0 else None
+
+    line_highlight_fig = px.line(
+        filtered_category_sales_df,
+        x="Year",
+        y="Sales",
+        color="Category",
+        markers=True,
+    )
+
+    for trace in line_highlight_fig.data:
+        if trace.name == first_category:
+            trace.update(line=dict(color=category_colors[first_category], width=3), marker=dict(color=category_colors[first_category], size=9))
+        else:
+            trace.update(line=dict(color="rgba(160, 160, 160, 0.7)", width=2), marker=dict(color="rgba(160, 160, 160, 0.7)", size=6))
+
+    line_highlight_fig.update_yaxes(tickformat="$,.0f", rangemode="tozero")
+    line_highlight_fig.update_xaxes(title="")
+    line_highlight_fig.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            title="",
+            xanchor="left",
+            x=0,
+            font=dict(size=14),
+        ),
+        height=400,
+    )
+
+    # Cell B: choose which already-prepared figure to show
+    _selected_line_fig = line_highlight_fig if fig_switch.value else line_all_categories_fig
+    _selected_line_fig
     return
 
 
@@ -222,7 +350,10 @@ def _(
 
     line_category_sales_subplots_fig.update_yaxes(tickformat="$,.0f", title="", rangemode="tozero")
     line_category_sales_subplots_fig.update_xaxes(title="")
-    line_category_sales_subplots_fig.update_layout(showlegend=False)
+    line_category_sales_subplots_fig.update_layout(barmode="group",
+                                              showlegend=False,
+                                              margin = dict(t=30),
+                                              height=400)
     line_category_sales_subplots_fig.update_annotations(font_size=14)
     line_category_sales_subplots_fig
     return
