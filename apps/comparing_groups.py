@@ -173,7 +173,7 @@ def _(chart_slider, segment_year_sales_df):
         ),
         height=400,
     )
-    bar_fig
+    mo.ui.plotly(bar_fig, config={"displayModeBar": False})
     return
 
 
@@ -245,7 +245,7 @@ def _(chart_slider, segment_year_sales_df):
                                               margin = dict(t=30),
                                               height=400)
     category_sales_subplots_fig.update_annotations(font_size=14)
-    category_sales_subplots_fig
+    mo.ui.plotly(category_sales_subplots_fig, config={"displayModeBar": False})
     return (
         categories,
         category_colors,
@@ -355,7 +355,7 @@ def _(categories, category_colors, fig_switch, filtered_category_sales_df):
 
     # Cell B: choose which already-prepared figure to show
     _selected_line_fig = line_highlight_fig if fig_switch.value else line_all_categories_fig
-    _selected_line_fig
+    mo.ui.plotly(_selected_line_fig,config={"displayModeBar": False})
     return
 
 
@@ -407,7 +407,7 @@ def _(
                                               margin = dict(t=30),
                                               height=400)
     line_category_sales_subplots_fig.update_annotations(font_size=14)
-    line_category_sales_subplots_fig
+    mo.ui.plotly(line_category_sales_subplots_fig,config={"displayModeBar": False})
     return
 
 
