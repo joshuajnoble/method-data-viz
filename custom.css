@@ -20,6 +20,7 @@
 /* tw colors to modify UI elements */
 :root {
   --color-blue-500: #4442e3;
+  --color-red-500: #ff584e;
 }
 
 /* Base Colors */
@@ -98,4 +99,23 @@ body {
 h1,
 h2 {
   font-weight: bold !important;
+}
+
+.callout-info,
+.callout-danger {
+  padding: 1rem;
+  margin: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--callout-color) 70%, white);
+  background-color: color-mix(in srgb, var(--callout-color) 10%, white);
+  box-shadow: 4px 4px 0px 0px
+    color-mix(in srgb, var(--callout-color) 75%, black);
+}
+
+.callout-info {
+  --callout-color: var(--color-blue-500);
+}
+
+.callout-danger {
+  --callout-color: var(--color-red-500);
 }
