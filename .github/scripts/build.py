@@ -21,6 +21,7 @@ The exported files will be placed in the specified output directory (default: _s
 # ///
 
 import subprocess
+import shutil
 from typing import List, Union
 from pathlib import Path
 
@@ -175,6 +176,37 @@ def _export(folder: Path, output_dir: Path, as_app: bool=False) -> List[dict]:
     logger.info(f"Successfully exported {len(notebook_data)} out of {len(notebooks)} files from {folder}")
     return notebook_data
 
+
+def _copy_static_assets(output_dir: Path) -> None:
+    """Copy static assets needed by exported HTML files.
+
+    Copies known static file/directory paths into the output directory while
+    preserving relative paths from the repository root.
+    """
+    logger.info("Copying static assets")
+
+    asset_paths: List[Path] = [
+        Path("apps/custom.css"),
+        Path("apps/public"),
+    ]
+
+    for src in asset_paths:
+        if not src.exists():
+            logger.debug(f"Static asset path not found, skipping: {src}")
+            continue
+
+        dst = output_dir / src
+        try:
+            if src.is_dir():
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+                logger.info(f"Copied directory: {src} -> {dst}")
+            else:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src, dst)
+                logger.info(f"Copied file: {src} -> {dst}")
+        except OSError as e:
+            logger.error(f"Failed to copy static asset {src}: {e}")
+
 def main(
     output_dir: Union[str, Path] = "_site",
     template: Union[str, Path] = "templates/tailwind.html.j2",
@@ -219,6 +251,9 @@ def main(
 
     # Generate the index.html file that lists all notebooks and apps
     _generate_index(output_dir=output_dir, notebooks_data=notebooks_data, apps_data=apps_data, template_file=template_file)
+
+    # Copy static assets used by notebooks/apps (CSS + datasets)
+    _copy_static_assets(output_dir)
 
     logger.info(f"Build completed successfully. Output directory: {output_dir}")
 
