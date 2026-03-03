@@ -55,7 +55,7 @@ def _():
     mo.md(
         """
         ## Height
-        The height of a bar shows the yearly sales.
+        The height of a bar shows the yearly sales. The point of it is to show how the different years compare to one another.
         """
     )
     return
@@ -92,7 +92,7 @@ def _(mo):
     sales['truncated'] = sales['sales']/1_000_000
 
     alt.Chart(sales).mark_bar().encode(
-        alt.Y('truncated', axis=alt.Axis(labelExpr='"$"+datum.value+"M"'), format='~s', title="Sales in Millions of USD"),
+        alt.Y('truncated', axis=alt.Axis(labelExpr='"$"+datum.value+"M"'), title="Sales in Millions of USD"),
         alt.X('year:N', title='Sales Year'),
     ).properties(
         width=600,  # Set the width to 600 pixels

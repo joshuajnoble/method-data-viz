@@ -1,4 +1,4 @@
-,Order Date,Segment,sales,truncated
+id,Order Date,Segment,sales,truncated
 0,2011-01-03,Consumer,4310.4902,4.0
 1,2011-01-03,Corporate,1078.095,1.0
 2,2011-01-03,Home Office,237.735,0.0

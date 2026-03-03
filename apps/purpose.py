@@ -170,7 +170,7 @@ def _(mo):
 
 
     alt.Chart(yearly_sales_by_segment).mark_line(point=True).encode(
-        alt.Y('truncated', axis=alt.Axis(labelExpr='"$"+datum.value+"M"'), title="Sales in Millions of USD"),
+        alt.Y('sales', axis=alt.Axis(labelExpr='"$"+datum.value+"M"'), title="Sales in Millions of USD"),
         alt.X('year:N', title='Year'),
         color='Segment:N',  
     ).properties(

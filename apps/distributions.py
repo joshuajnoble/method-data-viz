@@ -67,6 +67,16 @@ def _(mo):
     # The variables `x`, `y`, `fig`, and `ax` are now available to other cells
 
 
+@app.cell
+def _():
+    mo.md(
+        """
+        ## Height
+        This shows how what kinds of amounts purchases are most common.
+        """
+    )
+    return
+
 @app.cell()
 def _(mo):
 
