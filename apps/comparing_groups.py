@@ -47,15 +47,7 @@ def _():
 @app.cell(hide_code=True)
 def _():
     # prep data
-    remote_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
-
-    local_candidates = [
-        Path(__file__).resolve().parent / "public" / "superstore.csv",
-        Path.cwd() / "public" / "superstore.csv",
-    ]
-
-    path_to_csv = next((p for p in local_candidates if p.exists()), remote_csv)
-    print(path_to_csv)
+    path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
     base_df = pd.read_csv(path_to_csv)
 
     base_df_with_year = base_df.assign(
