@@ -63,7 +63,8 @@ def _():
 def _():
     # prep data
     path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
-    # path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+    print(path_to_csv)
+    path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
     base_df = pd.read_csv(path_to_csv)
 
     base_df_with_year = base_df.assign(
