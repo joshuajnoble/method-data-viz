@@ -18,6 +18,7 @@ with app.setup(hide_code=True):
     import pandas as pd
     import marimo as mo
     import plotly.io as pio
+    from pathlib import Path
 
     # set plotly default template and disable mode bar
     pio.templates.default = "plotly_white"
@@ -45,9 +46,16 @@ def _():
 
 @app.cell(hide_code=True)
 def _():
-    #prep data
-    #path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
-    path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+    # prep data
+    remote_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+
+    local_candidates = [
+        Path(__file__).resolve().parent / "public" / "superstore.csv",
+        Path.cwd() / "public" / "superstore.csv",
+    ]
+
+    path_to_csv = next((p for p in local_candidates if p.exists()), remote_csv)
+    print(path_to_csv)
     base_df = pd.read_csv(path_to_csv)
 
     base_df_with_year = base_df.assign(
