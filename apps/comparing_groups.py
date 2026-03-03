@@ -116,9 +116,26 @@ def _():
 
 @app.cell(hide_code=True)
 def callout_barchart(chart_slider):
-    # callout styles
-    _info_style = {"padding": "1rem", "margin": "1rem", "border-radius": "0.5rem", "border": "1px solid var(--sky-8)", "background-color": "var(--sky-2)", "box-shadow": "4px 4px 0px 0px var(--sky-7)"}
-    _danger_style = {"padding": "1rem", "margin": "1rem", "border-radius": "0.5rem", "border": "1px solid var(--red-9)", "background-color": "var(--red-2)", "box-shadow": "4px 4px 0px 0px var(--red-8)"}
+    _info_base_color = "#4442e3"
+    _danger_base_color = "#ff584e"
+
+    _info_style = {
+        "padding": "1rem",
+        "margin": "1rem",
+        "border-radius": "0.5rem",
+        "border": f"1px solid color-mix(in srgb, {_info_base_color} 70%, white)",
+        "background-color": f"color-mix(in srgb, {_info_base_color} 10%, white)",
+        "box-shadow": f"4px 4px 0px 0px color-mix(in srgb, {_info_base_color} 75%, black)",
+    }
+
+    _danger_style = {
+        "padding": "1rem",
+        "margin": "1rem",
+        "border-radius": "0.5rem",
+        "border": f"1px solid color-mix(in srgb, {_danger_base_color} 70%, white)",
+        "background-color": f"color-mix(in srgb, {_danger_base_color} 10%, white)",
+        "box-shadow": f"4px 4px 0px 0px color-mix(in srgb, {_danger_base_color} 75%, black)",
+    }
 
     # callout
     _message_by_range = [
