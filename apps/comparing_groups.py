@@ -10,7 +10,7 @@
 import marimo
 
 __generated_with = "0.20.2"
-app = marimo.App(width="medium")
+app = marimo.App(width="medium", css_file="custom.css")
 
 with app.setup(hide_code=True):
     # imports

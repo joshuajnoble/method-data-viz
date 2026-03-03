@@ -1,0 +1,96 @@
+/* Custom CSS for Marimo - Method Theme */
+
+/* Import Manrope font */
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap");
+/* @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap"); */
+/* @import url("https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap"); */
+
+:root {
+  --marimo-text-font: "Manrope", sans-serif;
+  --marimo-heading-font: "Manrope", sans-serif;
+  --marimo-monospace-font:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+}
+
+.cm-line {
+  font-family: var(--marimo-monospace-font);
+}
+
+/* Base Colors */
+:root {
+  /* Main Backgrounds: Grey (#ededed) for Light, Black (#000) for Dark */
+  --background: light-dark(#ffffff, #000000);
+  --foreground: light-dark(#000000, #ffffff);
+
+  /* Slightly offset colors for cards and elevated surfaces */
+  --muted: light-dark(#e0e0e0, #1a1a1a);
+  --muted-foreground: light-dark(rgba(0, 0, 0, 0.72), hsla(0, 0%, 85%, 0.72));
+
+  --popover: light-dark(#ffffff, #111111);
+  --popover-foreground: light-dark(#000000, #d9d9d9);
+
+  --card: light-dark(#ffffff, #111111);
+  --card-foreground: light-dark(#000000, #d9d9d9);
+
+  --border: light-dark(rgba(0, 0, 0, 0.15), hsla(0, 0%, 85%, 0.15));
+  --input: light-dark(rgba(0, 0, 0, 0.15), hsla(0, 0%, 85%, 0.15));
+
+  /* Primary: Brand Blue */
+  --primary: light-dark(#4442e3, #4442e3);
+  --primary-foreground: light-dark(#ffffff, #ffffff);
+
+  /* Secondary: Brand Yellow */
+  --secondary: light-dark(#ffb60c, #ffb60c);
+  --secondary-foreground: light-dark(#000000, #000000);
+
+  /* Accent: Light Blue Tint */
+  --accent: light-dark(#d9dcfa, #1a1b36);
+  --accent-foreground: light-dark(#4442e3, #d9dcfa);
+
+  --ring: light-dark(#4442e3, #4442e3);
+}
+
+/* Semantic Colors */
+:root {
+  /* Destructive/Error: Brand Coral */
+  --destructive: light-dark(#ff584e, #ff584e);
+  --destructive-foreground: light-dark(#000000, #000000);
+
+  --error: light-dark(#ff584e, #ff584e);
+  --error-foreground: light-dark(#000000, #000000);
+
+  --success: light-dark(#10b981, #10b981);
+  --success-foreground: light-dark(#ffffff, #000000);
+
+  /* Actions: Default to Brand Blue, hover to theme opposites */
+  --action: light-dark(#4442e3, #4442e3);
+  --action-hover: light-dark(#000000, #ededed);
+  --action-foreground: light-dark(#ffffff, #ffffff);
+
+  --link: light-dark(#4442e3, #d9dcfa);
+  --link-visited: light-dark(#3634b5, #b8bce8);
+  --stale: light-dark(hsla(0, 0%, 85%, 0.72), rgba(0, 0, 0, 0.72));
+}
+
+/* Shadows */
+:root {
+  --base-shadow: light-dark(hsla(0deg, 0%, 0%, 8%), hsla(0deg, 0%, 0%, 60%));
+  --base-shadow-darker: light-dark(
+    hsla(0deg, 0%, 0%, 15%),
+    hsla(0deg, 0%, 0%, 80%)
+  );
+  --base-shadow-opacity: 10%;
+}
+
+/* Override Marimo Default Backgrounds */
+body {
+  background-color: var(--background) !important;
+  background-image: none !important;
+}
+
+/* set font weight of h1/h2 */
+h1,
+h2 {
+  font-weight: bold !important;
+}
