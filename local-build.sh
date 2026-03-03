@@ -24,6 +24,4 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 #   --template 'templates/tailwind.html.j2': Specifies which template to use
 #                                            This uses the Tailwind CSS template
 #                                            for a clean, responsive design
-uv run build.py \
-       --output_dir '_site' \
-       --template 'templates/tailwind.html.j2'
+uv run .github/scripts/build.py
