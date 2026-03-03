@@ -25,3 +25,6 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 #                                            This uses the Tailwind CSS template
 #                                            for a clean, responsive design
 uv run .github/scripts/build.py
+
+# After running, serve.
+uv run python -m http.server --directory _site
