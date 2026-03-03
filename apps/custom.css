@@ -17,6 +17,11 @@
   font-family: var(--marimo-monospace-font);
 }
 
+/* tw colors to modify UI elements */
+:root {
+  --color-blue-500: #4442e3;
+}
+
 /* Base Colors */
 :root {
   /* Main Backgrounds: Grey (#ededed) for Light, Black (#000) for Dark */

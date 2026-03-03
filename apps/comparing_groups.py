@@ -20,9 +20,24 @@ with app.setup(hide_code=True):
     import plotly.io as pio
     from pathlib import Path
 
+    COLOR_PALETTE = [
+        "#4442e3", # 1. Brand Blue
+        "#ffb60c", # 2. Brand Yellow
+        "#ff584e", # 3. Brand Coral
+        "#10b981", # 4. Method Green
+        "#8b89f5", # 5. Vibrant Periwinkle
+        "#2b298c", # 6. Deep Navy
+        "#0ea5e9", # 7. Electric Teal
+        "#f97316", # 8. Vibrant Orange
+        "#ff9e99", # 9. Soft Melon
+        "#4e4e4e"  # 10. Method Slate
+    ]
+
     # set plotly default template and disable mode bar
     pio.templates.default = "plotly_white"
     pio.templates["plotly_white"].layout.margin = dict(t=0, b=0)
+    pio.templates["plotly_white"].layout.font.family = "var(--marimo-text-font)"
+    pio.templates["plotly_white"].layout.title.font.family = "var(--marimo-text-font)"
     for renderer_name in pio.renderers.default.split("+"):
         renderer_name = renderer_name.strip()
         if not renderer_name:
@@ -148,7 +163,8 @@ def _(chart_slider, segment_year_sales_df):
         x="Year",
         y="Sales",
         color="Category",
-        barmode="group"
+        barmode="group",
+        color_discrete_sequence=COLOR_PALETTE[:len(top_subcats)]
     )
 
     _year_ticks = sorted(filtered_segment_year_sales_df["Year"].unique())
@@ -207,9 +223,8 @@ def _(chart_slider, segment_year_sales_df):
 
     years = sorted(filtered_category_sales_df["Year"].unique())
     categories = sorted(top_categories.tolist())
-    color_sequence = px.colors.qualitative.Plotly
     category_colors = {
-        category: color_sequence[i % len(color_sequence)]
+        category: COLOR_PALETTE[i % len(COLOR_PALETTE)]
         for i, category in enumerate(categories)
     }
 
@@ -298,7 +313,8 @@ def _(categories, category_colors, fig_switch, filtered_category_sales_df):
         y="Sales",
         color="Category",
         markers=True,
-        title=""
+        title="",
+        color_discrete_sequence=COLOR_PALETTE[:len(categories)]
     )
     line_all_categories_fig.update_yaxes(tickformat="$,.0f",rangemode="tozero")
     line_all_categories_fig.update_xaxes(title="")
