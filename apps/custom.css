@@ -119,3 +119,8 @@ h2 {
 .callout-danger {
   --callout-color: var(--color-red-500);
 }
+
+/* hide the actions dropdown in the top right of the page */
+[data-testid="notebook-actions-dropdown"] {
+  display: none !important;
+}
