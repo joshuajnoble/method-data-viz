@@ -51,7 +51,7 @@ def _():
     base_df = pd.read_csv(path_to_csv)
 
     base_df_with_year = base_df.assign(
-        _order_year=pd.to_datetime(base_df["Order Date"]).dt.year
+        _order_year=pd.to_datetime(base_df["Order Date"], format="%m/%d/%y").dt.year
     )
     segment_year_sales_df = (
         base_df_with_year.groupby(["_order_year", "Sub-Category"], as_index=False)["Sales"]
