@@ -186,7 +186,7 @@ def _copy_static_assets(output_dir: Path) -> None:
     logger.info("Copying static assets")
 
     asset_paths: List[Path] = [
-        Path("apps/custom.css"),
+        Path("custom.css"),
         Path("apps/public"),
     ]
 
