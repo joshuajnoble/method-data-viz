@@ -9,7 +9,7 @@
 
 import marimo
 
-__generated_with = "0.20.2"
+__generated_with = "0.20.4"
 app = marimo.App(width="medium", css_file="custom.css")
 
 with app.setup(hide_code=True):
@@ -144,10 +144,13 @@ def callout_barchart(chart_slider):
 
 
 @app.cell(hide_code=True)
-def _():
-    mo.md(r"""
-    ### **Grouped Bar Chart** (Category Sales by Year)
-    """)
+def _(chart_slider):
+    _heading_color = COLOR_PALETTE[0] if 1 <= chart_slider.value <= 3 else  COLOR_PALETTE[2]
+    mo.md(
+        f"""
+    ### <span style="color: {_heading_color};">**Grouped Bar Chart** (Category Sales by Year)</span>
+    """
+    )
     return
 
 
@@ -200,10 +203,13 @@ def _(chart_slider, segment_year_sales_df):
 
 
 @app.cell(hide_code=True)
-def _():
-    mo.md(r"""
-    ### **Small Multiples** (Yearly Sales by Category)
-    """)
+def _(chart_slider):
+    _heading_color = COLOR_PALETTE[0] if 1 <= chart_slider.value <= 7 else  COLOR_PALETTE[2]
+    mo.md(
+        f"""
+    ### <span style="color: {_heading_color};">**Small Multiples** (Yearly Sales by Category)</span>
+    """
+    )
     return
 
 
