@@ -2,12 +2,17 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "marimo",
+#     "plotly",
+#     "pandas",
+#     "numpy",
+#     "scipy"
 # ]
 # ///
 import marimo as mo
 import pandas as pd
 import plotly
 import plotly.express as px
+import plotly.graph_objects as go
 
 import numpy as np
 
@@ -35,19 +40,89 @@ async def _():
     
     import plotly.express as px
     import numpy as np
-
-    import micropip
-
-    await micropip.install("plotly")
+    import plotly.graph_objects as go
 
     return (plt,)
+
 
 @app.cell
 def _():
     mo.md(
         """
-        ## Height
-        This shows how what purchases amounts are the most common.
+        # Distributions
+        
+        A distribution shows the range of values for a variable and how often they occur. 
+        For instance, imagine that you're looking at the heights of 11 year old students in centimeters. 
+        You might group the heights into ranges and see how the heights are distributed.
+
+        """
+    )
+    return
+
+@app.cell
+def _():
+    path_to_img = mo.notebook_location() / "public" / 'distribution_frame.png'
+    mo.image(path_to_img)
+    return
+
+@app.cell
+def _():
+    mo.md(
+        """
+        A few are shorter. Most students are in the middle. A few are taller.
+
+        That distribution is usually shown in a histogram like so:
+        """
+    )
+    return
+
+@app.cell
+def _():
+    #hist_plot = mo.notebook_location() / "public" / 'newplot.png'
+    #mo.image(hist_plot)
+    
+    from scipy.stats import gaussian_kde
+    df = pd.DataFrame({"value":[139,141,141,143,147,148,150,150,151,153,155,156,157,159,163,164,167,171]})
+
+    # Create the base histogram
+    demo_fig = px.histogram(df, x="value", histnorm='probability density', nbins=10)
+    demo_fig.update_traces(marker_color='rgba(76, 114, 176, 0.5)', marker_line_width=1, marker_line_color="black")
+
+    # Kernel Density Estimate
+    kde = gaussian_kde(df['value'])
+    x_range = np.linspace(min(df['value']), max(df['value']), 100)
+    y_density = kde(x_range)
+
+    # KDE as trace
+    curve = go.Scatter(
+        x=x_range,
+        y=y_density,
+        mode='lines',
+        name='Density Estimate',
+        line=dict(color='red', width=2),
+        line_shape='spline' # Optional: can apply slight smoothing to the line itself
+    )
+    demo_fig.add_trace(curve)
+
+    # Update layout for clarity
+    demo_fig.update_layout(
+        title="Heights of students",
+        xaxis_title="Heights",
+        yaxis_title="Density",
+        showlegend=True
+    )
+
+    mo.ui.plotly(demo_fig, config={"displayModeBar": False})
+
+    return
+
+@app.cell
+def _():
+    mo.md(
+        """
+        ## Histogram of Sales Data
+
+        This shows how what purchases amounts are the most common. The problem is that it's very difficult to see how the amounts of sales are distributed.
         """
     )
     return
@@ -56,16 +131,24 @@ def _():
 def _(mo):
 
     raw = raw_sales()
+    fig = px.histogram(raw, x="Sales", nbins=100)
+    
+    fig.update_layout(
+        title="Amount of Sales",
+        xaxis_title="Amount of sale",
+        yaxis_title="Number of sales",
+        showlegend=True
+    )
 
-    fig, ax = plt.subplots()
-    ax.hist(raw['Sales'], bins=30)
-    ax.set_title('Static Matplotlib Plot')
-    ax.legend()
+    # fig.show()
 
-    # The figure object is the last expression, so marimo displays it automatically
+    # fig, ax = plt.subplots()
+    # ax.hist(raw['Sales'], bins=30)
+    # ax.set_title('Static Matplotlib Plot')
+    # ax.legend()
+
     fig 
-    # The variables `x`, `y`, `fig`, and `ax` are now available to other cells
-
+    return
 
 @app.cell
 def _():
@@ -88,21 +171,40 @@ def _(mo):
     # Convert bin edges back to original scale
     bins = 10**log_bins
 
-    # Plot using original-scale bins
-    bar = plt.bar(bins[:-1], counts, width=np.diff(bins), align='edge')
+    # Compute bin centers and widths
+    bin_centers = (bins[:-1] + bins[1:]) / 2
+    bin_widths = bins[1:] - bins[:-1]
 
-    plt.xscale('log')  # Keep axis linear
+    log_bin_fig = go.Figure()
 
-    # Set ticks at specific positions and provide custom labels
-    tick_positions = [1, 10, 100, 1000, 10000, 100000]
-    tick_labels = ["$1", "$10", "$100", "$1000", "$10000", "$100000"]
+    log_bin_fig.add_trace(go.Bar(
+        x=bin_centers,
+        y=counts,
+        width=bin_widths,
+    ))
 
-    plt.xticks(tick_positions, tick_labels, rotation=45) # You can also add kwargs like rotation
+    log_bin_fig.update_xaxes(
+        type="log",
+        title="Sales"
+    )
 
+    log_bin_fig.update_yaxes(
+        title="Count"
+    )
 
-    plt.xlabel("Order Amount")
-    plt.ylabel("Number of Orders 2011-14")
-    bar
+    log_bin_fig.update_layout(
+        title="Histogram of Sales with Log-Spaced Bins"
+    )
+
+    tick_vals = [1, 10, 100, 1000, 10000, 100000]
+
+    log_bin_fig.update_xaxes(
+        tickmode="array",
+        tickvals=tick_vals,
+        ticktext=[f"${v:,}" for v in tick_vals]
+    )
+
+    mo.ui.plotly(log_bin_fig, config={"displayModeBar": False})
     
 
 
