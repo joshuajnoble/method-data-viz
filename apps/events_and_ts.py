@@ -37,6 +37,7 @@ with app.setup(hide_code=True):
         "#4e4e4e"  # 10. Method Slate
     ]
 
+    # set plotly default template and disable mode bar (copied from 'comparing_groups')
     # set plotly default template and disable mode bar
     pio.templates.default = "plotly_white"
     pio.templates["plotly_white"].layout.margin = dict(t=0, b=0)
@@ -51,6 +52,16 @@ with app.setup(hide_code=True):
         renderer = pio.renderers[renderer_name]
         if hasattr(renderer, "config") and renderer.config is not None:
             renderer.config["displayModeBar"] = False
+
+    def _callout(kind: str, content: str):
+        css_class = "callout-danger" if kind == "danger" else "callout-info"
+        return mo.Html(f"<div class='{css_class}'>{content}</div>")
+
+    def callout_info(content: str):
+        return _callout("info", content)
+
+    def callout_danger(content: str):
+        return _callout("danger", content)
 
 
 @app.cell
@@ -110,14 +121,14 @@ def _():
     )
     return
 
-@app.cell
+@app.cell(hide_code=True)
 def _():
 
     weekly = get_weekly()
     mask_2014 = weekly["Order Date"].dt.year == 2014
     line_fig = px.line(weekly.loc[mask_2014], x="Order Date", y="sales")
     mo.ui.plotly(line_fig, config={"displayModeBar": False})
-    return
+    return (weekly, mask_2014)
 
 @app.cell
 def _():
@@ -132,7 +143,7 @@ def _():
     return
 
 @app.cell
-def _():
+def _(weekly, mask_2014):
 
     weekly['Difference'] = weekly['sales'].diff()
     bar_fig = px.bar(weekly.loc[mask_2014], x="Order Date", y="Difference")
@@ -168,7 +179,7 @@ def _():
     heatmap.update_layout(title='Daily Total Sales')
     mo.ui.plotly(heatmap, config={"displayModeBar": False})
 
-    return
+    return (daily)
 
 @app.cell
 def _():
@@ -178,8 +189,11 @@ def _():
 
 
         ## Events
+
+        An event has a timestamp, just like a time series, but they aren't regular readings, they're just recording when something happened. This means that
+        putting them into a line chart just won't work. We can group them by week or month in order to create time series data from them, but then we lose some of the precision about the event itself.
         
-        If we look at every sales event, it's far too dense to be readable or useful:
+        Visualizing events is all about finding what information is meaningful. Maybe that's the spacing between events, a sequence, or simply a filtered subset of events. If we look at every sales event, it's far too dense to be readable or useful:
 
         """
     )
@@ -188,10 +202,10 @@ def _():
 @app.cell
 def _():
 
-    event_df = get_event_data()
-    scatter_fig = px.scatter(event_df, x="Order Date", y="Sales", opacity=0.2)
+    events = get_event_data()
+    scatter_fig = px.scatter(events, x="Order Date", y="Sales", opacity=0.2)
     mo.ui.plotly(scatter_fig, config={"displayModeBar": False})
-    return
+    return (events)
 
 @app.cell
 def _():
@@ -218,11 +232,12 @@ def _():
     return (chart_slider,)
 
 @app.cell(hide_code=True)
-def _(chart_slider, event_df):
+def _(chart_slider, events):
 
     _min = chart_slider.value
 
-    scatter_fig_filtered = px.scatter(event_df[event_df["Sales"] > _min], x="Order Date", y="Profit", color="Segment", size="Sales", opacity=0.3)
+    scatter_fig_filtered = px.scatter(events[events["Sales"] > _min], x="Order Date", y="Profit", color="Segment", size="Sales", opacity=0.3)
+    scatter_fig_filtered.update_yaxes(range=[-4500, 4500])
     mo.ui.plotly(scatter_fig_filtered, config={"displayModeBar": False})
 
     return
