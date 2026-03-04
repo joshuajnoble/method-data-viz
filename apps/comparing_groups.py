@@ -17,60 +17,10 @@ with app.setup(hide_code=True):
     import plotly.express as px
     import pandas as pd
     import marimo as mo
-    import plotly.io as pio
-    from urllib.request import urlopen
-    from pathlib import Path
-
-    COLOR_PALETTE = [
-        "#4442e3", # 1. Brand Blue
-        "#ffb60c", # 2. Brand Yellow
-        "#ff584e", # 3. Brand Coral
-        "#10b981", # 4. Method Green
-        "#8b89f5", # 5. Vibrant Periwinkle
-        "#2b298c", # 6. Deep Navy
-        "#0ea5e9", # 7. Electric Teal
-        "#f97316", # 8. Vibrant Orange
-        "#ff9e99", # 9. Soft Melon
-        "#4e4e4e"  # 10. Method Slate
-    ]
+    import utils
 
     # set plotly default template and disable mode bar
-    pio.templates.default = "plotly_white"
-    pio.templates["plotly_white"].layout.margin = dict(t=0, b=0)
-    pio.templates["plotly_white"].layout.font.family = "var(--marimo-text-font)"
-    pio.templates["plotly_white"].layout.title.font.family = "var(--marimo-text-font)"
-    for renderer_name in pio.renderers.default.split("+"):
-        renderer_name = renderer_name.strip()
-        if not renderer_name:
-            continue
-        if renderer_name not in pio.renderers:
-            continue
-        renderer = pio.renderers[renderer_name]
-        if hasattr(renderer, "config") and renderer.config is not None:
-            renderer.config["displayModeBar"] = False
-
-    def _callout(kind: str, content: str):
-        css_class = "callout-danger" if kind == "danger" else "callout-info"
-        return mo.Html(f"<div class='{css_class}'>{content}</div>")
-
-    def callout_info(content: str):
-        return _callout("info", content)
-
-    def callout_danger(content: str):
-        return _callout("danger", content)
-
-    async def read_csv_into_dataframe(filename):
-        filepath = mo.notebook_location() / "public" / filename
-        if "http" not in str(mo.notebook_location()):
-            return pd.read_csv(
-                filepath, 
-                index_col=0
-            )
-        from pyodide.http import pyfetch
-        from io import StringIO
-        response = await pyfetch(filepath)
-        data = await response.text()
-        return pd.read_csv(StringIO(data))
+    utils.run_plotly_defaults()
 
 
 @app.cell(hide_code=True)
@@ -86,7 +36,7 @@ def _():
 @app.cell(hide_code=True)
 async def _():
     # prep data
-    base_df = await read_csv_into_dataframe("superstore.csv")
+    base_df = await utils.gh_pages_read_csv_into_df("superstore.csv")
 
     base_df_with_year = base_df.assign(
         _order_year=pd.to_datetime(base_df["Order Date"], format="%m/%d/%y").dt.year
@@ -139,9 +89,9 @@ def _():
 def callout_barchart(chart_slider):
     # callout
     _message_by_range = [
-        {"min": 1, "max": 3, "message": callout_info("<b>1-3</b>: This number of categories is typically manageable in a <b>grouped bar chart</b>. It focuses on <b>intra-year comparisons</b> while still allowing for some comparison across years. <b>Small multiples</b> will also work well for this number of categories and can help to emphasize <b>individual trends</b>.")},
-        {"min": 4, "max": 7, "message": callout_info("<b>4-7</b>: This number of categories is great for a <b>small multiples chart</b> and showing <b>individual trends</b> while still allowing for comparison across categories. It's on the higher end for a <b>grouped bar chart</b> and can introduce visual overwhelm.")},
-        {"min": 8, "max": float("inf"), "message": callout_danger("<b>8+</b>: This number of categories will introduce <b>visual overwhelm with either chart type</b>. If you need more than 7 categories, try <b>consolidating categories or providing a table view instead.</b>")},
+        {"min": 1, "max": 3, "message": utils.callout_info("<b>1-3</b>: This number of categories is typically manageable in a <b>grouped bar chart</b>. It focuses on <b>intra-year comparisons</b> while still allowing for some comparison across years. <b>Small multiples</b> will also work well for this number of categories and can help to emphasize <b>individual trends</b>.")},
+        {"min": 4, "max": 7, "message": utils.callout_info("<b>4-7</b>: This number of categories is great for a <b>small multiples chart</b> and showing <b>individual trends</b> while still allowing for comparison across categories. It's on the higher end for a <b>grouped bar chart</b> and can introduce visual overwhelm.")},
+        {"min": 8, "max": float("inf"), "message": utils.callout_danger("<b>8+</b>: This number of categories will introduce <b>visual overwhelm with either chart type</b>. If you need more than 7 categories, try <b>consolidating categories or providing a table view instead.</b>")},
     ]
 
     _message = next(
@@ -156,7 +106,7 @@ def callout_barchart(chart_slider):
 
 @app.cell(hide_code=True)
 def _(chart_slider):
-    _heading_color = COLOR_PALETTE[0] if 1 <= chart_slider.value <= 3 else  COLOR_PALETTE[2]
+    _heading_color = utils.COLOR_PALETTE[0] if 1 <= chart_slider.value <= 3 else  utils.COLOR_PALETTE[2]
     mo.md(
         f"""
     ### <span style="color: {_heading_color};">**Grouped Bar Chart** (Category Sales by Year)</span>
@@ -184,7 +134,7 @@ def _(chart_slider, segment_year_sales_df):
         y="Sales",
         color="Category",
         barmode="group",
-        color_discrete_sequence=COLOR_PALETTE[:len(top_subcats)]
+        color_discrete_sequence=utils.COLOR_PALETTE[:len(top_subcats)]
     )
 
     _year_ticks = sorted(filtered_segment_year_sales_df["Year"].unique())
@@ -215,7 +165,7 @@ def _(chart_slider, segment_year_sales_df):
 
 @app.cell(hide_code=True)
 def _(chart_slider):
-    _heading_color = COLOR_PALETTE[0] if 1 <= chart_slider.value <= 7 else  COLOR_PALETTE[2]
+    _heading_color = utils.COLOR_PALETTE[0] if 1 <= chart_slider.value <= 7 else  utils.COLOR_PALETTE[2]
     mo.md(
         f"""
     ### <span style="color: {_heading_color};">**Small Multiples** (Yearly Sales by Category)</span>
@@ -247,7 +197,7 @@ def _(chart_slider, segment_year_sales_df):
     years = sorted(filtered_category_sales_df["Year"].unique())
     categories = sorted(top_categories.tolist())
     category_colors = {
-        category: COLOR_PALETTE[i % len(COLOR_PALETTE)]
+        category: utils.COLOR_PALETTE[i % len(utils.COLOR_PALETTE)]
         for i, category in enumerate(categories)
     }
 
@@ -337,7 +287,7 @@ def _(categories, category_colors, fig_switch, filtered_category_sales_df):
         color="Category",
         markers=True,
         title="",
-        color_discrete_sequence=COLOR_PALETTE[:len(categories)]
+        color_discrete_sequence=utils.COLOR_PALETTE[:len(categories)]
     )
     line_all_categories_fig.update_yaxes(tickformat="$,.0f",rangemode="tozero")
     line_all_categories_fig.update_xaxes(title="")
