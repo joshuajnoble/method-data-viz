@@ -48,6 +48,16 @@ with app.setup(hide_code=True):
         if hasattr(renderer, "config") and renderer.config is not None:
             renderer.config["displayModeBar"] = False
 
+    def _callout(kind: str, content: str):
+        css_class = "callout-danger" if kind == "danger" else "callout-info"
+        return mo.Html(f"<div class='{css_class}'>{content}</div>")
+
+    def callout_info(content: str):
+        return _callout("info", content)
+
+    def callout_danger(content: str):
+        return _callout("danger", content)
+
 
 @app.cell(hide_code=True)
 def _():
@@ -63,7 +73,8 @@ def _():
 def _():
     # prep data
     path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
-    # path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+    print(path_to_csv)
+    path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
     base_df = pd.read_csv(path_to_csv)
 
     base_df_with_year = base_df.assign(
@@ -115,15 +126,11 @@ def _():
 
 @app.cell(hide_code=True)
 def callout_barchart(chart_slider):
-    # callout styles
-    _info_style = {"padding": "1rem", "margin": "1rem", "border-radius": "0.5rem", "border": "1px solid var(--sky-8)", "background-color": "var(--sky-2)", "box-shadow": "4px 4px 0px 0px var(--sky-7)"}
-    _danger_style = {"padding": "1rem", "margin": "1rem", "border-radius": "0.5rem", "border": "1px solid var(--red-9)", "background-color": "var(--red-2)", "box-shadow": "4px 4px 0px 0px var(--red-8)"}
-
     # callout
     _message_by_range = [
-        {"min": 1, "max": 3, "message": mo.md("**1-3**: This number of categories is typically manageable in a **grouped bar chart**. It focuses on **intra-year comparisons** while still allowing for some comparison across years. **Small multiples** will also work well for this number of categories and can help to emphasize **individual trends**.").style(_info_style)},
-        {"min": 4, "max": 7, "message": mo.md("**4-7**: This number of categories is great for a **small multiples chart** and showing **individual trends** while still allowing for comparison across categories. It's on the higher end for a **grouped bar chart** and can introduce visual overwhelm.").style(_info_style)},
-        {"min": 8, "max": float("inf"), "message": mo.md("**8+**: This number of categories will introduce **visual overwhelm with either chart type**. If you need more than 7 categories, try **consolidating categories or providing a table view instead.**").style(_danger_style)},
+        {"min": 1, "max": 3, "message": callout_info("<b>1-3</b>: This number of categories is typically manageable in a <b>grouped bar chart</b>. It focuses on <b>intra-year comparisons</b> while still allowing for some comparison across years. <b>Small multiples</b> will also work well for this number of categories and can help to emphasize <b>individual trends</b>.")},
+        {"min": 4, "max": 7, "message": callout_info("<b>4-7</b>: This number of categories is great for a <b>small multiples chart</b> and showing <b>individual trends</b> while still allowing for comparison across categories. It's on the higher end for a <b>grouped bar chart</b> and can introduce visual overwhelm.")},
+        {"min": 8, "max": float("inf"), "message": callout_danger("<b>8+</b>: This number of categories will introduce <b>visual overwhelm with either chart type</b>. If you need more than 7 categories, try <b>consolidating categories or providing a table view instead.</b>")},
     ]
 
     _message = next(
