@@ -21,13 +21,25 @@ def _():
     import pandas as pd
 
     @mo.cache
-    def get_superstore():
+    def get_yearly():
 
-        #path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
-        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
-        superstore = pd.read_csv(path_to_csv)
-        superstore['Order Date'] = pd.to_datetime(superstore['Order Date'])
-        return superstore
+        path_to_csv = mo.notebook_location() / "public" / "yearly_sales.csv"
+        yearly_by_segment = pd.read_csv(path_to_csv)
+        return yearly_by_segment
+
+    @mo.cache
+    def get_yearly_by_segment():
+
+        path_to_csv = mo.notebook_location() / "public" / "yearly_sales_by_segment.csv"
+        yearly_by_segment = pd.read_csv(path_to_csv)
+        return yearly_by_segment
+    
+    @mo.cache
+    def get_weekly_by_segment():
+
+        path_to_csv = mo.notebook_location() / "public" / "weekly_sales_by_segment.csv"
+        weekly_sales_by_segment = pd.read_csv(path_to_csv)
+        return weekly_sales_by_segment
     
     return (mo,)
 
@@ -60,15 +72,12 @@ def _():
     )
     return
 
-@app.cell(get_superstore)
+@app.cell()
 def _(mo):
 
-    ss = get_superstore()
+    yearly_sales = get_yearly()
 
-    yearly_sales = ss.groupby(ss["Order Date"].dt.year)["Sales"].sum()
-    sales = pd.DataFrame({"year":ss["Order Date"].dt.year.unique(), "sales":yearly_sales})
-
-    alt.Chart(sales).mark_bar().encode(
+    alt.Chart(yearly_sales).mark_bar().encode(
         alt.Y('sales'),
         alt.X('year:N', title='Year'),
     ).properties(
@@ -86,12 +95,12 @@ def _():
     )
     return
 
-@app.cell(get_superstore)
+@app.cell()
 def _(mo):
 
-    sales['truncated'] = sales['sales']/1_000_000
+    yearly_sales['truncated'] = yearly_sales['sales']/1_000_000
 
-    alt.Chart(sales).mark_bar().encode(
+    alt.Chart(yearly_sales).mark_bar().encode(
         alt.Y('truncated', axis=alt.Axis(labelExpr='"$"+datum.value+"M"'), title="Sales in Millions of USD"),
         alt.X('year:N', title='Sales Year'),
     ).properties(
@@ -111,7 +120,7 @@ def _(mo):
 @app.cell()
 def _(mo):
 
-    alt.Chart(sales).mark_bar().encode(
+    alt.Chart(yearly_sales).mark_bar().encode(
         alt.Y('sales'),
         alt.X('year:N', title='Year'),
         color=alt.condition(
@@ -136,11 +145,7 @@ def _(mo):
 @app.cell()
 def _(mo):
 
-    yearly_sales_by_segment = (
-        ss.groupby([pd.Grouper(key="Order Date", freq="YE"), "Segment"], as_index=False).agg(sales=("Sales", "sum"))
-    )
-    yearly_sales_by_segment["Order Date"] = pd.to_datetime(yearly_sales_by_segment["Order Date"])
-    yearly_sales_by_segment['year'] = yearly_sales_by_segment["Order Date"].dt.year
+    yearly_sales_by_segment = get_yearly_sales_by_segment()
 
     alt.Chart(yearly_sales_by_segment).mark_bar().encode(
         alt.Y('sales'),
