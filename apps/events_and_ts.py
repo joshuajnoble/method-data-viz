@@ -2,6 +2,9 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "marimo",
+#     "plotly",
+#     "pandas",
+#     "numpy"
 # ]
 # ///
 import marimo as mo
@@ -70,7 +73,9 @@ def _():
     @mo.cache
     def get_weekly():
 
-        path_to_csv = mo.notebook_location() / "public" / "weekly_sales.csv"
+        #path_to_csv = mo.notebook_location() / "public" / "weekly_sales.csv"
+        #path_to_csv = "https://joshuajnoble.github.io/method-data-viz/apps/public/weekly_sales.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales.csv"
         weekly = pd.read_csv(path_to_csv)
         weekly['Order Date'] = pd.to_datetime(weekly['Order Date'])
         return weekly
@@ -78,7 +83,8 @@ def _():
     @mo.cache
     def get_daily_sales():
 
-        path_to_csv = mo.notebook_location() / "public" / "daily_sales.csv"
+        #path_to_csv = mo.notebook_location() / "public" / "daily_sales.csv"
+        path_to_csv = "https://joshuajnoble.github.io/method-data-viz/apps/public/daily_sales.csv"
         daily = pd.read_csv(path_to_csv)
         daily['Order Date'] = pd.to_datetime(daily['Order Date'])
         return daily
@@ -86,7 +92,8 @@ def _():
     @mo.cache
     def get_event_data():
 
-        path_to_csv = mo.notebook_location() / "public" / "events_2014.csv"
+        #path_to_csv = mo.notebook_location() / "public" / "events_2014.csv"
+        path_to_csv = "https://joshuajnoble.github.io/method-data-viz/apps/public/events_2014.csv"
         events = pd.read_csv(path_to_csv)
         events['Order Date'] = pd.to_datetime(events['Order Date'])
         return events
@@ -94,7 +101,8 @@ def _():
     @mo.cache
     def get_weekly_by_segment():
 
-        path_to_csv = mo.notebook_location() / "public" / "weekly_sales_by_segment.csv"
+        #path_to_csv = mo.notebook_location() / "public" / "weekly_sales_by_segment.csv"
+        path_to_csv = "https://joshuajnoble.github.io/method-data-viz/apps/public/weekly_sales_by_segment.csv"
         weekly_sales_by_segment = pd.read_csv(path_to_csv)
         weekly_sales_by_segment['Order Date'] = pd.to_datetime(weekly_sales_by_segment['Order Date'])
         return weekly_sales_by_segment
