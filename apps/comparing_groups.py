@@ -61,8 +61,10 @@ with app.setup(hide_code=True):
 
     def open_file_or_url(path):
         try:
+            print(path)
             return pd.read_csv(path)
         except FileNotFoundError:
+            print(path)
             with urlopen(str(path)) as _f:
                 return pd.read_csv(_f)
 
