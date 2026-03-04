@@ -18,6 +18,7 @@ with app.setup(hide_code=True):
     import pandas as pd
     import marimo as mo
     import plotly.io as pio
+    from urllib.request import urlopen
     from pathlib import Path
 
     COLOR_PALETTE = [
@@ -58,6 +59,13 @@ with app.setup(hide_code=True):
     def callout_danger(content: str):
         return _callout("danger", content)
 
+    def open_file_or_url(path):
+        try:
+            return pd.read_csv(path)
+        except FileNotFoundError:
+            with urlopen(str(path)) as _f:
+                return pd.read_csv(_f)
+
 
 @app.cell(hide_code=True)
 def _():
@@ -73,8 +81,7 @@ def _():
 def _():
     # prep data
     path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
-    print(path_to_csv)
-    base_df = pd.read_csv(str(path_to_csv))
+    base_df = open_file_or_url(path_to_csv)
 
     base_df_with_year = base_df.assign(
         _order_year=pd.to_datetime(base_df["Order Date"], format="%m/%d/%y").dt.year
