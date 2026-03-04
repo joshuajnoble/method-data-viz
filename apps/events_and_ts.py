@@ -142,10 +142,22 @@ def _():
 
 @app.cell
 def _():
+    mo.md(
+        """
+        
+        A different strategy to show how readings in a time series differ from one another is to use a heatmap. This is helpful if you believe there
+        are patterns that exist day to day and across days of the month. For instance, companies might buy supplies on the 1st, consumer spending may
+        spike on the 15th. A heatmap allows you to compare horizontally and vertically.
+
+        """
+    )
+    return
+
+@app.cell
+def _():
 
     daily = get_daily_sales()
 
-    # A simple example using random data for demonstration
     heatmap = go.Figure(data=go.Heatmap(
             z=daily["sales"],
             y=daily["Order Date"].dt.month,
@@ -153,10 +165,7 @@ def _():
             colorscale='Viridis'
         ))
 
-    # If you have raw datetime objects in x/y, Plotly handles them automatically:
-    # fig = go.Figure(data=go.Heatmap(z=my_z_data, x=my_date_list_x, y=my_date_list_y))
-
-    heatmap.update_layout(title='Datetime Heatmap Example')
+    heatmap.update_layout(title='Daily Total Sales')
     mo.ui.plotly(heatmap, config={"displayModeBar": False})
 
     return
