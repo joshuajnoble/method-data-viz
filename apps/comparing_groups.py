@@ -59,14 +59,18 @@ with app.setup(hide_code=True):
     def callout_danger(content: str):
         return _callout("danger", content)
 
-    def open_file_or_url(path):
-        try:
-            print(path)
-            return pd.read_csv(path)
-        except FileNotFoundError:
-            print(path)
-            with urlopen(str(path)) as _f:
-                return pd.read_csv(_f)
+    async def read_csv_into_dataframe(filename):
+        filepath = mo.notebook_location() / "public" / filename
+        if "http" not in str(mo.notebook_location()):
+            return pd.read_csv(
+                filepath, 
+                index_col=0
+            )
+        from pyodide.http import pyfetch
+        from io import StringIO
+        response = await pyfetch(filepath)
+        data = await response.text()
+        return pd.read_csv(StringIO(data))
 
 
 @app.cell(hide_code=True)
@@ -80,10 +84,9 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _():
+async def _():
     # prep data
-    path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
-    base_df = open_file_or_url(path_to_csv)
+    base_df = await read_csv_into_dataframe("superstore.csv")
 
     base_df_with_year = base_df.assign(
         _order_year=pd.to_datetime(base_df["Order Date"], format="%m/%d/%y").dt.year
