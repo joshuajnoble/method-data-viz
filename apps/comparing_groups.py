@@ -17,10 +17,47 @@ with app.setup(hide_code=True):
     import plotly.express as px
     import pandas as pd
     import marimo as mo
-    import utils
 
-    # set plotly default template and disable mode bar
-    utils.run_plotly_defaults()
+
+@app.cell
+async def setup_wasm():
+    import sys
+    import types
+    import importlib.util
+    from pathlib import Path
+
+    module_name = "my_utils"
+
+    if sys.platform == "emscripten":
+        from pyodide.http import pyfetch
+
+        print("WASM detected: Fetching local modules...")
+        response = await pyfetch("../public/my_utils.py")
+        if not response.ok:
+            print("Attempted to fetch:", response.url)
+            raise RuntimeError(f"Failed to load my_utils.py. Status: {response.status}")
+
+        source = await response.text()
+        module = types.ModuleType(module_name)
+        module.__file__ = "/virtual/my_utils.py"
+        exec(compile(source, module.__file__, "exec"), module.__dict__)
+        sys.modules[module_name] = module
+        my_utils = module
+        print("Successfully loaded my_utils.py!")
+    else:
+        # Local Python: load from apps/public/my_utils.py
+        module_path = Path("./apps/public/my_utils.py").resolve()
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Could not load module spec from {module_path}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        my_utils = module
+        print("Local Python environment detected. Loaded my_utils.py from public/.")
+
+    my_utils.run_plotly_defaults()
+    return (my_utils,)
 
 
 @app.cell(hide_code=True)
@@ -34,9 +71,9 @@ def _():
 
 
 @app.cell(hide_code=True)
-async def _():
+async def _(my_utils):
     # prep data
-    base_df = await utils.gh_pages_read_csv_into_df("superstore.csv")
+    base_df = await my_utils.gh_pages_read_csv_into_df("superstore.csv")
 
     base_df_with_year = base_df.assign(
         _order_year=pd.to_datetime(base_df["Order Date"], format="%m/%d/%y").dt.year
@@ -86,12 +123,12 @@ def _():
 
 
 @app.cell(hide_code=True)
-def callout_barchart(chart_slider):
+def callout_barchart(chart_slider, my_utils):
     # callout
     _message_by_range = [
-        {"min": 1, "max": 3, "message": utils.callout_info("<b>1-3</b>: This number of categories is typically manageable in a <b>grouped bar chart</b>. It focuses on <b>intra-year comparisons</b> while still allowing for some comparison across years. <b>Small multiples</b> will also work well for this number of categories and can help to emphasize <b>individual trends</b>.")},
-        {"min": 4, "max": 7, "message": utils.callout_info("<b>4-7</b>: This number of categories is great for a <b>small multiples chart</b> and showing <b>individual trends</b> while still allowing for comparison across categories. It's on the higher end for a <b>grouped bar chart</b> and can introduce visual overwhelm.")},
-        {"min": 8, "max": float("inf"), "message": utils.callout_danger("<b>8+</b>: This number of categories will introduce <b>visual overwhelm with either chart type</b>. If you need more than 7 categories, try <b>consolidating categories or providing a table view instead.</b>")},
+        {"min": 1, "max": 3, "message": my_utils.callout_info("<b>1-3</b>: This number of categories is typically manageable in a <b>grouped bar chart</b>. It focuses on <b>intra-year comparisons</b> while still allowing for some comparison across years. <b>Small multiples</b> will also work well for this number of categories and can help to emphasize <b>individual trends</b>.")},
+        {"min": 4, "max": 7, "message": my_utils.callout_info("<b>4-7</b>: This number of categories is great for a <b>small multiples chart</b> and showing <b>individual trends</b> while still allowing for comparison across categories. It's on the higher end for a <b>grouped bar chart</b> and can introduce visual overwhelm.")},
+        {"min": 8, "max": float("inf"), "message": my_utils.callout_danger("<b>8+</b>: This number of categories will introduce <b>visual overwhelm with either chart type</b>. If you need more than 7 categories, try <b>consolidating categories or providing a table view instead.</b>")},
     ]
 
     _message = next(
@@ -105,8 +142,8 @@ def callout_barchart(chart_slider):
 
 
 @app.cell(hide_code=True)
-def _(chart_slider):
-    _heading_color = utils.COLOR_PALETTE[0] if 1 <= chart_slider.value <= 3 else  utils.COLOR_PALETTE[2]
+def _(chart_slider, my_utils):
+    _heading_color = my_utils.COLOR_PALETTE[0] if 1 <= chart_slider.value <= 3 else  my_utils.COLOR_PALETTE[2]
     mo.md(
         f"""
     ### <span style="color: {_heading_color};">**Grouped Bar Chart** (Category Sales by Year)</span>
@@ -116,7 +153,7 @@ def _(chart_slider):
 
 
 @app.cell(hide_code=True)
-def _(chart_slider, segment_year_sales_df):
+def _(chart_slider, my_utils, segment_year_sales_df):
     top_subcats = (
         segment_year_sales_df.groupby("Category", as_index=False)["Sales"]
         .sum()
@@ -134,7 +171,7 @@ def _(chart_slider, segment_year_sales_df):
         y="Sales",
         color="Category",
         barmode="group",
-        color_discrete_sequence=utils.COLOR_PALETTE[:len(top_subcats)]
+        color_discrete_sequence=my_utils.COLOR_PALETTE[:len(top_subcats)]
     )
 
     _year_ticks = sorted(filtered_segment_year_sales_df["Year"].unique())
@@ -164,8 +201,8 @@ def _(chart_slider, segment_year_sales_df):
 
 
 @app.cell(hide_code=True)
-def _(chart_slider):
-    _heading_color = utils.COLOR_PALETTE[0] if 1 <= chart_slider.value <= 7 else  utils.COLOR_PALETTE[2]
+def _(chart_slider, my_utils):
+    _heading_color = my_utils.COLOR_PALETTE[0] if 1 <= chart_slider.value <= 7 else  my_utils.COLOR_PALETTE[2]
     mo.md(
         f"""
     ### <span style="color: {_heading_color};">**Small Multiples** (Yearly Sales by Category)</span>
@@ -175,7 +212,7 @@ def _(chart_slider):
 
 
 @app.cell(hide_code=True)
-def _(chart_slider, segment_year_sales_df):
+def _(chart_slider, my_utils, segment_year_sales_df):
     from plotly.subplots import make_subplots
     import plotly.graph_objects as go
 
@@ -197,7 +234,7 @@ def _(chart_slider, segment_year_sales_df):
     years = sorted(filtered_category_sales_df["Year"].unique())
     categories = sorted(top_categories.tolist())
     category_colors = {
-        category: utils.COLOR_PALETTE[i % len(utils.COLOR_PALETTE)]
+        category: my_utils.COLOR_PALETTE[i % len(my_utils.COLOR_PALETTE)]
         for i, category in enumerate(categories)
     }
 
@@ -279,7 +316,13 @@ def _(fig_switch):
 
 
 @app.cell(hide_code=True)
-def _(categories, category_colors, fig_switch, filtered_category_sales_df):
+def _(
+    categories,
+    category_colors,
+    fig_switch,
+    filtered_category_sales_df,
+    my_utils,
+):
     line_all_categories_fig = px.line(
         filtered_category_sales_df,
         x="Year",
@@ -287,7 +330,7 @@ def _(categories, category_colors, fig_switch, filtered_category_sales_df):
         color="Category",
         markers=True,
         title="",
-        color_discrete_sequence=utils.COLOR_PALETTE[:len(categories)]
+        color_discrete_sequence=my_utils.COLOR_PALETTE[:len(categories)]
     )
     line_all_categories_fig.update_yaxes(tickformat="$,.0f",rangemode="tozero")
     line_all_categories_fig.update_xaxes(title="")
