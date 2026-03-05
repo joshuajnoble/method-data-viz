@@ -32,6 +32,7 @@ async def setup_wasm():
         from pyodide.http import pyfetch
 
         print("WASM detected: Fetching local modules...")
+        # needs to be ../public because of how the assets dir is created during build
         response = await pyfetch("../public/my_utils.py")
         if not response.ok:
             print("Attempted to fetch:", response.url)
