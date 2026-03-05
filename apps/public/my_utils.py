@@ -9,8 +9,11 @@ import pandas as pd
 import plotly.io as pio
 
 def _callout(kind: str, content: str):
-    css_class = "callout-danger" if kind == "danger" else "callout-info"
+    css_class = f"callout-{kind}"
     return mo.Html(f"<div class='{css_class}'>{content}</div>")
+
+def callout_neutral(content: str):
+    return _callout("neutral", content)
 
 def callout_info(content: str):
     return _callout("info", content)
@@ -30,6 +33,16 @@ async def gh_pages_read_csv_into_df(filename: str) -> pd.DataFrame:
     response = await pyfetch(filepath)
     data = await response.text()
     return pd.read_csv(StringIO(data))
+
+async def gh_pages_load_image(filename: str) -> pd.DataFrame:
+    filepath = mo.notebook_location() / "public" / filename
+    if "http" not in str(mo.notebook_location()):
+        return mo.image(filepath)
+    from pyodide.http import pyfetch
+    from io import BytesIO
+    response = await pyfetch(filepath)
+    data = await response.bytes()
+    return mo.image(BytesIO(data))
 
 COLOR_PALETTE = [
         "#4442e3", # 1. Brand Blue
