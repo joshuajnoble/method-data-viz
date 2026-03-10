@@ -85,10 +85,13 @@ def __(mo):
 
           Most of the time, when we're working with data we have a few different stages of doing so: we explore, we diagnose, and then we explain. 
           At first, we're just trying to understnad what the data is and what things we might be able to learn from it. Is the sales data complete? Can we join it with other data sources like how much stock is at our suppliers or global prices?
+          These kinds of visualizations are open-ended and iterative and often involve many quick visualizations and are focused on our own learning or sharing with our team rather than communicating with an audience.
           
           Once we understand what the data is and what it might tell us, then we can diagnose whether what we think is happening is actually there. Do profits have a monthly cycle? Are orders in EMEA growing faster than in LATAM? Is the information reliable and does it communicate an insight?
+          This process often involves using multiple kinds of transformations and views of the data to test a hypothesis.
 
-          If we believe in the insight and understand the data that supports it, we should communicate that insight. 
+          If we believe in the insight and understand the data that supports it, we should communicate that insight. We want to use the minimal number of charts to communicate our idea.  Here, the design is of paramount importance.
+          Typically each visualization is focused on one single message for the audicen. We should ask ourselves, and be prepared to answer questions like: "What is the key insight?", "What evidence supports it?", "What should be done?"
 
           """)
     return
