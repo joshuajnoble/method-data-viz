@@ -1,4 +1,5 @@
 [
+  { "path": "apps/data_fundamentals.py", "label": "Data Fundamentals" },
   { "path": "apps/purpose.py", "label": "Purpose" },
   { "path": "apps/basic_principles.py", "label": "Basic Principles" },
   { "path": "apps/comparing_groups.py", "label": "Comparing Groups" },
