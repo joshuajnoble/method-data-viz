@@ -7,11 +7,18 @@
 # ]
 # ///
 
-import marimo
+import marimo as mo
 
-__generated_with = "0.8.19"
-app = marimo.App(width="full")
+__generated_with = "0.19.7"
+app = mo.App(width="medium")
 
+
+@app.cell
+def _():
+    import marimo as mo
+    import pandas as pd
+    
+    return (mo,)
 
 @app.cell(hide_code=True)
 def __(mo):
@@ -23,13 +30,13 @@ def __(mo):
 
         There are two fundamental kinds of numeric data:
           
-            * Discrete Data: These are things that cannot be divided, such as the number of items that someone bought or the number of customers who purchased an item.
-            * Continuous Data: These are things that can be divided into smaller and smaller units for more precision, like the weight of an item or exact instant that someone bought an item (though you don't typically see this expressed in nanoseconds).
+        - Discrete Data: These are things that cannot be divided, such as the number of items that someone bought or the number of customers who purchased an item. Think of a laptop: practically speaking, half a laptop isn't a laptop any more. There's either one laptop or zero laptops.
+        - Continuous Data: These are things that can be divided into smaller and smaller units for more precision, like the weight of an item or exact instant that someone bought an item, though you don't typically see those in micrograms or nanoseconds.
           
         The name of an item that someone bought though, is a categorical value. 
           
-            * Unordered Categorical: These aren't inherently sortable. Staplers aren't before or after monitors. We can sort these but we're using a feature of the category, like the first letter of the name or the price, rather than something inherent to the category itself.
-            * Ordered Categorical: That's something like comparing t-shirt sizes: Small, Medium, Large, Extra-Large. We may not know a number associated with these categories but we know that Small is less than Large and Extra-Large is bigger than Medium.
+        - Unordered Categorical: These aren't inherently sortable. Staplers aren't before or after monitors. We can sort these but we're using a feature of the category, like the first letter of the name or the price, rather than something inherent to the category itself.
+        - Ordered Categorical: That's something like comparing t-shirt sizes: Small, Medium, Large, Extra-Large. We may not know a number associated with these categories but we know that Small is less than Large and Extra-Large is bigger than Medium.
     
         Understanding how these types of data differ and can be combined is important to communicating clearly about them and helping people derive insights from that data.
 
