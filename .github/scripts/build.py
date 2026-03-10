@@ -149,7 +149,7 @@ def _relative_href(from_page: str, to_page: str) -> str:
 
 def _export_html_wasm(app_path: Path, output_dir: Path) -> bool:
     """Export a single marimo app to HTML/WebAssembly format."""
-    output_path: Path = output_dir / app_path.with_suffix(".html")
+    output_path: Path = output_dir / app_path.with_name(f"{app_path.stem}_iframe.html")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     cmd: List[str] = [
@@ -261,8 +261,8 @@ def _export(folder: Path, output_dir: Path) -> List[dict]:
                 {
                     "source_path": app_file.as_posix(),
                     "display_name": app_file.stem.replace("_", " ").title(),
-                    "html_path": app_file.with_suffix(".html").as_posix(),
-                    "shell_path": app_file.with_name(f"{app_file.stem}-shell.html").as_posix(),
+                    "html_path": app_file.with_name(f"{app_file.stem}_iframe.html").as_posix(),
+                    "shell_path": app_file.with_suffix(".html").as_posix(),
                 }
             )
 
