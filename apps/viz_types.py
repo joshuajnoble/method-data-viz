@@ -163,12 +163,7 @@ def callout_barchart(chart_slider, my_utils):
 
 @app.cell(hide_code=True)
 def _(chart_slider, my_utils):
-    _heading_color = my_utils.COLOR_PALETTE[0] if 1 <= chart_slider.value <= 3 else  my_utils.COLOR_PALETTE[2]
-    mo.md(
-        f"""
-    ### <span style="color: {_heading_color};">**Grouped Bar Chart** (Category Sales by Year)</span>
-    """
-    )
+    my_utils.title_with_icon(value = chart_slider.value, cutoff_value = 3, title = "Grouped Bar Chart", subtitle="(Category Sales by Year)")
     return
 
 
@@ -247,12 +242,7 @@ def _(chart_slider, my_utils):
 
 @app.cell(hide_code=True)
 def _(chart_slider, my_utils):
-    _heading_color = my_utils.COLOR_PALETTE[0] if 1 <= chart_slider.value <= 7 else  my_utils.COLOR_PALETTE[2]
-    mo.md(
-        f"""
-    ### <span style="color: {_heading_color};">**Small Multiples** (Yearly Sales by Category)</span>
-    """
-    )
+    my_utils.title_with_icon(value = chart_slider.value, cutoff_value = 7, title = "Small Multiples", subtitle="(Yearly Sales by Category)")
     return
 
 
@@ -355,21 +345,17 @@ def _(my_utils):
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    ### **Overlapping** (Yearly Sales by Category)
+    ### 📈 **Overlapping** (Yearly Sales by Category)
     """)
     return
 
 
 @app.cell
-def _():
-    fig_switch = mo.ui.switch(value=False, label="*Highlighting a single category within many overlapping lines can focus the story.*")
+def _(line_chart_slider):
+    fig_switch = mo.ui.switch(value=False, label=f"Highlighting a single category within many overlapping lines can focus the story.")
+    _pointer = mo.md((line_chart_slider.value - 3) * "👈")
+    mo.hstack([fig_switch,_pointer],align="start",justify="start",gap=0)
     return (fig_switch,)
-
-
-@app.cell
-def _(fig_switch):
-    fig_switch
-    return
 
 
 @app.cell(hide_code=True)
@@ -473,7 +459,7 @@ def _(
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    ### **Small Multiples** (Category Sales by Year)
+    ### 📈 **Small Multiples** (Category Sales by Year)
     """)
     return
 
@@ -536,52 +522,129 @@ def _():
 
 @app.cell
 def _():
-    category_slider = mo.ui.slider(start=2, stop=10, value=5, label = "Number of categories", show_value = True)
+    category_slider = mo.ui.slider(start=2, stop=8, value=3, label = "Number of categories", show_value = True)
     category_slider
     return (category_slider,)
 
 
 @app.cell
 def _(base_df, category_slider):
-    segment_sales_df = (
+    segment_sales_base_df = (
         base_df.groupby(["Sub-Category"], as_index=False)["Sales"]
         .sum()
-        .rename(columns={"Sub-Category":"Category"})
-        #.sort_values(by="Sales", ascending=False)
-        .head(category_slider.value)
-        .sort_values(by="Sales", ascending=False)
+        # filter all categories out with under 700k of sales
+        .query("Sales >= 400000")
+        .rename(columns={"Sub-Category": "Category"})
+        .sort_values("Sales", ascending=False)
     )
-    return (segment_sales_df,)
+
+    _top_categories_df = segment_sales_base_df.head(category_slider.value).copy()
+    _other_sales = segment_sales_base_df.iloc[category_slider.value:]["Sales"].sum()
+
+    segment_sales_df = (
+        pd.concat(
+            [
+                _top_categories_df,
+                pd.DataFrame([{"Category": "Other", "Sales": _other_sales}])
+                if _other_sales > 0
+                else pd.DataFrame(columns=["Category", "Sales"]),
+            ],
+            ignore_index=True,
+        )
+        .sort_values("Sales", ascending=True)
+        .reset_index(drop=True)
+    )
+    return segment_sales_base_df, segment_sales_df
 
 
 @app.cell
 def _(category_slider, my_utils, segment_sales_df):
     _total_sales = segment_sales_df["Sales"].sum()
-    _heading_icon = "☑️" if 1 <= category_slider.value <= 5 else "❌"
-    _heading_color = my_utils.COLOR_PALETTE[0] if 1 <= category_slider.value <= 5 else  my_utils.COLOR_PALETTE[2]
-    mo.md(f"""
-    ### {_heading_icon} <span style="color: {_heading_color};"> <b>Pie Chart</b> (Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)</span>
-    """)
-
+    my_utils.title_with_icon(value = category_slider.value, cutoff_value = 5, title = "Pie Chart", subtitle=f"(Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)")
     return
 
 
 @app.cell
-def _(category_slider, my_utils, segment_sales_df):
-    import plotly.express as _px  
+def _(my_utils, segment_sales_base_df, segment_sales_df):
+    _pie_color_map = {
+        category: my_utils.COLOR_PALETTE[i % len(my_utils.COLOR_PALETTE)]
+        for i, category in enumerate(segment_sales_df["Category"])
+        if category != "Other"
+    }
+    _pie_color_map["Other"] = "#9E9E9E"
 
-    _pie_fig = _px.pie(
+    _pie_fig = px.pie(
         segment_sales_df,
         names="Category",
         values="Sales",
         title="",
         color="Category",
-        color_discrete_sequence=my_utils.COLOR_PALETTE[:category_slider.value]
+        color_discrete_map=_pie_color_map
     )
-    _pie_fig.update_traces(textposition="inside", textinfo="percent+label", hovertemplate="%{label}: %{value} (%{percent})<extra></extra>")
+    _pie_fig.update_traces(
+        textposition="inside",
+        textinfo="percent+label",
+        hovertemplate="%{label}: %{value:$,.2f} (%{percent})<extra></extra>",
+        sort=True,
+    )
     _pie_fig.update_layout(showlegend = False)
 
-    _pie_fig
+
+    # START SEGMENT FOR STACKED BAR CHART OF OTHER CATEGORIES
+    selected_categories_for_pie = set(
+        segment_sales_df.loc[segment_sales_df["Category"] != "Other", "Category"].tolist()
+    )
+
+    other_categories_detail_df = (
+        segment_sales_base_df.loc[
+            ~segment_sales_base_df["Category"].isin(selected_categories_for_pie)
+        ]
+        .sort_values("Sales", ascending=True)
+        .reset_index(drop=True)
+    )
+
+    other_categories_stack_df = other_categories_detail_df.assign(Group="Other Categories")
+    _other_total_sales = other_categories_stack_df["Sales"].sum()
+    other_categories_stack_df["_percent_label"] = (
+        other_categories_stack_df["Sales"] / _other_total_sales
+    ).map(lambda x: f"{x:.1%}")
+    other_categories_stack_df["_segment_label"] = (
+        other_categories_stack_df["Category"] + "<br>" + other_categories_stack_df["_percent_label"]
+    )
+
+    other_stacked_bar_fig = px.bar(
+        other_categories_stack_df,
+        x="Group",
+        y="Sales",
+        color="Category",
+        barmode="stack",
+        color_discrete_sequence=my_utils.COLOR_PALETTE[
+            len(selected_categories_for_pie) : len(selected_categories_for_pie) + len(other_categories_stack_df)
+        ][::-1],
+        hover_data={"Sales": ":,.0f", "Group": False, "_percent_label": True},
+        text="_segment_label",
+    )
+
+    other_stacked_bar_fig.update_traces(
+        textposition="inside",
+        texttemplate="%{text}",
+        hovertemplate="%{y:$,.2f} <extra></extra>",
+    )
+
+    other_stacked_bar_fig.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        legend_title=None,
+        showlegend=False,
+        height=450,
+        width=350,
+        legend_traceorder="reversed"
+    )
+
+    other_stacked_bar_fig.update_yaxes(tickformat="$,.0f")
+
+
+    mo.hstack([_pie_fig,other_stacked_bar_fig],gap=1,align="center",widths=[.75,.25])
     return
 
 

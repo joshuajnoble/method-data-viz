@@ -71,3 +71,10 @@ def run_plotly_defaults():
         renderer = pio.renderers[renderer_name]
         if hasattr(renderer, "config") and renderer.config is not None:
             renderer.config["displayModeBar"] = False
+
+def title_with_icon(value: int, cutoff_value: int, title: str, subtitle:str = "", yes_icon:str = "☑️", no_icon:str = "❌", yes_color:str = COLOR_PALETTE[0], no_color:str = COLOR_PALETTE[2]):
+    _heading_icon = yes_icon if value <= cutoff_value else no_icon
+    _heading_color = yes_color if value <= cutoff_value else no_color
+    return mo.md(f"""
+    ### {_heading_icon} <span style="color: {_heading_color};"> <b>{title}</b>{f" {subtitle}" if subtitle else ""}</span>
+    """)
