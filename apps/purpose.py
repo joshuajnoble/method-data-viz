@@ -2,6 +2,8 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "marimo",
+#     "pandas",
+#     "plotly"
 # ]
 # ///
 import marimo as mo
@@ -51,31 +53,65 @@ def _():
 
 @app.cell
 async def _():
-    import matplotlib.pyplot as plt
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
-    import matplotlib.ticker as ticker
-    import matplotlib.dates as mdates
 
-    import altair as alt
-
-    import micropip
-
-    await micropip.install("seaborn")
-    await micropip.install("altair")
-
-    import seaborn as sns
-
-    return (plt,)
+    return ()
 
 @app.cell
 def _():
     mo.md(
         """
+
+        ## Data is for _insights_
+
+        What's the point of gathering data in the first place? Well, hopefully to tell you something informative. Did it freeze last night? Does this drug work? Can I retire?
+
+        Visualizing data, aka making charts, is to help people to derive insights from data or to help people contextualize insights and make decisions based on them.
+        
+        Much like good design helps people do things, good charts help people understand things. The point of making a chart isn't to make a cool chart, it's to make an aid to understanding.
+
         ## Why
+
+        You have probably made hundreds of bar charts in your life. Maybe even thousands. But why did you make them? What was the point? Why do they work? Why are charts so useful? Moreover, what makes some more useful than others?
+
+        This site is an attempt to demonstrate a little bit of why we visualize data, show some of the principles of what visualizing data is about, and to show examples of how different kinds of data can and should be visualized.
+
+        Let's start with bar charts:
+        """
+    )
+    return
+
+@app.cell()
+def _(mo):
+
+    yearly_sales = get_yearly()
+    yearly_sales_fig_labeled = px.bar(yearly_sales.sort_values("year"), x='year', y='sales')
+    yearly_sales_fig_labeled.update_layout(yaxis_tickprefix = 'USD$', yaxis_tickformat = ',.')
+    yearly_sales_fig_labeled.update_yaxes(tickformat=".2s") 
+    mo.ui.plotly(yearly_sales_fig_labeled,config={"displayModeBar": False})
+
+@app.cell
+def _():
+    mo.md("""
+        The height of a bar shows the yearly sales. The point of it is to show how the different years compare to one another. The higher the bar, the more sales.
+        Note that we know what we're measuring, _sales_, what units it's in, _USD_, and what sections are being used to measure, _years_.
+        We've all made lots of these in our lives and they work because we humans can easily compare the heights of two things.
+    """)
+    return
+
+@app.cell()
+def _(mo):
+
+    yearly_sales = get_yearly()
+    yearly_sales_fig = px.bar(yearly_sales.sort_values("year"), x='year', y='sales')
+    mo.ui.plotly(yearly_sales_fig,config={"displayModeBar": False})
+
+@app.cell
+def _():
+    mo.md(
+        """
         The purpose of visualizing data is to tell a story. What's the story that you're trying to tell?
 
-        Here the story is that 2014 was a stronger year:
+        Here the story is that 2014 was a stronger year. We can see that easily because we can compare the heights of objects easily.
         """
     )
     return
@@ -93,7 +129,6 @@ def _(mo):
             alt.value("#4e8ae9"),
             alt.value("#90b6f4")   # And grey for the rest of the bars
         ),
-        #tooltip=[alt.Tooltip('Year:N', title='Anno'), alt.Tooltip('Value', format=',', title='Immatricolazioni')]     
     ).properties(
         width=cell_width,
         height=400

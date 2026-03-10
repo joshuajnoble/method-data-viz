@@ -2,6 +2,8 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "marimo",
+#     "pandas",
+#     "plotly"
 # ]
 # ///
 import marimo as mo
@@ -19,13 +21,16 @@ app = mo.App(width="medium")
 def _():
     import marimo as mo
     import pandas as pd
+    import plotly.express as px
 
     @mo.cache
     def get_yearly():
 
         path_to_csv = mo.notebook_location() / "public" / "yearly_sales.csv"
-        yearly_by_segment = pd.read_csv(path_to_csv)
-        return yearly_by_segment
+        yearly = pd.read_csv(path_to_csv)
+        yearly['Order Date'] = pd.to_datetime(yearly['Order Date'])
+        yearly['year'] = yearly['year'].astype(str)
+        return yearly
 
     @mo.cache
     def get_yearly_by_segment():
@@ -43,31 +48,14 @@ def _():
     
     return (mo,)
 
-@app.cell
-async def _():
-    import matplotlib.pyplot as plt
-    import matplotlib.pyplot as plt
-    import matplotlib.dates as mdates
-    import matplotlib.ticker as ticker
-    import matplotlib.dates as mdates
-
-    import altair as alt
-
-    import micropip
-
-    await micropip.install("seaborn")
-    await micropip.install("altair")
-
-    import seaborn as sns
-
-    return (plt,)
 
 @app.cell
 def _():
     mo.md(
         """
         ## Height
-        The height of a bar shows the yearly sales. The point of it is to show how the different years compare to one another.
+        The height of a bar shows the yearly sales. The point of it is to show how the different years compare to one another. The higher the bar, the more sales.
+        We've all made lots of these in our lives. They work because we can easily compare the heights of two things.
         """
     )
     return
@@ -76,43 +64,31 @@ def _():
 def _(mo):
 
     yearly_sales = get_yearly()
-
-    alt.Chart(yearly_sales).mark_bar().encode(
-        alt.Y('sales'),
-        alt.X('year:N', title='Year'),
-    ).properties(
-        width=600,  # Set the width to 600 pixels
-        height=400  # Set the height to 400 pixels
-    )
+    yearly_sales_fig = px.bar(yearly_sales.sort_values("year"), x='year', y='sales')
+    mo.ui.plotly(yearly_sales_fig,config={"displayModeBar": False})
 
 @app.cell
 def _():
     mo.md(
         """
         ## Labels
-        Proper labels show units and specific values.
+
+        It's important that we know what it is that we're comparing though. Proper labels should show units and specific values.
         """
     )
     return
 
 @app.cell()
 def _(mo):
-
-    yearly_sales['truncated'] = yearly_sales['sales']/1_000_000
-
-    alt.Chart(yearly_sales).mark_bar().encode(
-        alt.Y('truncated', axis=alt.Axis(labelExpr='"$"+datum.value+"M"'), title="Sales in Millions of USD"),
-        alt.X('year:N', title='Sales Year'),
-    ).properties(
-        width=600,  # Set the width to 600 pixels
-        height=400  # Set the height to 400 pixels
-    )
+    yearly_sales_fig_labeled = px.bar(yearly_sales.sort_values("year"), x='year', y='sales')
+    yearly_sales_fig_labeled.update_layout(yaxis_tickprefix = '$', yaxis_tickformat = ',.')
+    yearly_sales_fig_labeled.update_yaxes(tickformat=".2s") 
+    mo.ui.plotly(yearly_sales_fig_labeled,config={"displayModeBar": False})
 
 @app.cell()
 def _(mo):
     mo.md(
         """
-        ## Color
         Highlighting one value with color draws the eye to that value.
         """
     )
@@ -133,76 +109,76 @@ def _(mo):
         height=400  # Set the height to 400 pixels
     )
 
-@app.cell()
-def _(mo):
-    mo.md(
-        """
+# @app.cell()
+# def _(mo):
+#     mo.md(
+#         """
         
-        Color also lets us show complex data easily.
-        """
-    )
+#         Color also lets us show complex data easily.
+#         """
+#     )
 
-@app.cell()
-def _(mo):
+# @app.cell()
+# def _(mo):
 
-    yearly_sales_by_segment = get_yearly_sales_by_segment()
+#     yearly_sales_by_segment = get_yearly_by_segment()
 
-    alt.Chart(yearly_sales_by_segment).mark_bar().encode(
-        alt.Y('sales'),
-        alt.X('year:N', title='Year'),
-        color='Segment',
-        xOffset='Segment'
-    ).properties(
-        width=500,  # Set the width to 600 pixels
-        height=400  # Set the height to 400 pixels
-    )
+#     alt.Chart(yearly_sales_by_segment).mark_bar().encode(
+#         alt.Y('sales'),
+#         alt.X('year:N', title='Year'),
+#         color='Segment',
+#         xOffset='Segment'
+#     ).properties(
+#         width=500,  # Set the width to 600 pixels
+#         height=400  # Set the height to 400 pixels
+#     )
 
-@app.cell()
-def _(mo):
-    mo.md(
-        """
-        Color alone isn't always enough though. Stacked bar charts are good for showing relative composition but hard for comparison.
-        """
-    )
+# @app.cell()
+# def _(mo):
+#     mo.md(
+#         """
+#         Color alone isn't always enough though. Stacked bar charts are good for showing relative composition but hard for comparison.
+#         """
+#     )
 
-@app.cell()
-def _(mo):
+# @app.cell()
+# def _(mo):
 
-    alt.Chart(yearly_sales_by_segment).mark_bar().encode(
-        alt.Y('sum(sales)'),
-        alt.X('year:N', title='Year'),
-        color='Segment'
-        #tooltip=[alt.Tooltip('year:N', title='Year'), alt.Tooltip('Value', format=',', title='sales')]     
-    ).properties(
-        width=500,  # Set the width to 600 pixels
-        height=400  # Set the height to 400 pixels
-    )
+#     alt.Chart(yearly_sales_by_segment).mark_bar().encode(
+#         alt.Y('sum(sales)'),
+#         alt.X('year:N', title='Year'),
+#         color='Segment'
+#         #tooltip=[alt.Tooltip('year:N', title='Year'), alt.Tooltip('Value', format=',', title='sales')]     
+#     ).properties(
+#         width=500,  # Set the width to 600 pixels
+#         height=400  # Set the height to 400 pixels
+#     )
 
-@app.cell()
-def _(mo):
-    mo.md(
-        """
-        ## Filters
-        Adding filters makes comparing across a stacked bar chart easier but always visually help the user keep track of what is selected.
-        """
-    )
+# @app.cell()
+# def _(mo):
+#     mo.md(
+#         """
+#         ## Filters
+#         Adding filters makes comparing across a stacked bar chart easier but always visually help the user keep track of what is selected.
+#         """
+#     )
 
-@app.cell()
-def _(mo):
+# @app.cell()
+# def _(mo):
 
-    selection = alt.selection_point(fields=['Segment'], bind='legend')
+#     selection = alt.selection_point(fields=['Segment'], bind='legend')
 
-    alt.Chart(yearly_sales_by_segment).mark_bar().transform_calculate(
-        site_order=f"if({selection.name}.Segment && indexof({selection.name}.Segment, datum.Segment) !== -1, 0, 1)"
-    ).encode(
-        alt.Y('sum(sales)'),
-        alt.X('year:N', title='Year'),
-        color='Segment',
-        order='site_order:N',
-        opacity=alt.when(selection).then(alt.value(0.9)).otherwise(alt.value(0.2))
-    ).add_params(
-        selection
-    )
+#     alt.Chart(yearly_sales_by_segment).mark_bar().transform_calculate(
+#         site_order=f"if({selection.name}.Segment && indexof({selection.name}.Segment, datum.Segment) !== -1, 0, 1)"
+#     ).encode(
+#         alt.Y('sum(sales)'),
+#         alt.X('year:N', title='Year'),
+#         color='Segment',
+#         order='site_order:N',
+#         opacity=alt.when(selection).then(alt.value(0.9)).otherwise(alt.value(0.2))
+#     ).add_params(
+#         selection
+#     )
 
 if __name__ == "__main__":
     app.run()
