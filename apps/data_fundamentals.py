@@ -77,5 +77,21 @@ def __(mo):
     return
 
 
+@app.cell(hide_code=True)
+def __(mo):
+    mo.md("""
+          
+        # Stages of data work
+
+          Most of the time, when we're working with data we have a few different stages of doing so: we explore, we diagnose, and then we explain. 
+          At first, we're just trying to understnad what the data is and what things we might be able to learn from it. Is the sales data complete? Can we join it with other data sources like how much stock is at our suppliers or global prices?
+          
+          Once we understand what the data is and what it might tell us, then we can diagnose whether what we think is happening is actually there. Do profits have a monthly cycle? Are orders in EMEA growing faster than in LATAM? Is the information reliable and does it communicate an insight?
+
+          If we believe in the insight and understand the data that supports it, we should communicate that insight. 
+
+          """)
+    return
+
 if __name__ == "__main__":
     app.run()
