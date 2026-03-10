@@ -4,6 +4,8 @@
 #     "marimo>=0.20.2",
 #     "plotly",
 #     "pandas",
+#     "openai==2.26.0",
+#     "pydantic-ai-slim==1.67.0",
 # ]
 # ///
 
@@ -19,7 +21,7 @@ with app.setup(hide_code=True):
     import marimo as mo
 
 
-@app.cell
+@app.cell(hide_code=True)
 async def setup_wasm():
     import sys
     import types
@@ -64,9 +66,11 @@ async def setup_wasm():
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    # Comparing Multiple Groups
+    # Types of Visualizations
 
-    The focus of this section is to address the most effective ways to compare multiple groups and the specific story you're trying to tell with the data.
+    TODO: summary
+
+    Covering vertical bar charts, line charts, and pie charts
     """)
     return
 
@@ -84,7 +88,7 @@ async def _(my_utils):
         .sum()
         .rename(columns={"_order_year": "Year","Sub-Category":"Category"})
     )
-    return (segment_year_sales_df,)
+    return base_df, segment_year_sales_df
 
 
 @app.cell(hide_code=True)
@@ -521,8 +525,63 @@ def _(
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
- 
+    ## Pie Charts
+
+    Pie charts are great for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become difficult to interpret with too many categories or similar values. Consider using a pie chart when you have a small number of categories (ideally 5 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.
+
+    TODO: direct labeling.
     """)
+    return
+
+
+@app.cell
+def _():
+    category_slider = mo.ui.slider(start=2, stop=10, value=5, label = "Number of categories", show_value = True)
+    category_slider
+    return (category_slider,)
+
+
+@app.cell
+def _(base_df, category_slider):
+    segment_sales_df = (
+        base_df.groupby(["Sub-Category"], as_index=False)["Sales"]
+        .sum()
+        .rename(columns={"Sub-Category":"Category"})
+        #.sort_values(by="Sales", ascending=False)
+        .head(category_slider.value)
+        .sort_values(by="Sales", ascending=False)
+    )
+    return (segment_sales_df,)
+
+
+@app.cell
+def _(category_slider, my_utils, segment_sales_df):
+    _total_sales = segment_sales_df["Sales"].sum()
+    _heading_icon = "☑️" if 1 <= category_slider.value <= 5 else "❌"
+    _heading_color = my_utils.COLOR_PALETTE[0] if 1 <= category_slider.value <= 5 else  my_utils.COLOR_PALETTE[2]
+    mo.md(f"""
+    ### {_heading_icon} <span style="color: {_heading_color};"> <b>Pie Chart</b> (Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)</span>
+    """)
+
+    return
+
+
+@app.cell
+def _(category_slider, my_utils, segment_sales_df):
+    import plotly.express as _px  
+
+    _pie_fig = _px.pie(
+        segment_sales_df,
+        names="Category",
+        values="Sales",
+        title="",
+        color="Category",
+        color_discrete_sequence=my_utils.COLOR_PALETTE[:category_slider.value]
+    )
+    _pie_fig.update_traces(textposition="inside", textinfo="percent+label", hovertemplate="%{label}: %{value} (%{percent})<extra></extra>")
+    _pie_fig.update_layout(showlegend = False)
+
+    _pie_fig
     return
 
 
