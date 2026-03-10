@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ title }} · marimo</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../custom.css">
 </head>
-<body class="min-h-screen bg-gray-50 text-gray-800">
+<body class="app-shell min-h-screen bg-gray-50 text-gray-800">
   <div class="min-h-screen flex">
     {% if nav_items and nav_items|length > 0 %}
     <div id="drawer-overlay" class="fixed inset-0 bg-black/40 z-40 hidden"></div>
-    <aside id="side-drawer" class="fixed inset-y-0 left-0 w-72 bg-white border-r border-gray-200 z-50 transform -translate-x-full transition-transform duration-200 flex flex-col">
+    <aside id="side-drawer" class="app-shell-drawer fixed inset-y-0 left-0 w-72 bg-white border-r border-gray-200 z-50 transform -translate-x-full transition-transform duration-200 flex flex-col">
       <div class="h-14 px-4 flex items-center justify-between border-b border-gray-200 font-semibold">
-        <span>Contents</span>
+        <span class="app-shell-contents-title text-lg">Contents</span>
         <button id="close-drawer" aria-label="Close menu" class="inline-flex rounded-md border border-gray-300 bg-white px-2 py-1 text-base leading-none text-gray-700 hover:bg-gray-100">
           ☰
         </button>
