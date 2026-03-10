@@ -1,0 +1,7 @@
+[
+  { "path": "apps/purpose.py", "label": "Purpose" },
+  { "path": "apps/basic_principles.py", "label": "Basic Principles" },
+  { "path": "apps/comparing_groups.py", "label": "Comparing Groups" },
+  { "path": "apps/distributions.py", "label": "Distributions" },
+  { "path": "apps/events_and_ts.py", "label": "Events and Time Series" }
+]
