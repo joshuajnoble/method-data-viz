@@ -187,7 +187,7 @@ def _(chart_slider, my_utils, segment_year_sales_df):
         y="Sales",
         color="Category",
         barmode="group",
-        text_auto=True,
+        text_auto=chart_slider.value <= 5,
         color_discrete_sequence=my_utils.COLOR_PALETTE[:len(top_subcats)]
     )
     bar_fig.update_traces(textposition="outside", cliponaxis=False)
@@ -294,8 +294,8 @@ def _(chart_slider, my_utils, segment_year_sales_df):
                     y=_year_value["Sales"],
                     name=_category,
                     marker_color=category_colors[_category],
-                    text=_year_value["Sales"],
-                    texttemplate="%{text:$,.3s}",
+                    text=_year_value["Sales"] if chart_slider.value <= 5 else None,
+                    texttemplate="%{text:$,.3s}" if chart_slider.value <= 5 else "",
                     textposition="outside",
                     cliponaxis=False,
                     showlegend=_col_idx == 1 and year == years[0],
@@ -565,7 +565,7 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("pie.jpg")
-    mo.hstack([_img,mo.md("**Pie chart:** This chart type is great for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret with too many categories** or **similar values**. Consider using a pie chart when you have a small number of categories (ideally 3 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Pie Chart:** This chart type is great for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret with too many categories** or **similar values**. Consider using a pie chart when you have a small number of categories (ideally 3 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.")],gap=2,align="center",widths=[.25,1])
     return
 
 
