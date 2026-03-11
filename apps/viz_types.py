@@ -583,8 +583,8 @@ def _(my_utils, segment_sales_base_df, segment_sales_df):
     )
     _pie_fig.update_traces(
         textposition="inside",
-        textinfo="percent+label",
-        hovertemplate="%{label}: %{value:$,.2f} (%{percent})<extra></extra>",
+        texttemplate="%{label}<br>%{percent} (%{value:$.3s})",
+        hoverinfo="none",
         sort=True,
     )
     _pie_fig.update_layout(showlegend = False)
@@ -599,36 +599,36 @@ def _(my_utils, segment_sales_base_df, segment_sales_df):
         segment_sales_base_df.loc[
             ~segment_sales_base_df["Category"].isin(selected_categories_for_pie)
         ]
-        .sort_values("Sales", ascending=True)
+        .sort_values("Sales", ascending=False)
         .reset_index(drop=True)
     )
 
     other_categories_stack_df = other_categories_detail_df.assign(Group="Other Categories")
-    _other_total_sales = other_categories_stack_df["Sales"].sum()
+    _all_total_sales = segment_sales_base_df["Sales"].sum()
+    other_categories_stack_df["_percent"] = (
+        other_categories_stack_df["Sales"] / _all_total_sales
+    )
     other_categories_stack_df["_percent_label"] = (
-        other_categories_stack_df["Sales"] / _other_total_sales
-    ).map(lambda x: f"{x:.1%}")
+        other_categories_stack_df["_percent"].map(lambda x: f"{x:.1%}"))
     other_categories_stack_df["_segment_label"] = (
-        other_categories_stack_df["Category"] + "<br>" + other_categories_stack_df["_percent_label"]
+        other_categories_stack_df["Category"]
     )
 
     other_stacked_bar_fig = px.bar(
         other_categories_stack_df,
         x="Group",
-        y="Sales",
+        y="_percent",
         color="Category",
         barmode="stack",
         color_discrete_sequence=my_utils.COLOR_PALETTE[
             len(selected_categories_for_pie) : len(selected_categories_for_pie) + len(other_categories_stack_df)
         ][::-1],
         hover_data={"Sales": ":,.0f", "Group": False, "_percent_label": True},
-        text="_segment_label",
+        text="_segment_label"
     )
 
     other_stacked_bar_fig.update_traces(
-        textposition="inside",
-        texttemplate="%{text}",
-        hovertemplate="%{y:$,.2f} <extra></extra>",
+        texttemplate="%{text}<br>%{value:.1%} (%{customdata[0]:$.2s})"
     )
 
     other_stacked_bar_fig.update_layout(
@@ -637,11 +637,10 @@ def _(my_utils, segment_sales_base_df, segment_sales_df):
         legend_title=None,
         showlegend=False,
         height=450,
-        width=350,
-        legend_traceorder="reversed"
+        width=350
     )
 
-    other_stacked_bar_fig.update_yaxes(tickformat="$,.0f")
+    other_stacked_bar_fig.update_yaxes(tickformat=".1%")
 
 
     mo.hstack([_pie_fig,other_stacked_bar_fig],gap=1,align="center",widths=[.75,.25])
