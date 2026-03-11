@@ -22,8 +22,8 @@ def _():
     @mo.cache
     def get_yearly_by_segment():
 
-        path_to_csv = mo.notebook_location() / "public" / "yearly_sales_by_segment.csv"
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/yearly_sales_by_segment.csv"
+        #path_to_csv = mo.notebook_location() / "public" / "yearly_sales_by_segment.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/yearly_sales_by_segment.csv"
         yearly_by_segment = pd.read_csv(path_to_csv)
         return yearly_by_segment
     
@@ -42,7 +42,7 @@ def _():
     
 @app.cell()
 def _(mo):
-    mo.image(src="apps/public/piechart.png")
+    mo.image(src="https://github.com/joshuajnoble/method-data-viz/blob/main/apps/public/piechart.png")
 
 @app.cell()
 def _(mo):
