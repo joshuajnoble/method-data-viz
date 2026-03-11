@@ -1,9 +1,8 @@
 """
-Build script for marimo notebooks.
+Build script for marimo apps.
 
-This script exports marimo notebooks to HTML/WebAssembly format and generates
-an index.html file that lists all the notebooks. It handles both regular notebooks
-(from the notebooks/ directory) and apps (from the apps/ directory).
+This script exports marimo apps to HTML/WebAssembly format, generates
+shell pages with sidenav, and writes a root index.html redirect.
 
 The script can be run from the command line with optional arguments:
     uv run .github/scripts/build.py [--output-dir OUTPUT_DIR]
@@ -19,170 +18,198 @@ The exported files will be placed in the specified output directory (default: _s
 #     "loguru==0.7.0"
 # ]
 # ///
-
-import subprocess
-import shutil
 from typing import List, Union
 from pathlib import Path
+import json
+import os
+import shutil
+import subprocess
 
-import jinja2
 import fire
-
+import jinja2
 from loguru import logger
 
-def _export_html_wasm(notebook_path: Path, output_dir: Path, as_app: bool = False) -> bool:
-    """Export a single marimo notebook to HTML/WebAssembly format.
 
-    This function takes a marimo notebook (.py file) and exports it to HTML/WebAssembly format.
-    If as_app is True, the notebook is exported in "run" mode with code hidden, suitable for
-    applications. Otherwise, it's exported in "edit" mode, suitable for interactive notebooks.
-
-    Args:
-        notebook_path (Path): Path to the marimo notebook (.py file) to export
-        output_dir (Path): Directory where the exported HTML file will be saved
-        as_app (bool, optional): Whether to export as an app (run mode) or notebook (edit mode).
-                                Defaults to False.
-
-    Returns:
-        bool: True if export succeeded, False otherwise
-    """
-    # Convert .py extension to .html for the output file
-    output_path: Path = notebook_path.with_suffix(".html")
-
-    # Base command for marimo export
-    cmd: List[str] = ["uvx", "marimo", "export", "html-wasm", "--sandbox"]
-
-    # Configure export mode based on whether it's an app or a notebook
-    if as_app:
-        logger.info(f"Exporting {notebook_path} to {output_path} as app")
-        cmd.extend(["--mode", "run", "--no-show-code"])  # Apps run in "run" mode with hidden code
-    else:
-        logger.info(f"Exporting {notebook_path} to {output_path} as notebook")
-        cmd.extend(["--mode", "edit"])  # Notebooks run in "edit" mode
-
+def _generate_app_shell(
+    output_dir: Path,
+    shell_template_file: Path,
+    shell_output_path: Path,
+    title: str,
+    embedded_path: str,
+    nav_items: List[dict] | None = None,
+    current_html_path: str = "",
+) -> bool:
+    """Generate a Tailwind wrapper page that embeds an exported app."""
     try:
-        # Create full output path and ensure directory exists
-        output_file: Path = output_dir / notebook_path.with_suffix(".html")
-        output_file.parent.mkdir(parents=True, exist_ok=True)
-
-        # Add notebook path and output file to command
-        cmd.extend([str(notebook_path), "-o", str(output_file)])
-
-        # Run marimo export command
-        logger.debug(f"Running command: {cmd}")
-        subprocess.run(cmd, capture_output=True, text=True, check=True)
-        logger.info(f"Successfully exported {notebook_path}")
-        return True
-    except subprocess.CalledProcessError as e:
-        # Handle marimo export errors
-        logger.error(f"Error exporting {notebook_path}:")
-        logger.error(f"Command output: {e.stderr}")
-        return False
-    except Exception as e:
-        # Handle unexpected errors
-        logger.error(f"Unexpected error exporting {notebook_path}: {e}")
-        return False
-
-
-def _generate_index(output_dir: Path, template_file: Path, notebooks_data: List[dict] | None = None, apps_data: List[dict] | None = None) -> None:
-    """Generate an index.html file that lists all the notebooks.
-
-    This function creates an HTML index page that displays links to all the exported
-    notebooks. The index page includes the marimo logo and displays each notebook
-    with a formatted title and a link to open it.
-
-    Args:
-        notebooks_data (List[dict]): List of dictionaries with data for notebooks
-        apps_data (List[dict]): List of dictionaries with data for apps
-        output_dir (Path): Directory where the index.html file will be saved
-        template_file (Path, optional): Path to the template file. If None, uses the default template.
-
-    Returns:
-        None
-    """
-    logger.info("Generating index.html")
-
-    # Create the full path for the index.html file
-    index_path: Path = output_dir / "index.html"
-
-    # Ensure the output directory exists
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    try:
-        # Set up Jinja2 environment and load template
-        template_dir = template_file.parent
-        template_name = template_file.name
         env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(template_dir),
-            autoescape=jinja2.select_autoescape(["html", "xml"])
+            loader=jinja2.FileSystemLoader(str(shell_template_file.parent)),
+            autoescape=jinja2.select_autoescape(["html", "xml"]),
         )
-        template = env.get_template(template_name)
+        template = env.get_template(shell_template_file.name)
+        rendered = template.render(
+            title=title,
+            embedded_path=embedded_path,
+            nav_items=nav_items or [],
+            current_html_path=current_html_path,
+        )
 
-        # Render the template with notebook and app data
-        rendered_html = template.render(notebooks=notebooks_data, apps=apps_data)
-
-        # Write the rendered HTML to the index.html file
-        with open(index_path, "w") as f:
-            f.write(rendered_html)
-        logger.info(f"Successfully generated index.html at {index_path}")
-
+        out_path = output_dir / shell_output_path
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(rendered, encoding="utf-8")
+        logger.info(f"Generated app shell: {out_path}")
+        return True
     except IOError as e:
-        # Handle file I/O errors
-        logger.error(f"Error generating index.html: {e}")
+        logger.error(f"Failed writing shell page {shell_output_path}: {e}")
+        return False
     except jinja2.exceptions.TemplateError as e:
-        # Handle template errors
-        logger.error(f"Error rendering template: {e}")
+        logger.error(f"Template rendering failed for {shell_template_file}: {e}")
+        return False
 
 
-def _export(folder: Path, output_dir: Path, as_app: bool=False) -> List[dict]:
-    """Export all marimo notebooks in a folder to HTML/WebAssembly format.
+def _load_apps_nav(nav_file: Path) -> List[dict]:
+    """Load flat app navigation config from JSON.
 
-    This function finds all Python files in the specified folder and exports them
-    to HTML/WebAssembly format using the export_html_wasm function. It returns a
-    list of dictionaries containing the data needed for the template.
-
-    Args:
-        folder (Path): Path to the folder containing marimo notebooks
-        output_dir (Path): Directory where the exported HTML files will be saved
-        as_app (bool, optional): Whether to export as apps (run mode) or notebooks (edit mode).
-
-    Returns:
-        List[dict]: List of dictionaries with "display_name" and "html_path" for each notebook
+    Supported list entries:
+    - "apps/charts.py"
+    - {"path": "apps/charts.py", "label": "Charts"}
     """
-    # Check if the folder exists
-    if not folder.exists():
-        logger.warning(f"Directory not found: {folder}")
+    if not nav_file.exists():
+        logger.warning(f"Apps nav file not found: {nav_file}; using discovered app order")
         return []
 
-    # Find all Python files recursively in the folder
-    notebooks = list(folder.rglob("*.py"))
-    logger.debug(f"Found {len(notebooks)} Python files in {folder}")
-
-    # Exit if no notebooks were found
-    if not notebooks:
-        logger.warning(f"No notebooks found in {folder}!")
+    try:
+        raw = json.loads(nav_file.read_text(encoding="utf-8"))
+    except Exception as e:
+        logger.error(f"Failed reading/parsing nav file {nav_file}: {e}")
         return []
 
-    # For each successfully exported notebook, add its data to the notebook_data list
-    notebook_data = [
-        {
-            "display_name": (nb.stem.replace("_", " ").title()),
-            "html_path": str(nb.with_suffix(".html")),
-        }
-        for nb in notebooks
-        if _export_html_wasm(nb, output_dir, as_app=as_app)
+    if not isinstance(raw, list):
+        logger.error(f"Apps nav file must contain a JSON list: {nav_file}")
+        return []
+
+    entries: List[dict] = []
+    for i, item in enumerate(raw):
+        if isinstance(item, str):
+            p = Path(item).as_posix()
+            entries.append(
+                {
+                    "source_path": p,
+                    "display_name": Path(p).stem.replace("_", " ").title(),
+                }
+            )
+            continue
+
+        if isinstance(item, dict):
+            path_val = item.get("path")
+            if not isinstance(path_val, str) or not path_val.strip():
+                logger.warning(f"Skipping nav entry #{i}: missing/invalid 'path'")
+                continue
+            p = Path(path_val).as_posix()
+            label = item.get("label")
+            display_name = label if isinstance(label, str) and label.strip() else Path(p).stem.replace("_", " ").title()
+            entries.append({"source_path": p, "display_name": display_name})
+            continue
+
+        logger.warning(f"Skipping nav entry #{i}: expected string or object, got {type(item).__name__}")
+
+    return entries
+
+
+def _build_apps_sidenav(apps_data: List[dict], nav_entries: List[dict]) -> List[dict]:
+    """Order/filter app nav using JSON entries.
+
+    - Apps not listed in JSON are hidden.
+    - Missing JSON entries warn and continue.
+    """
+    if not nav_entries:
+        return apps_data
+
+    by_source = {app["source_path"]: app for app in apps_data}
+    ordered: List[dict] = []
+
+    for entry in nav_entries:
+        src = entry["source_path"]
+        app = by_source.get(src)
+        if not app:
+            logger.warning(f"Nav entry not found among exported apps: {src}")
+            continue
+
+        merged = dict(app)
+        merged["display_name"] = entry.get("display_name", app["display_name"])
+        ordered.append(merged)
+
+    return ordered
+
+
+def _relative_href(from_page: str, to_page: str) -> str:
+    """Compute a relative href from one generated HTML page to another."""
+    from_parent = Path(from_page).parent
+    return Path(os.path.relpath(to_page, start=from_parent)).as_posix()
+
+
+def _export_html_wasm(app_path: Path, output_dir: Path) -> bool:
+    """Export a single marimo app to HTML/WebAssembly format."""
+    output_path: Path = output_dir / app_path.with_name(f"{app_path.stem}_iframe.html")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    cmd: List[str] = [
+        "uvx",
+        "marimo",
+        "export",
+        "html-wasm",
+        "--sandbox",
+        "--mode",
+        "run",
+        "--no-show-code",
+        str(app_path),
+        "-o",
+        str(output_path),
     ]
 
-    logger.info(f"Successfully exported {len(notebook_data)} out of {len(notebooks)} files from {folder}")
-    return notebook_data
+    logger.info(f"Exporting {app_path} -> {output_path}")
+    try:
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        return True
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Export failed for {app_path}: {e}")
+        if e.stderr:
+            logger.error(e.stderr.strip())
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected export error for {app_path}: {e}")
+        return False
+
+
+def _generate_index_redirect(output_dir: Path, target_href: str) -> None:
+    """Generate index.html that redirects to the provided app shell page."""
+    logger.info(f"Generating index.html redirect to {target_href}")
+
+    index_path: Path = output_dir / "index.html"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    redirect_html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="0; url={target_href}" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redirecting...</title>
+  <script>window.location.replace({json.dumps(target_href)});</script>
+</head>
+<body>
+  <p>Redirecting to <a href="{target_href}">{target_href}</a>...</p>
+</body>
+</html>
+"""
+
+    try:
+        index_path.write_text(redirect_html, encoding="utf-8")
+    except IOError as e:
+        logger.error(f"Failed to write redirect index.html: {e}")
 
 
 def _copy_static_assets(output_dir: Path) -> None:
-    """Copy static assets needed by exported HTML files.
-
-    Copies known static file/directory paths into the output directory while
-    preserving relative paths from the repository root.
-    """
+    """Copy static assets needed by exported HTML files."""
     logger.info("Copying static assets")
 
     asset_paths: List[Path] = [
@@ -192,71 +219,115 @@ def _copy_static_assets(output_dir: Path) -> None:
 
     for src in asset_paths:
         if not src.exists():
-            logger.debug(f"Static asset path not found, skipping: {src}")
+            logger.warning(f"Static asset not found, skipping: {src}")
             continue
 
         dst = output_dir / src
         try:
             if src.is_dir():
-                shutil.copytree(src, dst, dirs_exist_ok=True)
+                if dst.exists():
+                    shutil.rmtree(dst)
+                shutil.copytree(src, dst)
                 logger.info(f"Copied directory: {src} -> {dst}")
             else:
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src, dst)
                 logger.info(f"Copied file: {src} -> {dst}")
-        except OSError as e:
-            logger.error(f"Failed to copy static asset {src}: {e}")
+        except Exception as e:
+            logger.error(f"Failed copying asset {src}: {e}")
+
+
+def _export(folder: Path, output_dir: Path) -> List[dict]:
+    """Export all marimo apps in a folder to HTML/WebAssembly format."""
+    if not folder.exists():
+        logger.error(f"Apps folder does not exist: {folder}")
+        return []
+
+    app_files = sorted(
+        p for p in folder.rglob("*.py")
+        if "public" not in p.parts and p.name != "__init__.py"
+    )
+    logger.debug(f"Found {len(app_files)} app Python files in {folder}")
+
+    if not app_files:
+        logger.warning(f"No app files found in {folder}")
+        return []
+
+    app_data: List[dict] = []
+
+    for app_file in app_files:
+        if _export_html_wasm(app_file, output_dir):
+            app_data.append(
+                {
+                    "source_path": app_file.as_posix(),
+                    "display_name": app_file.stem.replace("_", " ").title(),
+                    "html_path": app_file.with_name(f"{app_file.stem}_iframe.html").as_posix(),
+                    "shell_path": app_file.with_suffix(".html").as_posix(),
+                }
+            )
+
+    logger.info(f"Successfully exported {len(app_data)} out of {len(app_files)} files from {folder}")
+    return app_data
+
 
 def main(
     output_dir: Union[str, Path] = "_site",
-    template: Union[str, Path] = "templates/tailwind.html.j2",
+    app_shell_template: Union[str, Path] = "templates/app_shell.html.j2",
+    apps_nav_json: Union[str, Path] = "templates/apps_nav.json",
 ) -> None:
-    """Main function to export marimo notebooks.
+    """Main function to export marimo apps and generate app shells + redirect index."""
+    logger.info("Starting marimo app build process")
 
-    This function:
-    1. Parses command line arguments
-    2. Exports all marimo notebooks in the 'notebooks' and 'apps' directories
-    3. Generates an index.html file that lists all the notebooks
-
-    Command line arguments:
-        --output-dir: Directory where the exported files will be saved (default: _site)
-        --template: Path to the template file (default: templates/index.html.j2)
-
-    Returns:
-        None
-    """
-    logger.info("Starting marimo build process")
-
-    # Convert output_dir explicitly to Path (not done by fire)
-    output_dir: Path = Path(output_dir)
-    logger.info(f"Output directory: {output_dir}")
-
-    # Make sure the output directory exists
+    output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Convert template to Path if provided
-    template_file: Path = Path(template)
-    logger.info(f"Using template file: {template_file}")
+    shell_template_file = Path(app_shell_template)
+    apps_nav_file = Path(apps_nav_json)
 
-    # Export notebooks from the notebooks/ directory
-    notebooks_data = _export(Path("notebooks"), output_dir, as_app=False)
-
-    # Export apps from the apps/ directory
-    apps_data = _export(Path("apps"), output_dir, as_app=True)
-
-    # Exit if no notebooks or apps were found
-    if not notebooks_data and not apps_data:
-        logger.warning("No notebooks or apps found!")
-        return
-
-    # Generate the index.html file that lists all notebooks and apps
-    _generate_index(output_dir=output_dir, notebooks_data=notebooks_data, apps_data=apps_data, template_file=template_file)
-
-    # Copy static assets used by notebooks/apps (CSS + datasets)
     _copy_static_assets(output_dir)
 
-    logger.info(f"Build completed successfully. Output directory: {output_dir}")
+    apps_data = _export(Path("apps"), output_dir)
+    if not apps_data:
+        logger.warning("No apps exported. Skipping shell generation.")
+        return
+
+    nav_entries = _load_apps_nav(apps_nav_file)
+    sidenav_apps = _build_apps_sidenav(apps_data, nav_entries)
+    if not sidenav_apps:
+        logger.warning("No apps in sidenav after nav filtering. Skipping shell generation.")
+        return
+
+    generated = 0
+    for current in sidenav_apps:
+        current_shell = current["shell_path"]
+        embedded_path = _relative_href(current_shell, current["html_path"])
+
+        nav_items = [
+            {
+                "display_name": item["display_name"],
+                "html_path": _relative_href(current_shell, item["shell_path"]),
+            }
+            for item in sidenav_apps
+        ]
+        current_href = _relative_href(current_shell, current_shell)
+
+        ok = _generate_app_shell(
+            output_dir=output_dir,
+            shell_template_file=shell_template_file,
+            shell_output_path=Path(current_shell),
+            title=current["display_name"],
+            embedded_path=embedded_path,
+            nav_items=nav_items,
+            current_html_path=current_href,
+        )
+        generated += int(ok)
+
+    if generated > 0:
+        _generate_index_redirect(output_dir, sidenav_apps[0]["shell_path"])
+        logger.info("Build completed successfully")
+    else:
+        logger.error("No shell pages were generated")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     fire.Fire(main)

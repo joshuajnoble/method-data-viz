@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }} · marimo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../custom.css">
+</head>
+<body class="app-shell min-h-screen bg-gray-50 text-gray-800">
+  <div class="min-h-screen flex">
+    {% if nav_items and nav_items|length > 0 %}
+    <div id="drawer-overlay" class="fixed inset-0 bg-black/40 z-40 hidden"></div>
+    <aside id="side-drawer" class="app-shell-drawer fixed inset-y-0 left-0 w-72 bg-white border-r border-gray-200 z-50 transform -translate-x-full transition-transform duration-200 flex flex-col">
+      <div class="h-14 px-4 flex items-center justify-between border-b border-gray-200 font-semibold">
+        <span class="app-shell-contents-title text-lg">Contents</span>
+        <button id="close-drawer" aria-label="Close menu" class="inline-flex rounded-md border border-gray-300 bg-white px-2 py-1 text-base leading-none text-gray-700 hover:bg-gray-100">
+          ☰
+        </button>
+      </div>
+      <nav class="p-2 space-y-1 overflow-y-auto">
+        {% for item in nav_items %}
+        <a
+          href="{{ item.html_path }}"
+          class="block rounded-md px-3 py-2 text-sm {% if item.html_path == current_html_path %}bg-gray-900 text-white{% else %}text-gray-700 hover:bg-gray-100{% endif %}"
+        >
+          {{ item.display_name }}
+        </a>
+        {% endfor %}
+      </nav>
+    </aside>
+    {% endif %}
+
+    <main id="main-content" class="flex-1 min-w-0 transition-[margin] duration-200 md:ml-0">
+      {% if nav_items and nav_items|length > 0 %}
+      <button id="open-drawer" aria-label="Open menu" class="fixed top-3 left-3 z-30 rounded-md border border-gray-300 bg-white px-2 py-1 text-base leading-none shadow-sm">☰</button>
+      {% endif %}
+
+      <section class="h-screen">
+        <iframe
+          src="{{ embedded_path }}"
+          title="{{ title }}"
+          class="w-full h-full border-0 bg-white"
+          loading="eager"
+        ></iframe>
+      </section>
+    </main>
+  </div>
+
+  {% if nav_items and nav_items|length > 0 %}
+  <script>
+    const drawer = document.getElementById("side-drawer");
+    const overlay = document.getElementById("drawer-overlay");
+    const openBtn = document.getElementById("open-drawer");
+    const closeBtn = document.getElementById("close-drawer");
+    const mainContent = document.getElementById("main-content");
+    const desktopQuery = window.matchMedia("(min-width: 768px)");
+
+    const setDrawerOpen = (isOpen) => {
+      if (!drawer) return;
+      drawer.classList.toggle("-translate-x-full", !isOpen);
+      drawer.classList.toggle("translate-x-0", isOpen);
+      if (desktopQuery.matches) {
+        if (mainContent) {
+          mainContent.classList.toggle("md:ml-72", isOpen);
+          mainContent.classList.toggle("md:ml-0", !isOpen);
+        }
+      }
+      if (overlay) {
+        if (desktopQuery.matches) {
+          overlay.classList.add("hidden");
+        } else {
+          overlay.classList.toggle("hidden", !isOpen);
+        }
+      }
+      if (openBtn) {
+        openBtn.style.display = isOpen ? "none" : "inline-flex";
+      }
+      localStorage.setItem("appShellNavOpen", isOpen ? "1" : "0");
+    };
+
+    const stored = localStorage.getItem("appShellNavOpen");
+    const initiallyOpen = stored === null ? desktopQuery.matches : stored === "1";
+    setDrawerOpen(initiallyOpen);
+
+    openBtn?.addEventListener("click", () => {
+      setDrawerOpen(true);
+    });
+    closeBtn?.addEventListener("click", () => {
+      setDrawerOpen(false);
+    });
+    overlay?.addEventListener("click", () => setDrawerOpen(false));
+    desktopQuery.addEventListener("change", () => {
+      const currentOpen = localStorage.getItem("appShellNavOpen") === "1";
+      setDrawerOpen(currentOpen);
+    });
+  </script>
+  {% endif %}
+</body>
+</html>
