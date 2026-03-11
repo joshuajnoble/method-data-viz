@@ -513,27 +513,38 @@ def _(
     return
 
 
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
     ## Pie Charts
 
-    Pie charts are great for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret with too many categories** or **similar values**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.
-
-    TODO: direct labeling.
+    TODO: direct labeling and hard to process arcs
     """)
     return
 
 
 @app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("pie.jpg")
+    mo.hstack([_img,mo.md("**Pie chart:** This chart type is great for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret with too many categories** or **similar values**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
 def _():
-    category_slider = mo.ui.slider(start=1, stop=8, value=1, label = "Number of categories", show_value = True)
+    category_slider = mo.ui.slider(start=1, stop=8, value=1, label = "Number of highlighted categories", show_value = True)
     category_slider
     return (category_slider,)
 
 
 @app.cell(hide_code=True)
-def _(base_df, category_slider):
+def pie_prep(base_df, category_slider):
     segment_sales_base_df = (
         base_df.groupby(["Sub-Category"], as_index=False)["Sales"]
         .sum()
@@ -556,7 +567,7 @@ def _(base_df, category_slider):
             ],
             ignore_index=True,
         )
-        .sort_values("Sales", ascending=True)
+        #.sort_values("Sales", ascending=True)
         .reset_index(drop=True)
     )
     return segment_sales_base_df, segment_sales_df
@@ -570,28 +581,29 @@ def _(category_slider, my_utils, segment_sales_df):
 
 
 @app.cell(hide_code=True)
-def _(my_utils, segment_sales_base_df, segment_sales_df):
+def pie(my_utils, segment_sales_base_df, segment_sales_df):
     _pie_color_map = {
         category: my_utils.COLOR_PALETTE[i % len(my_utils.COLOR_PALETTE)]
         for i, category in enumerate(segment_sales_df["Category"])
         if category != "Other"
     }
-    _pie_color_map["Other"] = "#D2D2D2"
+    _pie_color_map["Other"] = "#D9DCFA"
 
     _pie_fig = px.pie(
-        segment_sales_df,
+        segment_sales_df.reset_index(drop=True),
         names="Category",
         values="Sales",
         title="",
         color="Category",
         color_discrete_map=_pie_color_map,
-        height=450
+        height=450,
     )
     _pie_fig.update_traces(
         textposition="inside",
         texttemplate="%{label}<br>%{percent} (%{value:$.3s})",
         hoverinfo="none",
-        sort=True,
+        sort=False,
+        direction="clockwise"
     )
     _pie_fig.update_layout(showlegend = False)
 
@@ -627,8 +639,8 @@ def _(my_utils, segment_sales_base_df, segment_sales_df):
         color="Category",
         barmode="stack",
         color_discrete_sequence=my_utils.COLOR_PALETTE[
-            len(selected_categories_for_pie) : len(selected_categories_for_pie) + len(other_categories_stack_df)+1
-        ][::-1],
+            len(selected_categories_for_pie) : len(selected_categories_for_pie) + len(other_categories_stack_df)
+        ][::1],
         hover_data={"Sales": ":,.0f", "Group": False, "_percent_label": True},
         text="_segment_label"
     )
@@ -660,15 +672,31 @@ def _():
     mo.md(r"""
     ## Donut Charts and Gauge Charts
 
-    TODO : good for single values, goal orientation
+    These two chart types are great for quick diagnostic visualization of single continuous values in relationship to the whole (or another target value). Consider the story you're trying to tell with this single value chart.
     """)
     return
 
 
 @app.cell
-def _():
-    donut_slider = mo.ui.slider(start=0, stop=1, step=.01, value=.35, label = "Percentage of Sales", show_value = True, debounce=True)
-    donut_slider
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("donut.jpg")
+    mo.hstack([_img,mo.md("**Donut Chart**: This chart type is useful for representing **single values as a percentage of the whole**. A quick glance at a single donut chart can emphasize impact. While not represented in this guide, splitting a donut chart into multiple categories should follow the same rules of pie charts: **too many categories introduces visual overwhelm**.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("gauge.jpg")
+    mo.hstack([_img,mo.md("**Gauge Chart**: This chart type is useful for comparing a value against a target or a set of milestones. It emphasizes the coninuum of values along a desired goal or risk factors.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+def _(my_utils):
+    _message = my_utils.callout_neutral("Depending on the goal of the chart, how might you represent the data of a single category?")
+
+    donut_slider = mo.ui.slider(start=0, stop=1, step=.01, value=.35, label = "Percentage of Sales", show_value = True, debounce=True,full_width=True)
+    mo.hstack([_message,donut_slider],gap=2,align="center",widths=[2,.75])
     return (donut_slider,)
 
 
@@ -681,8 +709,8 @@ def _(donut_slider, my_utils):
         names=["Phone", "Other"],
         values=[_phone_share, 1 - _phone_share],
         color=["Phone", "Other"],
-        color_discrete_map={"Phone": my_utils.COLOR_PALETTE[0], "Other": "#D2D2D2"},
-        hole=0.45,
+        color_discrete_map={"Phone": my_utils.COLOR_PALETTE[0], "Other": "#d9dcfa"},
+        hole=0.5,
         height=350,
         title="Share of Phones"
     )
@@ -695,7 +723,7 @@ def _(donut_slider, my_utils):
         sort=False,
     )
 
-    _phone_donut_fig.update_layout(showlegend=False,title_x=0.5,margin=dict(t=40),title_font=dict(size=22,weight="bold"))
+    _phone_donut_fig.update_layout(showlegend=False,title_x=0.5,margin=dict(t=60),title_font=dict(size=22,weight="bold"))
 
     _label = f"{_phone_share:.0%}<br>({_phone_share_dollar})"
     _phone_donut_fig.add_annotation(
@@ -712,15 +740,16 @@ def _(donut_slider, my_utils):
         go.Indicator(
             mode="gauge+number+delta",
             value=donut_slider.value * 11000000,
-            number={"valueformat": "$.3s"},
+            number={"valueformat": "$.3s","font": {"size": 40, "weight": "bold"}},
             delta={
                 "reference": 7500000,
                 "valueformat": "$.3s",
                 "increasing": {"color": my_utils.COLOR_PALETTE[0]},
                 "decreasing": {"color": my_utils.COLOR_PALETTE[2]},
+                "font": {"size": 26, "weight": "bold"}
             },
             domain={"x": [0, 1], "y": [0, 1]},
-            title={"text": "Phone Sales (vs. Target)", "font": {"size": 22, "weight": "bold"}},
+            title={"text": "Phone Sales (vs. Target)", "font": {"size": 20, "weight": "normal"}},
             gauge={
                 "axis": {
                     "range": [None, 11000000],
@@ -733,23 +762,21 @@ def _(donut_slider, my_utils):
                 "bar": {"color": my_utils.COLOR_PALETTE[0]},
                 "bordercolor": "gray",
                 "steps": [
-                    {"range": [0, 2500000], "color": "#d9dcfa"},
-                    {"range": [2500000, 5000000], "color": "#a4a6dc"},
-                    {"range": [5000000, 7500000], "color": "#7473bd"},
+                    {"range": [0, 7500000], "color": "#d9dcfa"}
                 ],
                 "threshold": {
                     "line": {"color": my_utils.COLOR_PALETTE[1], "width": 8},
                     "thickness": 1,
-                    "value": 7500000,
+                    "value": 7500000
                 },
             },
         )
     )
 
     # add margin
-    _gauge_fig.update_layout(margin=dict(t=30), height=350)
+    _gauge_fig.update_layout(height=325)
 
-    mo.hstack([mo.ui.plotly(_phone_donut_fig, config={"displayModeBar": False}),mo.ui.plotly(_gauge_fig, config={"displayModeBar": False})],gap=2,widths=[.45,.55],align="center",justify="center")
+    mo.hstack([mo.ui.plotly(_phone_donut_fig, config={"displayModeBar": False}),mo.ui.plotly(_gauge_fig, config={"displayModeBar": False})],gap=0,widths=[.45,.55],align="center",justify="center")
     return
 
 
