@@ -299,6 +299,11 @@ def _(chart_slider, my_utils, segment_year_sales_df):
                     textposition="outside",
                     cliponaxis=False,
                     showlegend=_col_idx == 1 and year == years[0],
+                    hovertemplate=(f"Category={_category}<br>"
+                    "Year=%{x}<br>"
+                    "Sales=%{y:$,.3s}"
+                    "<extra></extra>"
+                    )
                 ),
                 row=1,
                 col=_col_idx,
@@ -357,15 +362,20 @@ def _():
 
 
 @app.cell
-def _(line_chart_slider):
+def _():
     fig_switch = mo.ui.switch(value=False, label=f"Highlighting a single category within many overlapping lines can focus the story.")
-    _pointer = mo.md((line_chart_slider.value - 3) * "👈")
-    mo.hstack([fig_switch,_pointer],align="start",justify="start",gap=0)
     return (fig_switch,)
 
 
-@app.cell(hide_code=True)
-def _(
+@app.cell
+def _(fig_switch, line_chart_slider):
+    _pointer = mo.md((line_chart_slider.value - 3) * "👈👈")
+    mo.hstack([fig_switch,_pointer],align="start",justify="start",gap=0)
+    return
+
+
+@app.cell
+def lines_overlapping(
     fig_switch,
     line_chart_slider,
     my_utils,
@@ -383,7 +393,7 @@ def _(
     ]
 
     line_years = sorted(line_filtered_category_sales_df["Year"].unique())
-    line_categories = sorted(line_top_categories.tolist())
+    line_categories = line_top_categories.tolist()
     line_category_colors = {
         category: my_utils.COLOR_PALETTE[i % len(my_utils.COLOR_PALETTE)]
         for i, category in enumerate(line_categories)
@@ -399,7 +409,8 @@ def _(
         title="",
         color_discrete_sequence=my_utils.COLOR_PALETTE[:len(line_categories)]
     )
-    line_all_categories_fig.update_yaxes(tickformat="$,.0f",rangemode="tozero")
+    line_all_categories_fig.update_traces(marker=dict(size=8))
+    line_all_categories_fig.update_yaxes(tickformat="$,.3s",rangemode="tozero")
     line_all_categories_fig.update_xaxes(title="")
     line_all_categories_fig.update_layout(
         xaxis_title=None,
@@ -419,7 +430,7 @@ def _(
 
 
 
-    first_category = line_categories[0] if len(line_categories) > 0 else None
+    first_category = line_categories[-1]
 
     line_highlight_fig = px.line(
         line_filtered_category_sales_df,
@@ -427,28 +438,45 @@ def _(
         y="Sales",
         color="Category",
         markers=True,
+        title=(
+            f"One of the biggest categories, "
+            f"<span style='color: {line_category_colors[first_category]}; text-decoration: underline;'>"
+            f"{first_category}</span>, needs more attention."
+        ),
+        subtitle="Category sales by year"
     )
 
     for trace in line_highlight_fig.data:
-        if trace.name == first_category:
-            trace.update(line=dict(color=line_category_colors[first_category], width=3), marker=dict(color=line_category_colors[first_category], size=9))
-        else:
-            trace.update(line=dict(color="rgba(160, 160, 160, 0.7)", width=2), marker=dict(color="rgba(160, 160, 160, 0.7)", size=6))
+        is_focus = trace.name == first_category
+        trace.update(
+            line=dict(
+                color=line_category_colors[first_category] if is_focus else "rgba(180, 180, 180, 0.75)",
+                width=4 if is_focus else 2
+            ),
+            marker=dict(
+                color=line_category_colors[first_category] if is_focus else "rgba(180, 180, 180, 0.75)",
+                size=9 if is_focus else 5
+            ),
+            opacity=1.0 if is_focus else 0.5
+        )
 
     line_highlight_fig.update_yaxes(tickformat="$,.0f", rangemode="tozero")
     line_highlight_fig.update_xaxes(title="")
     line_highlight_fig.update_layout(
         xaxis_title=None,
         yaxis_title=None,
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            title="",
-            xanchor="left",
-            x=0,
-            font=dict(size=14),
-        ),
+        showlegend=False,
+        margin=dict(t=50),
+        title=dict(font=dict(size=20, weight="bold")),
+        # legend=dict(
+        #     orientation="h",
+        #     yanchor="bottom",
+        #     y=1.02,
+        #     title = "",
+        #     xanchor="left",
+        #     x=0,
+        #     font=dict(size=14),
+        # ),
         height=400,
     )
 
@@ -471,7 +499,7 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(
+def lines_small_multiples(
     line_categories,
     line_category_colors,
     line_filtered_category_sales_df,
@@ -495,14 +523,19 @@ def _(
                 mode="lines+markers",
                 name=_category,
                 line=dict(color=line_category_colors[_category]),
-                marker=dict(color=line_category_colors[_category]),
+                marker=dict(color=line_category_colors[_category],size=8),
                 showlegend=False,
+                hovertemplate=(f"Category={_category}<br>"
+                    "Year=%{x}<br>"
+                    "Sales=%{y:$,.3s}"
+                    "<extra></extra>"
+                )
             ),
             row=1,
             col=_col_idx,
         )
 
-    line_category_sales_subplots_fig.update_yaxes(tickformat="$,.0f", title="", rangemode="tozero")
+    line_category_sales_subplots_fig.update_yaxes(tickformat="$,.3s", title="", rangemode="tozero")
     line_category_sales_subplots_fig.update_xaxes(title="")
     line_category_sales_subplots_fig.update_layout(barmode="group",
                                               showlegend=False,
@@ -532,15 +565,31 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("pie.jpg")
-    mo.hstack([_img,mo.md("**Pie chart:** This chart type is great for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret with too many categories** or **similar values**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Pie chart:** This chart type is great for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret with too many categories** or **similar values**. Consider using a pie chart when you have a small number of categories (ideally 3 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.")],gap=2,align="center",widths=[.25,1])
     return
 
 
 @app.cell
 def _():
-    category_slider = mo.ui.slider(start=1, stop=8, value=1, label = "Number of highlighted categories", show_value = True)
-    category_slider
+    category_slider = mo.ui.slider(start=1, stop=8, value=1, label = "Number of highlighted categories", show_value = True,full_width=True)
     return (category_slider,)
+
+
+@app.cell
+def _(category_slider, my_utils):
+    _message_by_range = [
+        {"min": 1, "max": 3, "message": my_utils.callout_info("TODO")},
+        {"min": 4, "max": float("inf"), "message": my_utils.callout_danger("TODO")},
+    ]
+
+    _message = next(
+        item["message"]
+        for item in _message_by_range
+        if item["min"] <= category_slider.value <= item["max"]
+    ) 
+
+    mo.hstack([_message,category_slider],gap=2,align="center",widths=[2,.75])
+    return
 
 
 @app.cell(hide_code=True)
@@ -576,7 +625,7 @@ def pie_prep(base_df, category_slider):
 @app.cell
 def _(category_slider, my_utils, segment_sales_df):
     _total_sales = segment_sales_df["Sales"].sum()
-    my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, title = "Pie Chart", subtitle=f"(Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)")
+    my_utils.title_with_icon(value = category_slider.value, cutoff_value = 3, no_icon="⚠️",no_color=my_utils.COLOR_PALETTE[7], title = "Pie Chart", subtitle=f"(Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)")
     return
 
 
@@ -601,9 +650,10 @@ def pie(my_utils, segment_sales_base_df, segment_sales_df):
     _pie_fig.update_traces(
         textposition="inside",
         texttemplate="%{label}<br>%{percent} (%{value:$.3s})",
-        hoverinfo="none",
         sort=False,
-        direction="clockwise"
+        direction="clockwise",
+        hoverinfo="skip",
+        hovertemplate=None
     )
     _pie_fig.update_layout(showlegend = False)
 
@@ -648,7 +698,8 @@ def pie(my_utils, segment_sales_base_df, segment_sales_df):
     other_stacked_bar_fig.update_traces(
         texttemplate="%{text}<br>%{value:.1%} (%{customdata[0]:$.2s})",
         textposition="inside",
-        hovertext="none"
+        hoverinfo="skip",
+        hovertemplate=None
     )
 
     other_stacked_bar_fig.update_layout(
@@ -664,6 +715,12 @@ def pie(my_utils, segment_sales_base_df, segment_sales_df):
 
 
     mo.hstack([_pie_fig,other_stacked_bar_fig],gap=0,align="center",justify="center",widths=[.65,.35])
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
     return
 
 
@@ -777,6 +834,12 @@ def _(donut_slider, my_utils):
     _gauge_fig.update_layout(height=325)
 
     mo.hstack([mo.ui.plotly(_phone_donut_fig, config={"displayModeBar": False}),mo.ui.plotly(_gauge_fig, config={"displayModeBar": False})],gap=0,widths=[.45,.55],align="center",justify="center")
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
     return
 
 

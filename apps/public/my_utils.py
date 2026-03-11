@@ -21,6 +21,9 @@ def callout_info(content: str):
 def callout_danger(content: str):
     return _callout("danger", content)
 
+def callout_warning(content: str):
+    return _callout("warning", content)
+
 async def gh_pages_read_csv_into_df(filename: str) -> pd.DataFrame:
     filepath = mo.notebook_location() / "public" / filename
     if "http" not in str(mo.notebook_location()):
