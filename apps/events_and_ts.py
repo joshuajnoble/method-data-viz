@@ -116,6 +116,9 @@ def _():
         """
         # Data with time
         
+        Time is a data feature that naturally lends itself to grouping or filtering and because of that, it's a powerful tool for creating aggregate views. 
+        For instance: all sales in 2012 or the aggregated sales on the first day of a month. It's also potentially very confusing.
+
         Not all data that includes time is the same. For instance, if your data has irregular time stamps like tracking when earthquakes happen, 
         then that's event data. If your data has regular time stamps, like tracking the temperature inside your house every hour, then that's a 
         time series. Because they're pretty different types of data, they should different sorts of visualization.

@@ -13,10 +13,40 @@ __generated_with = "0.19.7"
 app = mo.App(width="medium")
 
 
+
 @app.cell
 def _():
     import marimo as mo
     import pandas as pd
+    import altair as alt
+    import plotly.express as px
+
+    cell_width = 800
+
+    @mo.cache
+    def get_yearly():
+
+        path_to_csv = mo.notebook_location() / "public" / "yearly_sales.csv"
+        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+        yearly_sales = pd.read_csv(path_to_csv)
+        yearly_sales = yearly_sales.sort_values("year")
+        return yearly_sales
+
+    @mo.cache
+    def get_yearly_by_segment():
+
+        path_to_csv = mo.notebook_location() / "public" / "yearly_sales_by_segment.csv"
+        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+        yearly_by_segment = pd.read_csv(path_to_csv)
+        return yearly_by_segment
+    
+    @mo.cache
+    def get_weekly_by_segment():
+
+        path_to_csv = mo.notebook_location() / "public" / "weekly_sales_by_segment.csv"
+        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+        weekly_sales_by_segment = pd.read_csv(path_to_csv)
+        return weekly_sales_by_segment
     
     return (mo,)
 
@@ -56,6 +86,8 @@ def __(mo):
           Most of the time visualizations are meant to highlight the result of some operation on a set of data. Most of these operations are done before you visualize data, but many can be feature of dashboards or interactive visualizations. The point of visualizing data is to make these operations easier to understand.
           If humans could automatically parse the cells in an Excel, we'd never use charts, but that's just not how our brains work. There are many many kinds of things that people do with data but it's important to understand the most common because that's what most of us need to communicate and to understand.
           
+          When we work with data, usually we are picking one field of some data and using to inform our view of other fields. When a sale happened can be as informative and what it purchased or how the total sale amount.
+
         ## Filtering
           
           This means looking at all sales in New York City or all computer purchases on Jan 12, 2025. You filter out items to try to find insights about a specific category of items or range of numeric or temporal values. This can be static, "here are sales from Asia", or interactive, "select which region you want to see sales from".
@@ -102,6 +134,200 @@ def __(mo):
 
           """)
     return
+
+@app.cell
+def _():
+    mo.md(
+        """
+
+        # What is Data for? 
+        
+        Data is for _insights_
+
+        What's the point of gathering data in the first place? Well, hopefully to tell you something informative. Did it freeze last night? Does this drug work? Can I retire?
+
+        Visualizing data, aka making charts, is to help people to derive insights from data or to help people contextualize insights and make decisions based on them.
+        
+        Much like good design helps people do things, good charts help people understand things. The point of making a chart isn't to make a cool chart, it's to make an aid to understanding.
+
+        ## Charts explain what 
+
+        You have probably made hundreds of bar charts in your life. Maybe even thousands. But why did you make them? What was the point? Why do they work? Why are charts so useful? Moreover, what makes some more useful than others?
+
+        This site is an attempt to demonstrate a little bit of why we visualize data, show some of the principles of what visualizing data is about, and to show examples of how different kinds of data can and should be visualized.
+
+        Let's start with bar charts:
+        """
+    )
+    return
+
+@app.cell()
+def _(mo):
+
+    yearly_sales_fig_labeled = px.bar(get_yearly(), x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
+
+    __tick_vals = [2011, 2012, 2013, 2014]
+    yearly_sales_fig_labeled.update_xaxes(
+        tickmode="array",
+        tickvals=__tick_vals,
+        ticktext=[f"{v}" for v in __tick_vals]
+    )
+    yearly_sales_fig_labeled.update_layout(yaxis_tickprefix = 'USD$', yaxis_tickformat = ',.')
+    yearly_sales_fig_labeled.update_yaxes(tickformat=".2s") 
+    mo.ui.plotly(yearly_sales_fig_labeled,config={"displayModeBar": False})
+    
+    return (tick_vals)
+
+@app.cell
+def _():
+    mo.md("""
+        The height of a bar shows the yearly sales. The point of it is to show how the different years compare to one another. The higher the bar, the more sales.
+        Note that we know what we're measuring, _sales_, what units it's in, _USD_, and what sections are being used to measure, _years_.
+        We've all made lots of these in our lives and they work because we humans can easily compare the heights of two things.
+    """)
+    return
+
+@app.cell()
+def _(mo, tick_vals):
+
+    _tick_vals = [2011, 2012, 2013, 2014]
+    yearly_sales_fig = px.bar(get_yearly(), x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
+    yearly_sales_fig.update_xaxes(
+        tickmode="array",
+        tickvals=_tick_vals,
+        ticktext=[f"{v}" for v in _tick_vals]
+    )
+    mo.ui.plotly(yearly_sales_fig,config={"displayModeBar": False})
+
+@app.cell
+def _():
+    mo.md(
+        """
+        The purpose of visualizing data is to tell a story. What's the story that you're trying to tell?
+
+        Here the story is that 2014 was a stronger year. We can see that easily because we can compare the heights of objects easily.
+
+        However, if our goal is show the _trend_, then a line shows a trend better than a bar.
+        """
+    )
+    return
+
+@app.cell()
+def _(mo):
+    
+    yearly_sales = get_yearly()
+    yearly_sales['truncated'] = yearly_sales['sales']/1_000_000
+
+    yearly_line = px.line(yearly_sales, x="year", y="truncated", labels={"year": "Financial Year","truncated": "Total Sales in Millions ($)"}, title='Sales Per Year in Millions of USD')
+
+    tick_vals = [2010, 2011, 2012, 2013, 2014, 2015]
+    yearly_line.update_xaxes(
+        tickmode="array",
+        tickvals=tick_vals,
+        ticktext=[f"{v}" for v in tick_vals]
+    )
+
+    yearly_line.update_yaxes(tickformat="$,.2s")
+
+    mo.ui.plotly(yearly_line,config={"displayModeBar": False})
+
+
+@app.cell
+def _():
+    mo.md(
+        """
+        Picking the right chart depends on the story that you're trying to tell, not which kind of chart looks the best.
+        """
+    )
+    return
+
+
+# @app.cell
+# def _():
+#     mo.md(
+#         """
+#         Multiple lines make it easier to compare trends than multiple bars.
+#         """
+#     )
+#     return
+
+# @app.cell()
+# def _(mo):
+
+#     yearly_sales_by_segment = get_yearly_by_segment()
+
+#     alt.Chart(yearly_sales_by_segment).mark_line(point=True).encode(
+#         alt.Y('sales', axis=alt.Axis(labelExpr='"$"+datum.value+"M"'), title="Sales in Millions of USD"),
+#         alt.X('year:N', title='Year'),
+#         color='Segment:N',  
+#     ).properties(
+#         width=cell_width,  # Set the width to 600 pixels
+#         height=400  # Set the height to 400 pixels
+#     )
+
+
+# @app.cell
+# def _():
+#     mo.md(
+#         """
+#         However, it's difficult to compare at a given point. If we want to make sure that users can compare values at given
+#         point in time, we need to provide a different affordance. There are a number of ways to do that, one is through interaction.
+#         """
+#     )
+#     return
+
+# @app.cell()
+# def _(mo):
+
+#     weekly_sales_by_segment = get_weekly_by_segment()
+
+#     # Create a selection that chooses the nearest point & selects based on x-value
+#     nearest = alt.selection_point(nearest=True, on="pointerover", fields=["Order Date"], empty=False)
+
+#     # The basic line
+#     line = alt.Chart(weekly_sales_by_segment).mark_line().encode(
+#         #x="Order Date:O",
+#         x=alt.X('Order Date:T', axis=alt.Axis(tickCount=2, format="%Y-%m-%d", labelAngle=-45)),
+#         y=alt.Y('truncated:Q', axis=alt.Axis(labelExpr='"$"+datum.value+"K"'), title="Weekly Sales in USD"),
+#         color="Segment:N",
+#         opacity=alt.value(0.5)
+#     )
+
+#     # Transparent selectors across the chart. This is what tells us
+#     # the x-value of the cursor
+#     selectors = alt.Chart(weekly_sales_by_segment).mark_point().encode(x="Order Date", opacity=alt.value(0)).add_params( nearest )
+#     when_near = alt.when(nearest)
+
+#     # Draw points on the line, and highlight based on selection
+#     points = line.mark_point().encode(opacity=when_near.then(alt.value(1)).otherwise(alt.value(0)))
+
+#     # Draw text labels near the points, and highlight based on selection
+#     text = line.mark_text(align="left", dx=5, dy=-5, fontWeight='bolder').encode(
+#         text=when_near.then(alt.Text("sales:Q", format="$.2~s")).otherwise(alt.value(" ")), color=alt.value("black")
+#     )
+
+#     # text = line.mark_text(align="left", dx=5, dy=-5, fontWeight='bolder').encode(
+#     #     text=when_near.then(alt.expr("'$' + format(datum.truncated) + 'K'")).otherwise(alt.value(" ")), color=alt.value("black")
+#     # )
+
+#     text_background = text.mark_text(
+#         align='left',
+#         dx=5,dy=-5,
+#         stroke='white',
+#         strokeWidth=5,
+#         strokeJoin='round'
+#     )
+
+#     # Draw a rule at the location of the selection
+#     rules = alt.Chart(weekly_sales_by_segment).mark_rule(color="gray").encode(
+#         x="Order Date",
+#     ).transform_filter(
+#         nearest
+#     )
+
+#     # Put the five layers into a chart and bind the data
+#     alt.layer( line, selectors, points, rules, text_background, text ).properties( width=cell_width, height=400 )
+
 
 if __name__ == "__main__":
     app.run()
