@@ -94,7 +94,9 @@ def __(mo):
           
         ## Sorting
           
-          This means arranging values according to one or more variables, for instance, individual sales ranked from highest dollar amount to lowest. You've definitely seen this before. It's important to know what you can and can't sort.
+          This means arranging values according to one or more variables, for instance, individual sales ranked from highest dollar amount to lowest. You've definitely seen this before. When you sort data, you give an ordering that it doesn't naturally contain, 
+          so it's important to make sure that you know what fields you're sorting on. Putting a classroom of students in order by age is different ordering them by height or grade point average. The point of sorting is to see how one feature of the data relates
+          to others.
           
         ## Aggregating
           
