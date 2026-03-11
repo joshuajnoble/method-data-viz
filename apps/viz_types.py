@@ -4,8 +4,7 @@
 #     "marimo>=0.20.2",
 #     "plotly",
 #     "pandas",
-#     "openai==2.26.0",
-#     "pydantic-ai-slim==1.67.0",
+#     "numerize==0.12",
 # ]
 # ///
 
@@ -19,6 +18,7 @@ with app.setup(hide_code=True):
     import plotly.express as px
     import pandas as pd
     import marimo as mo
+    from numerize import numerize
 
 
 @app.cell(hide_code=True)
@@ -513,7 +513,7 @@ def _():
     mo.md(r"""
     ## Pie Charts
 
-    Pie charts are great for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become difficult to interpret with too many categories or similar values. Consider using a pie chart when you have a small number of categories (ideally 5 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.
+    Pie charts are great for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret with too many categories** or **similar values**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.
 
     TODO: direct labeling.
     """)
@@ -522,7 +522,7 @@ def _():
 
 @app.cell
 def _():
-    category_slider = mo.ui.slider(start=2, stop=8, value=3, label = "Number of categories", show_value = True)
+    category_slider = mo.ui.slider(start=1, stop=8, value=1, label = "Number of categories", show_value = True)
     category_slider
     return (category_slider,)
 
@@ -560,7 +560,7 @@ def _(base_df, category_slider):
 @app.cell
 def _(category_slider, my_utils, segment_sales_df):
     _total_sales = segment_sales_df["Sales"].sum()
-    my_utils.title_with_icon(value = category_slider.value, cutoff_value = 5, title = "Pie Chart", subtitle=f"(Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)")
+    my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, title = "Pie Chart", subtitle=f"(Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)")
     return
 
 
@@ -571,7 +571,7 @@ def _(my_utils, segment_sales_base_df, segment_sales_df):
         for i, category in enumerate(segment_sales_df["Category"])
         if category != "Other"
     }
-    _pie_color_map["Other"] = "#9E9E9E"
+    _pie_color_map["Other"] = "#D2D2D2"
 
     _pie_fig = px.pie(
         segment_sales_df,
@@ -579,7 +579,8 @@ def _(my_utils, segment_sales_base_df, segment_sales_df):
         values="Sales",
         title="",
         color="Category",
-        color_discrete_map=_pie_color_map
+        color_discrete_map=_pie_color_map,
+        height=450
     )
     _pie_fig.update_traces(
         textposition="inside",
@@ -621,14 +622,16 @@ def _(my_utils, segment_sales_base_df, segment_sales_df):
         color="Category",
         barmode="stack",
         color_discrete_sequence=my_utils.COLOR_PALETTE[
-            len(selected_categories_for_pie) : len(selected_categories_for_pie) + len(other_categories_stack_df)
+            len(selected_categories_for_pie) : len(selected_categories_for_pie) + len(other_categories_stack_df)+1
         ][::-1],
         hover_data={"Sales": ":,.0f", "Group": False, "_percent_label": True},
         text="_segment_label"
     )
 
     other_stacked_bar_fig.update_traces(
-        texttemplate="%{text}<br>%{value:.1%} (%{customdata[0]:$.2s})"
+        texttemplate="%{text}<br>%{value:.1%} (%{customdata[0]:$.2s})",
+        textposition="inside",
+        hovertext="none"
     )
 
     other_stacked_bar_fig.update_layout(
@@ -643,7 +646,62 @@ def _(my_utils, segment_sales_base_df, segment_sales_df):
     other_stacked_bar_fig.update_yaxes(tickformat=".1%")
 
 
-    mo.hstack([_pie_fig,other_stacked_bar_fig],gap=1,align="center",widths=[.75,.25])
+    mo.hstack([_pie_fig,other_stacked_bar_fig],gap=0,align="center",justify="center",widths=[.65,.35])
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Donut Charts
+
+    TODO : good for single values, goal orientation
+    """)
+    return
+
+
+@app.cell
+def _():
+    donut_slider = mo.ui.slider(start=.01, stop=1, step=.01, value=.35, label = "Percentage", show_value = True, debounce=True)
+    donut_slider
+    return (donut_slider,)
+
+
+@app.cell
+def _(donut_slider, my_utils):
+    _phone_share = min(max(float(donut_slider.value), 0.0), 1.0)
+    _phone_share_dollar = "$" + numerize.numerize(_phone_share * 11000000)
+
+    _phone_donut_fig = px.pie(
+        names=["Phone", "Other"],
+        values=[_phone_share, 1 - _phone_share],
+        color=["Phone", "Other"],
+        color_discrete_map={"Phone": my_utils.COLOR_PALETTE[0], "Other": "#D2D2D2"},
+        hole=0.45,
+        height=450,
+        title=f"Phone Share"
+    )
+
+    _phone_donut_fig.update_traces(
+        #textposition="inside",
+        #texttemplate="%{label}<br>%{percent}",
+        #hoverinfo="none",
+        textinfo="none",
+        sort=False,
+    )
+
+    _phone_donut_fig.update_layout(showlegend=False,title_x=0.5,margin=dict(t=40),title_font=dict(size=24,weight="bold"))
+
+    _label = f"{_phone_share:.0%}<br>({_phone_share_dollar})"
+    _phone_donut_fig.add_annotation(
+        x=0.5,
+        y=0.5,
+        text=_label,
+        showarrow=False,
+        font=dict(size=26),
+    )
+
+    mo.ui.plotly(_phone_donut_fig, config={"displayModeBar": False})
     return
 
 
