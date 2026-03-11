@@ -16,6 +16,7 @@ app = marimo.App(width="medium", css_file="custom.css")
 with app.setup(hide_code=True):
     # imports
     import plotly.express as px
+    import plotly.graph_objects as go
     import pandas as pd
     import marimo as mo
     from numerize import numerize
@@ -186,8 +187,10 @@ def _(chart_slider, my_utils, segment_year_sales_df):
         y="Sales",
         color="Category",
         barmode="group",
+        text_auto=True,
         color_discrete_sequence=my_utils.COLOR_PALETTE[:len(top_subcats)]
     )
+    bar_fig.update_traces(textposition="outside", cliponaxis=False)
 
     _year_ticks = sorted(filtered_segment_year_sales_df["Year"].unique())
     bar_fig.update_xaxes(
@@ -195,7 +198,7 @@ def _(chart_slider, my_utils, segment_year_sales_df):
         tickvals=_year_ticks,
         ticktext=_year_ticks
     )
-    bar_fig.update_yaxes(tickformat="$,.0f", gridcolor="rgba(0, 0, 0, 0.15)",
+    bar_fig.update_yaxes(tickformat="$,.3s", gridcolor="rgba(0, 0, 0, 0.15)",
         gridwidth=1.1)
     bar_fig.update_layout(
         xaxis_title=None,
@@ -249,7 +252,6 @@ def _(chart_slider, my_utils):
 @app.cell(hide_code=True)
 def _(chart_slider, my_utils, segment_year_sales_df):
     from plotly.subplots import make_subplots
-    import plotly.graph_objects as go
 
     segment_year_sales_df_with_year_cat = segment_year_sales_df.assign(
         Year=segment_year_sales_df["Year"].astype(str)
@@ -292,13 +294,17 @@ def _(chart_slider, my_utils, segment_year_sales_df):
                     y=_year_value["Sales"],
                     name=_category,
                     marker_color=category_colors[_category],
+                    text=_year_value["Sales"],
+                    texttemplate="%{text:$,.3s}",
+                    textposition="outside",
+                    cliponaxis=False,
                     showlegend=_col_idx == 1 and year == years[0],
                 ),
                 row=1,
                 col=_col_idx,
             )
 
-    category_sales_subplots_fig.update_yaxes(tickformat="$,.0f", title="", gridcolor="rgba(0, 0, 0, 0.15)",gridwidth=1.05)
+    category_sales_subplots_fig.update_yaxes(tickformat="$,.3s", title="", gridcolor="rgba(0, 0, 0, 0.15)",gridwidth=1.05)
     category_sales_subplots_fig.update_xaxes(title="")
     category_sales_subplots_fig.update_layout(barmode="group",
                                               showlegend=False,
@@ -306,7 +312,7 @@ def _(chart_slider, my_utils, segment_year_sales_df):
                                               height=400)
     category_sales_subplots_fig.update_annotations(font_size=14)
     mo.ui.plotly(category_sales_subplots_fig, config={"displayModeBar": False})
-    return go, make_subplots, segment_year_sales_df_with_year_cat
+    return make_subplots, segment_year_sales_df_with_year_cat
 
 
 @app.cell
@@ -466,7 +472,6 @@ def _():
 
 @app.cell(hide_code=True)
 def _(
-    go,
     line_categories,
     line_category_colors,
     line_filtered_category_sales_df,
@@ -527,7 +532,7 @@ def _():
     return (category_slider,)
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(base_df, category_slider):
     segment_sales_base_df = (
         base_df.groupby(["Sub-Category"], as_index=False)["Sales"]
@@ -564,7 +569,7 @@ def _(category_slider, my_utils, segment_sales_df):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(my_utils, segment_sales_base_df, segment_sales_df):
     _pie_color_map = {
         category: my_utils.COLOR_PALETTE[i % len(my_utils.COLOR_PALETTE)]
@@ -653,7 +658,7 @@ def _(my_utils, segment_sales_base_df, segment_sales_df):
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    ## Donut Charts
+    ## Donut Charts and Gauge Charts
 
     TODO : good for single values, goal orientation
     """)
@@ -662,7 +667,7 @@ def _():
 
 @app.cell
 def _():
-    donut_slider = mo.ui.slider(start=.01, stop=1, step=.01, value=.35, label = "Percentage", show_value = True, debounce=True)
+    donut_slider = mo.ui.slider(start=0, stop=1, step=.01, value=.35, label = "Percentage of Sales", show_value = True, debounce=True)
     donut_slider
     return (donut_slider,)
 
@@ -678,8 +683,8 @@ def _(donut_slider, my_utils):
         color=["Phone", "Other"],
         color_discrete_map={"Phone": my_utils.COLOR_PALETTE[0], "Other": "#D2D2D2"},
         hole=0.45,
-        height=450,
-        title=f"Phone Share"
+        height=350,
+        title="Share of Phones"
     )
 
     _phone_donut_fig.update_traces(
@@ -690,18 +695,61 @@ def _(donut_slider, my_utils):
         sort=False,
     )
 
-    _phone_donut_fig.update_layout(showlegend=False,title_x=0.5,margin=dict(t=40),title_font=dict(size=24,weight="bold"))
+    _phone_donut_fig.update_layout(showlegend=False,title_x=0.5,margin=dict(t=40),title_font=dict(size=22,weight="bold"))
 
     _label = f"{_phone_share:.0%}<br>({_phone_share_dollar})"
     _phone_donut_fig.add_annotation(
         x=0.5,
-        y=0.5,
+        y=0.51,
         text=_label,
         showarrow=False,
-        font=dict(size=26),
+        font=dict(size=26,weight="bold"),
     )
 
-    mo.ui.plotly(_phone_donut_fig, config={"displayModeBar": False})
+    #Use Plotly Indicator’s `number.prefix` (and optionally `delta.prefix`) fields.
+
+    _gauge_fig = go.Figure(
+        go.Indicator(
+            mode="gauge+number+delta",
+            value=donut_slider.value * 11000000,
+            number={"valueformat": "$.3s"},
+            delta={
+                "reference": 7500000,
+                "valueformat": "$.3s",
+                "increasing": {"color": my_utils.COLOR_PALETTE[0]},
+                "decreasing": {"color": my_utils.COLOR_PALETTE[2]},
+            },
+            domain={"x": [0, 1], "y": [0, 1]},
+            title={"text": "Phone Sales (vs. Target)", "font": {"size": 22, "weight": "bold"}},
+            gauge={
+                "axis": {
+                    "range": [None, 11000000],
+                    "tickwidth": 1,
+                    "tickcolor": "darkblue",
+                    "tickformat": "$.3s",
+                    "tickvals": [0, 2500000, 5000000, 7500000, 10000000,11000000], # Specify the values where ticks appear
+
+                },
+                "bar": {"color": my_utils.COLOR_PALETTE[0]},
+                "bordercolor": "gray",
+                "steps": [
+                    {"range": [0, 2500000], "color": "#d9dcfa"},
+                    {"range": [2500000, 5000000], "color": "#a4a6dc"},
+                    {"range": [5000000, 7500000], "color": "#7473bd"},
+                ],
+                "threshold": {
+                    "line": {"color": my_utils.COLOR_PALETTE[1], "width": 8},
+                    "thickness": 1,
+                    "value": 7500000,
+                },
+            },
+        )
+    )
+
+    # add margin
+    _gauge_fig.update_layout(margin=dict(t=30), height=350)
+
+    mo.hstack([mo.ui.plotly(_phone_donut_fig, config={"displayModeBar": False}),mo.ui.plotly(_gauge_fig, config={"displayModeBar": False})],gap=2,widths=[.45,.55],align="center",justify="center")
     return
 
 
