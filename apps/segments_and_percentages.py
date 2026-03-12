@@ -37,21 +37,19 @@ def _():
         # Percentages and Segments
 
         When you want to see what makes up a whole, for instance, all customers in Australia or all sales in 2011, it's helpful to figure out how much of the whole each segment represents. 
-        The classic way to represent this is with a pie chart.
+        
+        The classic way to represent this is with a pie chart but that really best comparing one or perhaps two parts to the rest. 
+        Transforming the data to create the kind of comparison that we can do with a pie chart means figuring out how much of the whole one part is. For instance, how much of the total consumer electronics sales were cell phones?
         """)
     
-@app.cell()
-def _(mo):
-    mo.image(src="https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/piechart.png")
-
 @app.cell()
 def _(mo):
     mo.md(
         """
 
-        Pie charts show how much of a whole different segments make. This is a row-wise (per observation) percentage where we have multiple segments within a single observation (like a single year) and we want to see what fraction each segment contributes to that row.
+        This is a row-wise (per observation) percentage where we have multiple segments within a single observation (like a single year) and we want to see what fraction each segment contributes to that row.
 
-        The limitation of a pie chart is that it only allows you to show one 'whole' at a time. When you want to show more than 1 'whole' and compare them, you might look at a stacked bar chart or an area chart.
+        Another limitation of a pie chart is that it only allows you to show one 'whole' at a time. When you want to show more than 1 'whole' and compare them, you might look at a stacked bar chart or an area chart.
         
         The limitation of a stacked bar chart is that it's difficult to compare how much a segment contributes to different wholes. 
         If you want to know how much of sales went to Asia in 2011 versus 2012, you're wanting to know what percentage of all sales Asia contributed in 2011 vs 2012. That's different than knowing the total amount of sales that went to Asia in 2011 and 2012.
