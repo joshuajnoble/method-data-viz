@@ -84,7 +84,7 @@ def _():
     def get_daily_sales():
 
         #path_to_csv = mo.notebook_location() / "public" / "daily_sales.csv"
-        path_to_csv = "https://joshuajnoble.github.io/method-data-viz/apps/public/daily_sales.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/daily_sales.csv"
         daily = pd.read_csv(path_to_csv)
         daily['Order Date'] = pd.to_datetime(daily['Order Date'])
         return daily
@@ -93,7 +93,7 @@ def _():
     def get_event_data():
 
         #path_to_csv = mo.notebook_location() / "public" / "events_2014.csv"
-        path_to_csv = "https://joshuajnoble.github.io/method-data-viz/apps/public/events_2014.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/events_2014.csv"
         events = pd.read_csv(path_to_csv)
         events['Order Date'] = pd.to_datetime(events['Order Date'])
         return events
