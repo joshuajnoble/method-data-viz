@@ -26,8 +26,8 @@ def _():
     @mo.cache
     def get_yearly():
 
-        path_to_csv = mo.notebook_location() / "public" / "yearly_sales.csv"
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+        #path_to_csv = mo.notebook_location() / "public" / "yearly_sales.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/yearly_sales.csv"
         yearly_sales = pd.read_csv(path_to_csv)
         yearly_sales = yearly_sales.sort_values("year")
         return yearly_sales
@@ -35,16 +35,16 @@ def _():
     @mo.cache
     def get_yearly_by_segment():
 
-        path_to_csv = mo.notebook_location() / "public" / "yearly_sales_by_segment.csv"
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+        #path_to_csv = mo.notebook_location() / "public" / "yearly_sales_by_segment.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/yearly_sales_by_segment.csv"
         yearly_by_segment = pd.read_csv(path_to_csv)
         return yearly_by_segment
     
     @mo.cache
     def get_weekly_by_segment():
 
-        path_to_csv = mo.notebook_location() / "public" / "weekly_sales_by_segment.csv"
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/superstore.csv"
+        #path_to_csv = mo.notebook_location() / "public" / "weekly_sales_by_segment.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/weekly_sales_by_segment.csv"
         weekly_sales_by_segment = pd.read_csv(path_to_csv)
         return weekly_sales_by_segment
     
