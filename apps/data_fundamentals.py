@@ -178,7 +178,7 @@ def _(mo):
     yearly_sales_fig_labeled.update_yaxes(tickformat=".2s") 
     mo.ui.plotly(yearly_sales_fig_labeled,config={"displayModeBar": False})
     
-    return (tick_vals)
+    return (__tick_vals)
 
 @app.cell
 def _():
@@ -238,98 +238,10 @@ def _(mo):
 def _():
     mo.md(
         """
-        Picking the right chart depends on the story that you're trying to tell, not which kind of chart looks the best.
+        Picking the right chart depends on the story that you're trying to tell.
         """
     )
     return
-
-
-# @app.cell
-# def _():
-#     mo.md(
-#         """
-#         Multiple lines make it easier to compare trends than multiple bars.
-#         """
-#     )
-#     return
-
-# @app.cell()
-# def _(mo):
-
-#     yearly_sales_by_segment = get_yearly_by_segment()
-
-#     alt.Chart(yearly_sales_by_segment).mark_line(point=True).encode(
-#         alt.Y('sales', axis=alt.Axis(labelExpr='"$"+datum.value+"M"'), title="Sales in Millions of USD"),
-#         alt.X('year:N', title='Year'),
-#         color='Segment:N',  
-#     ).properties(
-#         width=cell_width,  # Set the width to 600 pixels
-#         height=400  # Set the height to 400 pixels
-#     )
-
-
-# @app.cell
-# def _():
-#     mo.md(
-#         """
-#         However, it's difficult to compare at a given point. If we want to make sure that users can compare values at given
-#         point in time, we need to provide a different affordance. There are a number of ways to do that, one is through interaction.
-#         """
-#     )
-#     return
-
-# @app.cell()
-# def _(mo):
-
-#     weekly_sales_by_segment = get_weekly_by_segment()
-
-#     # Create a selection that chooses the nearest point & selects based on x-value
-#     nearest = alt.selection_point(nearest=True, on="pointerover", fields=["Order Date"], empty=False)
-
-#     # The basic line
-#     line = alt.Chart(weekly_sales_by_segment).mark_line().encode(
-#         #x="Order Date:O",
-#         x=alt.X('Order Date:T', axis=alt.Axis(tickCount=2, format="%Y-%m-%d", labelAngle=-45)),
-#         y=alt.Y('truncated:Q', axis=alt.Axis(labelExpr='"$"+datum.value+"K"'), title="Weekly Sales in USD"),
-#         color="Segment:N",
-#         opacity=alt.value(0.5)
-#     )
-
-#     # Transparent selectors across the chart. This is what tells us
-#     # the x-value of the cursor
-#     selectors = alt.Chart(weekly_sales_by_segment).mark_point().encode(x="Order Date", opacity=alt.value(0)).add_params( nearest )
-#     when_near = alt.when(nearest)
-
-#     # Draw points on the line, and highlight based on selection
-#     points = line.mark_point().encode(opacity=when_near.then(alt.value(1)).otherwise(alt.value(0)))
-
-#     # Draw text labels near the points, and highlight based on selection
-#     text = line.mark_text(align="left", dx=5, dy=-5, fontWeight='bolder').encode(
-#         text=when_near.then(alt.Text("sales:Q", format="$.2~s")).otherwise(alt.value(" ")), color=alt.value("black")
-#     )
-
-#     # text = line.mark_text(align="left", dx=5, dy=-5, fontWeight='bolder').encode(
-#     #     text=when_near.then(alt.expr("'$' + format(datum.truncated) + 'K'")).otherwise(alt.value(" ")), color=alt.value("black")
-#     # )
-
-#     text_background = text.mark_text(
-#         align='left',
-#         dx=5,dy=-5,
-#         stroke='white',
-#         strokeWidth=5,
-#         strokeJoin='round'
-#     )
-
-#     # Draw a rule at the location of the selection
-#     rules = alt.Chart(weekly_sales_by_segment).mark_rule(color="gray").encode(
-#         x="Order Date",
-#     ).transform_filter(
-#         nearest
-#     )
-
-#     # Put the five layers into a chart and bind the data
-#     alt.layer( line, selectors, points, rules, text_background, text ).properties( width=cell_width, height=400 )
-
 
 if __name__ == "__main__":
     app.run()

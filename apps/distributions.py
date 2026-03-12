@@ -62,7 +62,7 @@ def _():
 
 @app.cell
 def _():
-    path_to_img = mo.notebook_location() / "public" / 'distribution_frame.png'
+    path_to_img = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/distribution_frame.png"
     mo.image(path_to_img)
     return
 
