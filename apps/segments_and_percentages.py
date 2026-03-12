@@ -42,7 +42,7 @@ def _():
     
 @app.cell()
 def _(mo):
-    mo.image(src="https://github.com/joshuajnoble/method-data-viz/blob/main/apps/public/piechart.png")
+    mo.image(src="https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/piechart.png")
 
 @app.cell()
 def _(mo):

@@ -1,13 +1,16 @@
 # /// script
 # requires-python = ">=3.9"
 # dependencies = [
-#     "altair==5.4.1",
 #     "marimo",
-#     "vega-datasets==0.9.0",
+#     "plotly",
+#     "pandas",
+#     "numpy",
+#     "scipy"
 # ]
 # ///
 
 import marimo as mo
+import plotly.express as px
 
 __generated_with = "0.19.7"
 app = mo.App(width="medium")
@@ -18,7 +21,6 @@ app = mo.App(width="medium")
 def _():
     import marimo as mo
     import pandas as pd
-    import altair as alt
     import plotly.express as px
 
     cell_width = 800
@@ -27,7 +29,7 @@ def _():
     def get_yearly():
 
         #path_to_csv = mo.notebook_location() / "public" / "yearly_sales.csv"
-        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/yearly_sales.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/yearly_sales.csv"
         yearly_sales = pd.read_csv(path_to_csv)
         yearly_sales = yearly_sales.sort_values("year")
         return yearly_sales
@@ -36,7 +38,7 @@ def _():
     def get_yearly_by_segment():
 
         #path_to_csv = mo.notebook_location() / "public" / "yearly_sales_by_segment.csv"
-        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/yearly_sales_by_segment.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/yearly_sales_by_segment.csv"
         yearly_by_segment = pd.read_csv(path_to_csv)
         return yearly_by_segment
     
@@ -48,7 +50,7 @@ def _():
         weekly_sales_by_segment = pd.read_csv(path_to_csv)
         return weekly_sales_by_segment
     
-    return (mo,)
+    return (mo,px)
 
 @app.cell(hide_code=True)
 def __(mo):
@@ -166,7 +168,8 @@ def _():
 @app.cell()
 def _(mo):
 
-    yearly_sales_fig_labeled = px.bar(get_yearly(), x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
+    sales = get_yearly()
+    yearly_sales_fig_labeled = px.bar(sales, x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
 
     __tick_vals = [2011, 2012, 2013, 2014]
     yearly_sales_fig_labeled.update_xaxes(
@@ -178,7 +181,7 @@ def _(mo):
     yearly_sales_fig_labeled.update_yaxes(tickformat=".2s") 
     mo.ui.plotly(yearly_sales_fig_labeled,config={"displayModeBar": False})
     
-    return (__tick_vals)
+    return
 
 @app.cell
 def _():
@@ -186,25 +189,7 @@ def _():
         The height of a bar shows the yearly sales. The point of it is to show how the different years compare to one another. The higher the bar, the more sales.
         Note that we know what we're measuring, _sales_, what units it's in, _USD_, and what sections are being used to measure, _years_.
         We've all made lots of these in our lives and they work because we humans can easily compare the heights of two things.
-    """)
-    return
 
-@app.cell()
-def _(mo, tick_vals):
-
-    _tick_vals = [2011, 2012, 2013, 2014]
-    yearly_sales_fig = px.bar(get_yearly(), x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
-    yearly_sales_fig.update_xaxes(
-        tickmode="array",
-        tickvals=_tick_vals,
-        ticktext=[f"{v}" for v in _tick_vals]
-    )
-    mo.ui.plotly(yearly_sales_fig,config={"displayModeBar": False})
-
-@app.cell
-def _():
-    mo.md(
-        """
         The purpose of visualizing data is to tell a story. What's the story that you're trying to tell?
 
         Here the story is that 2014 was a stronger year. We can see that easily because we can compare the heights of objects easily.
@@ -216,6 +201,7 @@ def _():
 
 @app.cell()
 def _(mo):
+    
     
     yearly_sales = get_yearly()
     yearly_sales['truncated'] = yearly_sales['sales']/1_000_000
@@ -232,6 +218,7 @@ def _(mo):
     yearly_line.update_yaxes(tickformat="$,.2s")
 
     mo.ui.plotly(yearly_line,config={"displayModeBar": False})
+    return
 
 
 @app.cell
