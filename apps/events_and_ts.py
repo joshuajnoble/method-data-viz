@@ -72,9 +72,6 @@ def _():
 
     @mo.cache
     def get_weekly():
-
-        #path_to_csv = mo.notebook_location() / "public" / "weekly_sales.csv"
-        #path_to_csv = "https://joshuajnoble.github.io/method-data-viz/apps/public/weekly_sales.csv"
         path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales.csv"
         weekly = pd.read_csv(path_to_csv)
         weekly['Order Date'] = pd.to_datetime(weekly['Order Date'])
@@ -82,8 +79,6 @@ def _():
 
     @mo.cache
     def get_daily_sales():
-
-        #path_to_csv = mo.notebook_location() / "public" / "daily_sales.csv"
         path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/daily_sales.csv"
         daily = pd.read_csv(path_to_csv)
         daily['Order Date'] = pd.to_datetime(daily['Order Date'])
@@ -91,8 +86,6 @@ def _():
 
     @mo.cache
     def get_event_data():
-
-        #path_to_csv = mo.notebook_location() / "public" / "events_2014.csv"
         path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/events_2014.csv"
         events = pd.read_csv(path_to_csv)
         events['Order Date'] = pd.to_datetime(events['Order Date'])
@@ -100,9 +93,7 @@ def _():
     
     @mo.cache
     def get_weekly_by_segment():
-
-        #path_to_csv = mo.notebook_location() / "public" / "weekly_sales_by_segment.csv"
-        path_to_csv = "https://joshuajnoble.github.io/method-data-viz/apps/public/weekly_sales_by_segment.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales_by_segment.csv"
         weekly_sales_by_segment = pd.read_csv(path_to_csv)
         weekly_sales_by_segment['Order Date'] = pd.to_datetime(weekly_sales_by_segment['Order Date'])
         return weekly_sales_by_segment
@@ -114,7 +105,9 @@ def _():
 def _():
     mo.md(
         """
-        # Data with time
+        # Time and Flows
+
+        Ah, the most philosohpical of our charting sections: what does time mean and how do things flow from one state to another? If you're a project manager, this section is for you, because we are going to talk about Gantt charts.
         
         Time is a data feature that naturally lends itself to grouping or filtering and because of that, it's a powerful tool for creating aggregate views. 
         For instance: all sales in 2012 or the aggregated sales on the first day of a month. It's also potentially very confusing.
@@ -147,7 +140,7 @@ def _():
         """
         
         We can also take the weekly change to see how one week compares to another. This is called 'differencing' and it can clearly show trends.
-        In our dataset there is no clear trend:
+        In our dataset there is no clear trend in the weekly amount of sales. That's helpful to know!
 
         """
     )
@@ -253,13 +246,43 @@ def _(chart_slider, events):
 
     return
 
-# @app.cell
-# def _():
 
-#     scatter_fig_plotting = px.scatter(event_df.query("Segment == 'Consumer'"), x="Order Date", y="Sales", size="Profit", opacity=0.1)
-#     mo.ui.plotly(scatter_fig_plotting, config={"displayModeBar": False})
-#     return
+@app.cell
+def _():
+    mo.md(
+        """
 
+
+
+        ## Sequences and Flows
+
+        Gantt chart
+
+        Sankey chart
+
+        """
+    )
+    return
+
+
+@app.cell
+def _():
+
+    # dummy data
+    df = pd.DataFrame([
+        dict(Task="Job A", Start='2025-01-01', Finish='2025-02-28', Resource="Alex"),
+        dict(Task="Job B", Start='2025-03-05', Finish='2025-04-15', Resource="Alex"),
+        dict(Task="Job C", Start='2025-02-20', Finish='2025-05-30', Resource="Max")
+    ])
+
+    # Create the timeline chart
+    fig = px.timeline(df, x_start="Start", x_end="Finish", y="Task", color="Resource")
+
+    # Customize the layout (optional)
+    fig.update_layout(title="Project Schedule")
+
+    # Display the figure
+    mo.ui.plotly(fig, config={"displayModeBar": False})
 
 if __name__ == "__main__":
     app.run()
