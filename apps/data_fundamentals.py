@@ -88,26 +88,32 @@ def __(mo):
           Most of the time visualizations are meant to highlight the result of some operation on a set of data. Most of these operations are done before you visualize data, but many can be feature of dashboards or interactive visualizations. The point of visualizing data is to make these operations easier to understand.
           If humans could automatically parse the cells in an Excel, we'd never use charts, but that's just not how our brains work. There are many many kinds of things that people do with data but it's important to understand the most common because that's what most of us need to communicate and to understand.
           
+          One nice thing about living in a world of charts is that most of these things are really familiar to us, even if the terms aren't. You've already seen these dozens of times because you've already seen and perfectly understood charts that use them.
+
+          **If you can read a chart, you can mentally do the data work that went into making it.**
+
           When we work with data, usually we are picking one field of some data and using to inform our view of other fields. When a sale happened can be as informative and what it purchased or how the total sale amount.
 
         ## Filtering
           
-          This means looking at all sales in New York City or all computer purchases on Jan 12, 2025. You filter out items to try to find insights about a specific category of items or range of numeric or temporal values. This can be static, "here are sales from Asia", or interactive, "select which region you want to see sales from".
+          This means looking at something like "sales in New York City" or "all computer purchases on Jan 12, 2025". Almost any chart you've ever seen does this. You filter out items to try to find insights about a specific category of items or range of numeric or temporal values. This can be static, "here are sales from Asia", or interactive, "select which region you want to see sales from".
           
         ## Sorting
           
-          This means arranging values according to one or more variables, for instance, individual sales ranked from highest dollar amount to lowest. You've definitely seen this before. When you sort data, you give an ordering that it doesn't naturally contain, 
+          This means arranging values according to one or more variables, for instance, individual sales ranked from highest dollar amount to lowest. You've seen this when you looked at the standings of teams in a league or sorted by cost at an retailers website. When you sort data, you give an ordering that it doesn't naturally contain, 
           so it's important to make sure that you know what fields you're sorting on. Putting a classroom of students in order by age is different ordering them by height or grade point average. The point of sorting is to see how one feature of the data relates
           to others.
           
         ## Aggregating
           
-          When we aggregate, we group information about an event by one of its values to reduce what we're looking at. That can be simple, like adding together all the sales, or complicated, like grouping together all sales to East Asia except Korea by category to compare monitor sales to projector sales. 
+          This goes along with filtering. Usually when we look at "sales in New York City" we say something like "all sales in New York City". Any bar chart you've ever seen is aggregating. When we aggregate, we group information about an event by one of its values to reduce what we're looking at.
+          That can be simple, like adding together all the sales, or complicated, like grouping together all sales to East Asia except Korea by category to compare monitor sales to projector sales. 
           Aggregation often gets combined with other operations: find the biggest sales and sort them, find the least expensive items to ship that are consumer electronics, the average order amount in December vs April. 
           By combining different operations, we can use visualization to explore for ourselves and communicate to others.
 
         ## Feature Engineering
           
+          Any time you've seen a line chart showing "profit" or "Annual Run Revenue" or, for NFL fans, "Quarterback Rating", you've understood this. It's a number made from other numbers.
           Often times the information about filtered or aggregated values alone isn't quite enough, sometimes we need to make up new kinds of information. An easy example is profit: purchase price minus cost to seller. Profit margin is just profit divided by sales. 
           Complex metrics like Annual Run Rate are made from aggregating and filtering data. These are new features built from existing data. Building new feature
 
@@ -126,7 +132,7 @@ def __(mo):
           
         # Stages of data work
 
-          Most of the time, when we're working with data we have a few different stages of doing so: we explore, we diagnose, and then we explain. 
+          Most of the time, when we're working with data we have a few different stages of doing so: we **explore**, we **diagnose**, and then we **explain**. 
           At first, we're just trying to understnad what the data is and what things we might be able to learn from it. Is the sales data complete? Can we join it with other data sources like how much stock is at our suppliers or global prices?
           These kinds of visualizations are open-ended and iterative and often involve many quick visualizations and are focused on our own learning or sharing with our team rather than communicating with an audience.
           
@@ -160,7 +166,7 @@ def _():
 
         This site is an attempt to demonstrate a little bit of why we visualize data, show some of the principles of what visualizing data is about, and to show examples of how different kinds of data can and should be visualized.
 
-        Let's start with bar charts:
+        Let's start with the simplest of charts, the bar chart. In a later section of this, we'll dive much more deeply into these, but for right now, they're a great place to start thinking about thinking with data.
         """
     )
     return
@@ -168,20 +174,20 @@ def _():
 @app.cell()
 def _(mo):
 
-    sales = get_yearly()
-    yearly_sales_fig_labeled = px.bar(sales, x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
+    yearly_sales = get_yearly()
+    yearly_sales_fig_labeled = px.bar(yearly_sales, x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
 
-    __tick_vals = [2011, 2012, 2013, 2014]
+    tick_vals = [2011, 2012, 2013, 2014]
     yearly_sales_fig_labeled.update_xaxes(
         tickmode="array",
-        tickvals=__tick_vals,
-        ticktext=[f"{v}" for v in __tick_vals]
+        tickvals=tick_vals,
+        ticktext=[f"{v}" for v in tick_vals]
     )
     yearly_sales_fig_labeled.update_layout(yaxis_tickprefix = 'USD$', yaxis_tickformat = ',.')
     yearly_sales_fig_labeled.update_yaxes(tickformat=".2s") 
     mo.ui.plotly(yearly_sales_fig_labeled,config={"displayModeBar": False})
     
-    return
+    return (yearly_sales, tick_vals,)
 
 @app.cell
 def _():
@@ -192,7 +198,7 @@ def _():
 
         The purpose of visualizing data is to tell a story. What's the story that you're trying to tell?
 
-        Here the story is that 2014 was a stronger year. We can see that easily because we can compare the heights of objects easily.
+        Here the story is that 2014 was a stronger year than any of the previous years. We can see that easily because we can compare the heights of objects easily.
 
         However, if our goal is show the _trend_, then a line shows a trend better than a bar.
         """
@@ -200,15 +206,15 @@ def _():
     return
 
 @app.cell()
-def _(mo):
+def _(mo, yearly_sales, tick_vals):
     
     
-    yearly_sales = get_yearly()
     yearly_sales['truncated'] = yearly_sales['sales']/1_000_000
 
-    yearly_line = px.line(yearly_sales, x="year", y="truncated", labels={"year": "Financial Year","truncated": "Total Sales in Millions ($)"}, title='Sales Per Year in Millions of USD')
+    yearly_line = px.line(yearly_sales, x="year", y="sales", labels={"year": "Financial Year","sales": "Total Sales in Millions ($)"}, title='Sales Per Year in Millions of USD')
 
-    tick_vals = [2010, 2011, 2012, 2013, 2014, 2015]
+    yearly_line.update_traces(mode='lines+markers')
+
     yearly_line.update_xaxes(
         tickmode="array",
         tickvals=tick_vals,
@@ -225,7 +231,31 @@ def _(mo):
 def _():
     mo.md(
         """
-        Picking the right chart depends on the story that you're trying to tell.
+        Picking the right chart depends on the story that you're trying to tell but it also depends on what kinds of data transformations you can (and can't) do with the data.
+        
+        The bar chart and the line chart shown here both use the exact same data, there's no need to make more changes in order to show one or the other. However, getting to the point of being able to show this data is a little tricky.
+
+        We have to answer two questions first:
+
+        1. What are all the years in our dataset?
+        2. For each year, what is the total sum of sales?
+
+        Those operations can happen in Excel, in code, you could even do them by hand with a calculator if you felt like it. The point isn't so much how they get done as they're both what the chart is showing and what the data looked like before the chart could be created. The sales data underlying those charts looks like this:
+
+        |   Row ID | Order ID       | Order Date   | Ship Date   | Ship Mode    | Customer ID   | Customer Name   | Segment   |   Sales |
+        |---------:|:---------------|:-------------|:------------|:-------------|:--------------|:----------------|:----------|--------:|
+        |    32298 | CA-2012-124891 | 7/31/12      | 7/31/12     | Same Day     | RH-19495      | Rick Hansen     | Consumer  | 2309.65 |
+        |    26341 | IN-2013-77878  | 2/5/13       | 2/7/13      | Second Class | JR-16210      | Justin Ritter   | Corporate | 3709.39 |
+        |    25330 | IN-2013-71249  | 10/17/13     | 10/18/13    | First Class  | CR-12730      | Craig Reiter    | Consumer  | 5175.17 |
+
+        This might look a little overwhelming at first but to get to the data that we're interested in, we're going to ignore most of it. All we care about is the year in the Order Date column and the Sales. Everything else doesn't matter for our chart or the story we're trying to tell.
+
+        To get to the data that we need for our bar chart, we get the date from every row (and in this dataset there are more than 50,000) and depending on the year, add it to the running total for that year. That's both what the chart shows and what the data we need is.
+
+        This is important to understand becuase visualizing data really is manipulating it, that's actually what's going on when you make a chart. Again, that doesn't mean that you need to be a data scientist to make beautiful and meaningful visualizations. It means that if you've been reading charts, you already know how to do most of these things, conceptually speaking at least.
+
+        Visualizing data well isn't about showing all the data or even knowing all of the data, it's about knowing what you're interested in and how to communicate that effectively to your audience.
+
         """
     )
     return
