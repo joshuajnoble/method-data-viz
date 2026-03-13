@@ -79,7 +79,8 @@ def _():
 
     @mo.cache
     def get_daily_sales():
-        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/daily_sales.csv"
+        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/daily_sales.csv"
+        path_to_csv = mo.notebook_location() / "public" / "daily_sales.csv"
         daily = pd.read_csv(path_to_csv)
         daily['Order Date'] = pd.to_datetime(daily['Order Date'])
         return daily
@@ -171,6 +172,8 @@ def _():
 @app.cell
 def _():
 
+    import calendar
+
     daily = get_daily_sales()
 
     heatmap = go.Figure(data=go.Heatmap(
@@ -179,8 +182,15 @@ def _():
             x=daily["Order Date"].dt.day,
             colorscale='Viridis'
         ))
+    
+    months = list(calendar.month_name)[1:]
 
-    heatmap.update_layout(title='Daily Total Sales')
+    heatmap.update_layout(
+        title='Daily Total Sales',
+        xaxis=dict(title='Day'),
+        yaxis=dict(title='Month', tickmode='array', tickvals=np.arange(1,13), ticktext=months)
+    )
+
     mo.ui.plotly(heatmap, config={"displayModeBar": False})
 
     return (daily)
@@ -256,9 +266,11 @@ def _():
 
         ## Sequences and Flows
 
-        Gantt chart
+        Time is also a key component of sequences, that is, some kind of data object that has a start timestamp and an end timestamp. 
+        If you've ever seen a project plan, you've seen a Gantt chart, and thus you've understood a sequence. The Gantt chart is meant to be read from top to bottom and left to right.
+        Typically the y-axis in the chart sorts by start date but there are no strict rules about this. The x-axis is the date and that's applied to both the start and the end date.
 
-        Sankey chart
+        In the below Gantt chart we can see how Josh and Ben worked on this project (although, caveats, this is faked)
 
         """
     )
@@ -268,21 +280,35 @@ def _():
 @app.cell
 def _():
 
-    # dummy data
-    df = pd.DataFrame([
-        dict(Task="Job A", Start='2025-01-01', Finish='2025-02-28', Resource="Alex"),
-        dict(Task="Job B", Start='2025-03-05', Finish='2025-04-15', Resource="Alex"),
-        dict(Task="Job C", Start='2025-02-20', Finish='2025-05-30', Resource="Max")
+    gantt_data = pd.DataFrame([
+        dict(Task="Planning and Initial Script", Start='2025-01-15', Finish='2025-02-15', Resource="Josh"),
+        dict(Task="Script Review and Refinement", Start='2025-02-01', Finish='2025-02-28', Resource="Ben"),
+        dict(Task="Design Definition", Start='2025-02-15', Finish='2025-02-28', Resource="Ben"),
+        dict(Task="Technical Architecture", Start='2025-01-15', Finish='2025-02-28', Resource="Josh"),
+        dict(Task="Visualization Development", Start='2025-03-05', Finish='2025-05-30', Resource="Ben"),
+        dict(Task="Visualization Development", Start='2025-04-01', Finish='2025-05-30', Resource="Josh"),
+        dict(Task="Workshop Prep, Ben", Start='2025-06-01', Finish='2025-06-08', Resource="Ben"),
+        dict(Task="Workshop Prep, Josh", Start='2025-06-01', Finish='2025-06-08', Resource="Josh")
     ])
 
-    # Create the timeline chart
-    fig = px.timeline(df, x_start="Start", x_end="Finish", y="Task", color="Resource")
+    gantt_data = gantt_data.sort_values("Start")
 
-    # Customize the layout (optional)
-    fig.update_layout(title="Project Schedule")
+    fig = px.timeline(gantt_data, x_start="Start", x_end="Finish", y="Task", color="Resource")
+
+    fig.update_layout(yaxis={'categoryorder': 'array', 'categoryarray': gantt_data["Task"].unique()[::-1]})
 
     # Display the figure
     mo.ui.plotly(fig, config={"displayModeBar": False})
+
+
+@app.cell
+def _():
+    mo.md(
+        """
+        Sankey chart
+        """
+    )
+    return
 
 if __name__ == "__main__":
     app.run()
