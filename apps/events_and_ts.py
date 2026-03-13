@@ -72,8 +72,8 @@ def _():
 
     @mo.cache
     def get_superstore():
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales.csv"
-        path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/superstore.csv"
+        #path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
         superstore = pd.read_csv(path_to_csv)
         return superstore
 
@@ -86,6 +86,7 @@ def _():
 
     @mo.cache
     def get_daily_sales():
+        # TODO change this back after pushing to main - figure out a better way to handle this
         #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/daily_sales.csv"
         path_to_csv = mo.notebook_location() / "public" / "daily_sales.csv"
         daily = pd.read_csv(path_to_csv)
@@ -122,7 +123,7 @@ def _():
 
         Not all data that includes time is the same. For instance, if your data has irregular time stamps like tracking when earthquakes happen, 
         then that's event data. If your data has regular time stamps, like tracking the temperature inside your house every hour, then that's a 
-        time series. Because they're pretty different types of data, they should different sorts of visualization.
+        time series. Because they're pretty different types of data, they should use different sorts of visualization.
 
         ## Time Series 
         
@@ -319,10 +320,11 @@ def _():
         Technically a Sankey chart is weighted directed graph. The dataset is usually what is called an "edge list" and it contains nodes and edges along with a weight list for each edge.
 
         You may have seen these in maps of energy sources. In fact the "Sankey" graph is named after a fellow with the last name Sankey who invented them to visualize energy efficiency in steam engines.
-        They're an excellent fit for a situation where a flow transitions into multiple sub-flows. For instance: company revenue turns into salaries for workers, taxes, and profits to shareholders. That's a form of process mapping.
+        They're an excellent fit for a situation where a flow transitions into multiple sub-flows. For instance, how energy flowing through a system, or how company revenue turns into salaries for workers, taxes, and profits to shareholders. That's a form of process mapping.
         It's that "turns into" that gives the Sankey its distinctive shape and they do certainly look cool.
 
-        There are some caveats to the Sankey though: they're not appropriate when precise comparisons need to be made and they very quickly become visually over-whelming and uninformative.
+        There are some caveats to the Sankey though: they're not appropriate when precise comparisons need to be made and they very quickly become visually overwhelming and uninformative. 
+        They can become bad enough to inspire a whole [article](https://freerangestats.info/blog/2025/06/25/sankey-charts) and that's testament to how good they are when used well and unhelpful they are when used poorly.
 
         """
     )
@@ -370,9 +372,16 @@ def _(hide_code=False):
     ))
 
     sankey_fig.update_layout(title="Superstore Flow")
+    sankey_fig
 
-    mo.ui.plotly(sankey_fig, config={"displayModeBar": False})
-    return
+@app.cell
+def _():
+    mo.md("""
+        Sankey charts teach us something important to remember about really cool kinds of charts: they often get in the way of what a chart or visualization is supposed to do. The same is true for alluvial charts, network graphs, word-clouds and many other kinds of visually complex but difficult to understand visualizations.
+          Communicating information clearly and concisely might not seem spectacular, but it is impressive because it is hard to do. A good visualization very much follows an 'outcomes over outputs' philosophy.
+          If the reader of a visualization can understand what to _do_ with that information, then the output is impressive because it leads to the right outcome.
+    """)
+          
 
 if __name__ == "__main__":
     app.run()
