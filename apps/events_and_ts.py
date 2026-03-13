@@ -74,9 +74,8 @@ def _():
     def get_superstore():
         #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales.csv"
         path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
-        weekly = pd.read_csv(path_to_csv)
-        weekly['Order Date'] = pd.to_datetime(weekly['Order Date'])
-        return weekly
+        superstore = pd.read_csv(path_to_csv)
+        return superstore
 
     @mo.cache
     def get_weekly():
@@ -330,12 +329,12 @@ def _():
     return
 
 @app.cell
-def _():
+def _(hide_code=False):
 
     superstore = get_superstore()
 
     seg_cat = (superstore.groupby(["Segment", "Category"])["Sales"].sum().reset_index())
-    cat_sub = (df.groupby(["Category", "Sub-Category"])["Sales"].sum().reset_index())
+    cat_sub = (superstore.groupby(["Category", "Sub-Category"])["Sales"].sum().reset_index())
 
     nodes = list(pd.concat([
         seg_cat["Segment"],
@@ -357,8 +356,6 @@ def _():
     targets = pd.concat([targets, targets2])
     values  = pd.concat([values, values2])
 
-    import plotly.graph_objects as go
-
     sankey_fig = go.Figure(go.Sankey(
         node=dict(
             label=nodes,
@@ -372,12 +369,10 @@ def _():
         )
     ))
 
-    sankey_fig.update_layout(
-        title="Superstore Sales Flow: Segment → Category → Sub-Category",
-        font_size=12
-    )
+    sankey_fig.update_layout(title="Superstore Flow")
 
     mo.ui.plotly(sankey_fig, config={"displayModeBar": False})
+    return
 
 if __name__ == "__main__":
     app.run()
