@@ -324,7 +324,7 @@ def _():
         It's that "turns into" that gives the Sankey its distinctive shape and they do certainly look cool.
 
         There are some caveats to the Sankey though: they're not appropriate when precise comparisons need to be made and they very quickly become visually overwhelming and uninformative. 
-        They can become bad enough to inspire a whole [article](https://freerangestats.info/blog/2025/06/25/sankey-charts) and that's testament to how good they are when used well and unhelpful they are when used poorly.
+        They can become bad enough to inspire a whole [article](https://sciolisticramblings.wordpress.com/2018/11/23/sankey-charts-the-new-pie-chart/) and that's testament to how good they are when used well and unhelpful they are when used poorly.
 
         """
     )
