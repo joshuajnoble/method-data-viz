@@ -235,6 +235,7 @@ def _():
         """
         
         Instead, think of finding what events are relevant to reduce the chart density and guide the readers of the chart to what's most useful.
+        Check out how much more legible this chart becomes with a filter for the lower bound.
 
         """
     )
@@ -378,8 +379,8 @@ def _(hide_code=False):
 def _():
     mo.md("""
         Sankey charts teach us something important to remember about really cool kinds of charts: they often get in the way of what a chart or visualization is supposed to do. The same is true for alluvial charts, network graphs, word-clouds and many other kinds of visually complex but difficult to understand visualizations.
-          Communicating information clearly and concisely might not seem spectacular, but it is impressive because it is hard to do. A good visualization very much follows an 'outcomes over outputs' philosophy.
-          If the reader of a visualization can understand what to _do_ with that information, then the output is impressive because it leads to the right outcome.
+        Communicating information clearly and concisely might not seem spectacular, but it is impressive because it is hard to do. A good visualization very much follows an 'outcomes over outputs' philosophy.
+        If the reader of a visualization can understand what to _do_ with that information, then the output is impressive because it leads to the right outcome.
     """)
           
 
