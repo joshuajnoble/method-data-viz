@@ -71,6 +71,14 @@ with app.setup(hide_code=True):
 def _():
 
     @mo.cache
+    def get_superstore():
+        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales.csv"
+        path_to_csv = mo.notebook_location() / "public" / "superstore.csv"
+        weekly = pd.read_csv(path_to_csv)
+        weekly['Order Date'] = pd.to_datetime(weekly['Order Date'])
+        return weekly
+
+    @mo.cache
     def get_weekly():
         path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales.csv"
         weekly = pd.read_csv(path_to_csv)
@@ -262,15 +270,14 @@ def _():
     mo.md(
         """
 
+        ## Sequences
 
+        Time is also a key component of sequences, that is, some kind of event that has a start timestamp and an end timestamp. 
+        If you've ever seen a project plan, you've seen a Gantt chart, and thus you've understood a sequence. The Gantt chart is usually meant to be read from top to bottom (typically the y-axis in a project planning Gantt chart sorts by start date) and left to right. 
+        The x-axis is the date and that's applied to both the start and the end date. The width of a band shows the relative duration of an event as well as the relative ordering of the begining and ending of events.
+        What we get from a Gantt chart is an view of sequences and their relationships to one another in time.
 
-        ## Sequences and Flows
-
-        Time is also a key component of sequences, that is, some kind of data object that has a start timestamp and an end timestamp. 
-        If you've ever seen a project plan, you've seen a Gantt chart, and thus you've understood a sequence. The Gantt chart is meant to be read from top to bottom and left to right.
-        Typically the y-axis in the chart sorts by start date but there are no strict rules about this. The x-axis is the date and that's applied to both the start and the end date.
-
-        In the below Gantt chart we can see how Josh and Ben worked on this project (although, caveats, this is faked)
+        In the below Gantt chart we can see how Josh and Ben worked on this project (although, caveats, the data is not real).
 
         """
     )
@@ -305,10 +312,72 @@ def _():
 def _():
     mo.md(
         """
-        Sankey chart
+
+        ## Flows
+
+        A flow is sort of like the set of sequences we see in a Gantt chart (sort of) and it's often represented in a Sankey chart. That name might not be familiar to you, but there's a very good chance that you've seen one before.
+
+        Technically a Sankey chart is weighted directed graph. The dataset is usually what is called an "edge list" and it contains nodes and edges along with a weight list for each edge.
+
+        You may have seen these in maps of energy sources. In fact the "Sankey" graph is named after a fellow with the last name Sankey who invented them to visualize energy efficiency in steam engines.
+        They're an excellent fit for a situation where a flow transitions into multiple sub-flows. For instance: company revenue turns into salaries for workers, taxes, and profits to shareholders. That's a form of process mapping.
+        It's that "turns into" that gives the Sankey its distinctive shape and they do certainly look cool.
+
+        There are some caveats to the Sankey though: they're not appropriate when precise comparisons need to be made and they very quickly become visually over-whelming and uninformative.
+
         """
     )
     return
+
+@app.cell
+def _():
+
+    superstore = get_superstore()
+
+    seg_cat = (superstore.groupby(["Segment", "Category"])["Sales"].sum().reset_index())
+    cat_sub = (df.groupby(["Category", "Sub-Category"])["Sales"].sum().reset_index())
+
+    nodes = list(pd.concat([
+        seg_cat["Segment"],
+        seg_cat["Category"],
+        cat_sub["Sub-Category"]
+    ]).unique())
+
+    node_index = {name: i for i, name in enumerate(nodes)}
+
+    sources = seg_cat["Segment"].map(node_index)
+    targets = seg_cat["Category"].map(node_index)
+    values  = seg_cat["Sales"]
+
+    sources2 = cat_sub["Category"].map(node_index)
+    targets2 = cat_sub["Sub-Category"].map(node_index)
+    values2  = cat_sub["Sales"]
+
+    sources = pd.concat([sources, sources2])
+    targets = pd.concat([targets, targets2])
+    values  = pd.concat([values, values2])
+
+    import plotly.graph_objects as go
+
+    sankey_fig = go.Figure(go.Sankey(
+        node=dict(
+            label=nodes,
+            pad=20,
+            thickness=20
+        ),
+        link=dict(
+            source=sources,
+            target=targets,
+            value=values
+        )
+    ))
+
+    sankey_fig.update_layout(
+        title="Superstore Sales Flow: Segment → Category → Sub-Category",
+        font_size=12
+    )
+
+    mo.ui.plotly(sankey_fig, config={"displayModeBar": False})
 
 if __name__ == "__main__":
     app.run()
