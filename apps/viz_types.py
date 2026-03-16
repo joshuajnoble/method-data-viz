@@ -346,24 +346,22 @@ def _(my_utils):
         show_value = True,
         full_width=True
     )
-
-    mo.center(horizontal_bar_slider)
-
     _message = my_utils.callout_neutral("TODO")
-
     mo.hstack([_message,horizontal_bar_slider],gap=2,align="center",widths=[2,.75])
     return (horizontal_bar_slider,)
 
 
 @app.cell
 def _():
-    horizontal_switch = mo.ui.switch(value=False, label=f"Toggle parent category highlighting.")
+    horizontal_switch = mo.ui.switch(value=False, label=f"Toggle grouping highlight.")
     return (horizontal_switch,)
 
 
-@app.cell
-def _(horizontal_bar_slider, my_utils):
-    my_utils.title_with_icon(value = horizontal_bar_slider.value, cutoff_value = 7, title = "Horizontal Bar Chart", subtitle="(Total Sales by Category)")
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### <b>Horizontal Bar Chart</b> (Total Sales by Category)
+    """)
     return
 
 
@@ -438,7 +436,7 @@ def _(base_df, horizontal_bar_slider, horizontal_switch, my_utils):
             x=0,
             font=dict(size=14),
         ),
-        margin=dict(l=10, r=10, t=0, b=10),
+        margin=dict(l=10, r=10, t=(0 if horizontal_switch.value else 30), b=10),
         yaxis={'categoryorder':'total ascending'}
     )
 
@@ -454,7 +452,16 @@ def _():
 
 @app.cell
 def _(horizontal_bar_slider, my_utils):
-    my_utils.title_with_icon(value = horizontal_bar_slider.value, cutoff_value = 7, title = "Small Multiples", subtitle="(Total Sales by Category)")
+    _message = my_utils.callout_neutral("TODO")
+    mo.hstack([_message,horizontal_bar_slider],gap=2,align="center",widths=[2,.75])
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### <b>Small Multiples</b> (Category Sales by Grouping)
+    """)
     return
 
 
