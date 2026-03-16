@@ -353,7 +353,7 @@ def _(my_utils):
 
 @app.cell
 def _():
-    horizontal_switch = mo.ui.switch(value=False, label=f"Toggle grouping highlight.")
+    horizontal_switch = mo.ui.switch(value=False, label=f"Emphasize differences in categories by highlighting their groupings.")
     return (horizontal_switch,)
 
 
