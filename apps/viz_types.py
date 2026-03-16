@@ -339,7 +339,7 @@ def _():
 @app.cell
 def _(my_utils):
     horizontal_bar_slider = mo.ui.slider(
-        start=2,
+        start=3,
         stop=12,
         value=7,
         label="Number of categories",
@@ -357,26 +357,24 @@ def _(my_utils):
 
 @app.cell
 def _():
-    horizontal_switch = mo.ui.switch(value=False, label=f"Toggle grouping by category.")
-    horizontal_switch2 = mo.ui.switch(value=False, label=f"Toggle single color.")
-    return horizontal_switch, horizontal_switch2
+    horizontal_switch = mo.ui.switch(value=False, label=f"Toggle parent category highlighting.")
+    return (horizontal_switch,)
 
 
 @app.cell
-def _(horizontal_switch, horizontal_switch2):
-    mo.hstack([horizontal_switch,horizontal_switch2])
+def _(horizontal_bar_slider, my_utils):
+    my_utils.title_with_icon(value = horizontal_bar_slider.value, cutoff_value = 7, title = "Horizontal Bar Chart", subtitle="(Total Sales by Category)")
     return
 
 
 @app.cell
-def _(
-    base_df,
-    horizontal_bar_slider,
-    horizontal_switch,
-    horizontal_switch2,
-    make_subplots,
-    my_utils,
-):
+def _(horizontal_switch):
+    horizontal_switch
+    return
+
+
+@app.cell
+def _(base_df, horizontal_bar_slider, horizontal_switch, my_utils):
     category_sales_df = (
         base_df.groupby(["Category","Sub-Category"], as_index=False)["Sales"]
         .sum()
@@ -406,7 +404,7 @@ def _(
         y="SubCategory",
         orientation="h",
         text="Sales",
-        color="Category" if horizontal_switch2.value else None,
+        color="Category" if horizontal_switch.value else None,
         title=None,
         color_discrete_sequence=my_utils.COLOR_PALETTE
     )
@@ -430,7 +428,7 @@ def _(
     _category_sales_fig.update_yaxes(title=None, ticksuffix="   ")
     _category_sales_fig.update_layout(
         showlegend=True,
-        height=max(320, int(horizontal_bar_slider.value * 36 + (category_sales_df["Category"].nunique() * 40))),
+        #height=max(320, int(horizontal_bar_slider.value * 36 + (category_sales_df["Category"].nunique() * 40))),
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -440,9 +438,28 @@ def _(
             x=0,
             font=dict(size=14),
         ),
-        margin=dict(l=10, r=10, t=50, b=10),
+        margin=dict(l=10, r=10, t=0, b=10),
         yaxis={'categoryorder':'total ascending'}
     )
+
+    mo.ui.plotly(_category_sales_fig, config={"displayModeBar": False})
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell
+def _(horizontal_bar_slider, my_utils):
+    my_utils.title_with_icon(value = horizontal_bar_slider.value, cutoff_value = 7, title = "Small Multiples", subtitle="(Total Sales by Category)")
+    return
+
+
+@app.cell
+def _(base_df, horizontal_bar_slider, make_subplots, my_utils):
 
     _small_multiples_source_df = (
         base_df.groupby(["Category", "Sub-Category"], as_index=False)["Sales"]
@@ -533,11 +550,11 @@ def _(
     )
     _small_multiples_fig.update_yaxes(title=None, ticksuffix="   ")
     _small_multiples_fig.update_layout(
-        height=max(320, int(_small_multiples_bar_counts.sum() * 36 + len(_top_categories_for_small_multiples) * 40)),
+        #height=max(320, int(_small_multiples_bar_counts.sum() * 36 + len(_top_categories_for_small_multiples) * 40)),
         margin=dict(t=40, l=20, r=20, b=20),
     )
 
-    mo.ui.plotly(_small_multiples_fig if horizontal_switch.value else _category_sales_fig, config={"displayModeBar": False})
+    mo.ui.plotly(_small_multiples_fig, config={"displayModeBar": False})
     return
 
 
