@@ -329,6 +329,227 @@ def _():
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
+    ## Horizontal Bar Charts
+
+    Useful for unordered information. Ordered looks better in vertical.
+    """)
+    return
+
+
+@app.cell
+def _(my_utils):
+    horizontal_bar_slider = mo.ui.slider(
+        start=2,
+        stop=12,
+        value=7,
+        label="Number of categories",
+        show_value = True,
+        full_width=True
+    )
+
+    mo.center(horizontal_bar_slider)
+
+    _message = my_utils.callout_neutral("TODO")
+
+    mo.hstack([_message,horizontal_bar_slider],gap=2,align="center",widths=[2,.75])
+    return (horizontal_bar_slider,)
+
+
+@app.cell
+def _():
+    horizontal_switch = mo.ui.switch(value=False, label=f"Toggle grouping by category.")
+    horizontal_switch2 = mo.ui.switch(value=False, label=f"Toggle single color.")
+    return horizontal_switch, horizontal_switch2
+
+
+@app.cell
+def _(horizontal_switch, horizontal_switch2):
+    mo.hstack([horizontal_switch,horizontal_switch2])
+    return
+
+
+@app.cell
+def _(
+    base_df,
+    horizontal_bar_slider,
+    horizontal_switch,
+    horizontal_switch2,
+    make_subplots,
+    my_utils,
+):
+    category_sales_df = (
+        base_df.groupby(["Category","Sub-Category"], as_index=False)["Sales"]
+        .sum()
+        .rename(columns={"Sub-Category": "SubCategory"})
+        .sort_values("Sales", ascending=False)
+        .head(horizontal_bar_slider.value)
+        .sort_values("Sales", ascending=False)
+    )
+
+    # get the count of unique categories
+
+    _category_totals_for_legend = (
+        category_sales_df.groupby("Category", as_index=False)["Sales"]
+        .sum()
+        .set_index("Category")["Sales"]
+        .to_dict()
+    )
+
+    _category_legend_labels = {
+        _cat: f"{_cat} (${numerize.numerize(_total)})"
+        for _cat, _total in _category_totals_for_legend.items()
+    }
+
+    _category_sales_fig = px.bar(
+        category_sales_df,
+        x="Sales",
+        y="SubCategory",
+        orientation="h",
+        text="Sales",
+        color="Category" if horizontal_switch2.value else None,
+        title=None,
+        color_discrete_sequence=my_utils.COLOR_PALETTE
+    )
+
+    for _trace in _category_sales_fig.data:
+        _original_category = _trace.name
+        _trace.hovertemplate = (
+            f"Category={_original_category}<br>"
+            "SubCategory=%{y}<br>"
+            "Sales=%{x:$,.3s}"
+            "<extra></extra>"
+        )
+        _trace.name = _category_legend_labels.get(_original_category, _original_category)
+
+    _category_sales_fig.update_traces(
+        texttemplate="%{text:$,.3s}",
+        textposition="outside",
+    )
+
+    _category_sales_fig.update_xaxes(title=None, tickformat="$,.0s")
+    _category_sales_fig.update_yaxes(title=None, ticksuffix="   ")
+    _category_sales_fig.update_layout(
+        showlegend=True,
+        height=max(320, int(horizontal_bar_slider.value * 36 + (category_sales_df["Category"].nunique() * 40))),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            title = "",
+            xanchor="left",
+            x=0,
+            font=dict(size=14),
+        ),
+        margin=dict(l=10, r=10, t=50, b=10),
+        yaxis={'categoryorder':'total ascending'}
+    )
+
+    _small_multiples_source_df = (
+        base_df.groupby(["Category", "Sub-Category"], as_index=False)["Sales"]
+        .sum()
+        .rename(columns={"Sub-Category": "SubCategory"})
+        .sort_values("Sales", ascending=False)
+        .head(horizontal_bar_slider.value)
+        .sort_values("Sales", ascending=False)
+    )
+
+    _top_categories_for_small_multiples = (
+        _small_multiples_source_df.groupby("Category", as_index=False)["Sales"]
+        .sum()
+        .sort_values("Sales", ascending=False)
+        .head(min(4, _small_multiples_source_df["Category"].nunique()))["Category"]
+        .tolist()
+    )
+
+    _small_multiples_filtered_df = _small_multiples_source_df[
+        _small_multiples_source_df["Category"].isin(_top_categories_for_small_multiples)
+    ].copy()
+
+    _small_multiples_color_map = {
+        _cat: my_utils.COLOR_PALETTE[i % len(my_utils.COLOR_PALETTE)]
+        for i, _cat in enumerate(_top_categories_for_small_multiples)
+    }
+
+    _small_multiples_bar_counts = (
+        _small_multiples_filtered_df.groupby("Category")["SubCategory"]
+        .nunique()
+        .reindex(_top_categories_for_small_multiples)
+        .fillna(0)
+        .astype(int)
+    )
+
+    _small_multiples_row_heights = _small_multiples_bar_counts.tolist()
+
+    _small_multiples_category_totals = (
+        _small_multiples_filtered_df.groupby("Category")["Sales"]
+        .sum()
+        .reindex(_top_categories_for_small_multiples)
+    )
+
+    _small_multiples_subplot_titles = [
+        f"{_cat} (${numerize.numerize(_small_multiples_category_totals[_cat])})"
+        for _cat in _top_categories_for_small_multiples
+    ]
+
+    _small_multiples_fig = make_subplots(
+        rows=len(_top_categories_for_small_multiples),
+        cols=1,
+        shared_xaxes=True,
+        subplot_titles=_small_multiples_subplot_titles,
+        vertical_spacing=0.08,
+        row_heights=_small_multiples_row_heights,
+    )
+
+    for _row_idx, _cat in enumerate(_top_categories_for_small_multiples, start=1):
+        _cat_df = (
+            _small_multiples_filtered_df[_small_multiples_filtered_df["Category"] == _cat]
+            .sort_values("Sales", ascending=True)
+        )
+
+        _small_multiples_fig.add_trace(
+            go.Bar(
+                x=_cat_df["Sales"],
+                y=_cat_df["SubCategory"],
+                orientation="h",
+                marker_color=_small_multiples_color_map[_cat],
+                text=_cat_df["Sales"],
+                texttemplate="%{text:$,.2s}",
+                textposition="outside",
+                cliponaxis=False,
+                hovertemplate=(
+                    f"Category={_cat}<br>"
+                    "Sub-Category=%{y}<br>"
+                    "Sales=%{x:$,.2s}"
+                    "<extra></extra>"
+                ),
+                showlegend=False,
+            ),
+            row=_row_idx,
+            col=1,
+        )
+
+    _small_multiples_fig.update_xaxes(
+        tickformat="$,.0s", title=None, showgrid=True, gridcolor="rgba(0,0,0,0.1)"
+    )
+    _small_multiples_fig.update_yaxes(title=None, ticksuffix="   ")
+    _small_multiples_fig.update_layout(
+        height=max(320, int(_small_multiples_bar_counts.sum() * 36 + len(_top_categories_for_small_multiples) * 40)),
+        margin=dict(t=40, l=20, r=20, b=20),
+    )
+
+    mo.ui.plotly(_small_multiples_fig if horizontal_switch.value else _category_sales_fig, config={"displayModeBar": False})
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
     ## Line Charts
     """)
     return
@@ -410,7 +631,7 @@ def lines_overlapping(
         color_discrete_sequence=my_utils.COLOR_PALETTE[:len(line_categories)]
     )
     line_all_categories_fig.update_traces(marker=dict(size=8))
-    line_all_categories_fig.update_yaxes(tickformat="$,.3s",rangemode="tozero")
+    line_all_categories_fig.update_yaxes(tickformat="$,.0s",rangemode="tozero")
     line_all_categories_fig.update_xaxes(title="")
     line_all_categories_fig.update_layout(
         xaxis_title=None,
@@ -460,7 +681,7 @@ def lines_overlapping(
             opacity=1.0 if is_focus else 0.5
         )
 
-    line_highlight_fig.update_yaxes(tickformat="$,.0f", rangemode="tozero")
+    line_highlight_fig.update_yaxes(tickformat="$,.0s", rangemode="tozero")
     line_highlight_fig.update_xaxes(title="")
     line_highlight_fig.update_layout(
         xaxis_title=None,
@@ -752,7 +973,7 @@ async def _(my_utils):
 def _(my_utils):
     _message = my_utils.callout_neutral("Depending on the goal of the chart, how might you represent the data of a single category?")
 
-    donut_slider = mo.ui.slider(start=0, stop=1, step=.01, value=.35, label = "Percentage of Sales", show_value = True, debounce=True,full_width=True)
+    donut_slider = mo.ui.slider(start=0, stop=1, step=.01, value=.50, label = "Percentage of Sales", show_value = True, debounce=True,full_width=True)
     mo.hstack([_message,donut_slider],gap=2,align="center",widths=[2,.75])
     return (donut_slider,)
 
@@ -806,7 +1027,7 @@ def _(donut_slider, my_utils):
                 "font": {"size": 26, "weight": "bold"}
             },
             domain={"x": [0, 1], "y": [0, 1]},
-            title={"text": "Phone Sales (vs. Target)", "font": {"size": 20, "weight": "normal"}},
+            title={"text": "Phone Sales (vs. Target)", "font": {"size": 20, "weight": "bold"}},
             gauge={
                 "axis": {
                     "range": [None, 11000000],
