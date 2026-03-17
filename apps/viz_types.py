@@ -104,8 +104,6 @@ def _():
 def _():
     mo.md(r"""
     ## Vertical Bar Charts
-
-    Consider a vertical bar chart of many categories. Depending on what story you're looking to tell, there are usually two ways to group the bars.
     """)
     return
 
@@ -317,7 +315,7 @@ def _(chart_slider, my_utils, segment_year_sales_df):
                 col=_col_idx,
             )
 
-    category_sales_subplots_fig.update_yaxes(tickformat="$,.3s", title="", gridcolor="rgba(0, 0, 0, 0.15)",gridwidth=1.05)
+    category_sales_subplots_fig.update_yaxes(tickformat="$,.0s", title="", gridcolor="rgba(0, 0, 0, 0.15)",gridwidth=1.05)
     category_sales_subplots_fig.update_xaxes(title="")
     category_sales_subplots_fig.update_layout(barmode="group",
                                               showlegend=False,
@@ -345,7 +343,20 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("line.jpg")
-    mo.hstack([_img,mo.md("**Line Chart**: In this format, individual data points are connected by lines to commuinicate trends, fluctuations, and patterns. Primarily used for **showing change over time**, this chart type is most appropriate for data that has a **natural sequential order along the horizontal axis**. The best-practice of [\"starting the y-axis at zero\"](https://stephanieevergreen.com/non-zero-axis-rules/) can be adjusted here to \"zoom in\" on the dataset.<br>**Tip: for high density time-series data, consider reducing the point radius or removing it entirely.**")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Line Chart**: In this format, individual data points are connected by lines to commuinicate trends, fluctuations, and patterns. Primarily used for **showing change over time**, this chart type is most appropriate for data that has a **natural sequential order along the horizontal axis**. The best-practice of [\"starting the y-axis at zero\"](https://stephanieevergreen.com/non-zero-axis-rules/) can be adjusted here to \"zoom in\" on the dataset.<br>**Tip: consider reducing the point radius or entirely removing the point for high density time-series data.**")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell(hide_code=True)
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("line_labeling.png")
+    mo.hstack([mo.md("> Although not represented in the examples below due to technical limitations of the visualization library, [directly labeling lines with category labels](https://depictdatastudio.com/directly-labeling-line-graphs/) reduces the need for a legend and decreases cognitive load.<br>**Tip: Consider adding final values; ie: \"Computer Sciences (20%)\".**"),_img],gap=2,align="center",widths=[.65,.35])
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
     return
 
 
@@ -362,7 +373,7 @@ def _(my_utils):
 
     mo.center(line_chart_slider)
 
-    _message = my_utils.callout_neutral("Similarly, consider a <b>line chart</b> of the same information. How does the choice between a single line chart with <b>all categories</b> vs. <b>small multiples</b> of line charts affect your ability to <b>compare trends</b> across categories and within categories? Does the number of categories shown change <b>which chart type is more effective</b> for the story you're trying to tell with the data?")
+    _message = my_utils.callout_neutral("Similar to the vertical bar chart section, consider a <b>line chart</b> of the same information. How does the choice between a single line chart with <b>all categories</b> vs. <b>small multiples</b> of line charts affect your ability to <b>compare trends</b> across categories and within categories? Does the number of categories shown change <b>which chart type is more effective</b> for the story you're trying to tell with the data?")
 
     mo.hstack([_message,line_chart_slider],gap=2,align="center",widths=[2,.75])
     return (line_chart_slider,)
@@ -371,7 +382,7 @@ def _(my_utils):
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    ### 📈 **Overlapping** (Yearly Sales by Category)
+    ### **Overlapping** (Yearly Sales by Category)
     """)
     return
 
@@ -481,7 +492,7 @@ def lines_overlapping(
         xaxis_title=None,
         yaxis_title=None,
         showlegend=False,
-        margin=dict(t=50),
+        margin=dict(t=50,b=0,l=0,r=0),
         title=dict(font=dict(size=20, weight="bold")),
         # legend=dict(
         #     orientation="h",
@@ -508,7 +519,7 @@ def lines_overlapping(
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    ### 📈 **Small Multiples** (Category Sales by Year)
+    ### **Small Multiples** (Category Sales by Year)
     """)
     return
 
@@ -517,6 +528,7 @@ def _():
 def lines_small_multiples(
     line_categories,
     line_category_colors,
+    line_chart_slider,
     line_filtered_category_sales_df,
     make_subplots,
 ):
@@ -550,14 +562,22 @@ def lines_small_multiples(
             col=_col_idx,
         )
 
-    line_category_sales_subplots_fig.update_yaxes(tickformat="$,.3s", title="", rangemode="tozero")
-    line_category_sales_subplots_fig.update_xaxes(title="")
+    _year_ticks = sorted({str(x_val) for tr in line_category_sales_subplots_fig.data for x_val in tr.x})
+
+    line_category_sales_subplots_fig.update_yaxes(tickformat="$,.0s", title="", rangemode="tozero")
+    line_category_sales_subplots_fig.update_xaxes(title="",tickmode="array", tickvals=_year_ticks, ticktext=[f"'{y[-2:]}" for y in _year_ticks] if line_chart_slider.value >= 5 else _year_ticks)
     line_category_sales_subplots_fig.update_layout(barmode="group",
                                               showlegend=False,
-                                              margin = dict(t=30),
+                                              margin = dict(t=30,b=0),
                                               height=400)
     line_category_sales_subplots_fig.update_annotations(font_size=14)
     mo.ui.plotly(line_category_sales_subplots_fig,config={"displayModeBar": False})
+    return
+
+
+@app.cell
+def _(line_chart_slider):
+    mo.hstack([mo.Html("&nbsp;"),mo.md("💡 Notice the shortening of x-axis year labels from **2011** to **'11** when the available space starts to decrease.")],gap=3,justify="start") if line_chart_slider.value >= 5 else None
     return
 
 
@@ -571,8 +591,6 @@ def _():
 def _():
     mo.md(r"""
     ## Horizontal Bar Charts
-
-    Useful for unordered information. Ordered looks better in vertical.
     """)
     return
 
@@ -607,7 +625,7 @@ def _(my_utils):
         show_value = True,
         full_width=True
     )
-    _message = my_utils.callout_neutral("TODO")
+    _message = my_utils.callout_neutral("How does the <b>number of categories</b> impact the ability to quickly gain insights? How does <b>emphasizing groupings with bar color</b> affect the story being told with the data?")
     mo.hstack([_message,horizontal_bar_slider],gap=2,align="center",widths=[2,.75])
     return (horizontal_bar_slider,)
 
@@ -687,7 +705,7 @@ def _(base_df, horizontal_bar_slider, horizontal_switch, my_utils):
     _category_sales_fig.update_yaxes(title=None, ticksuffix="   ")
     _category_sales_fig.update_layout(
         showlegend=True,
-        height = 400,
+        height = 325,
         #height=max(320, int(horizontal_bar_slider.value * 36 + (category_sales_df["Category"].nunique() * 40))),
         legend=dict(
             orientation="h",
@@ -698,24 +716,12 @@ def _(base_df, horizontal_bar_slider, horizontal_switch, my_utils):
             x=0,
             font=dict(size=14),
         ),
-        margin=dict(l=(0 if horizontal_switch.value else 10), r=10, t=(0 if horizontal_switch.value else 40), b=(10 if horizontal_switch.value else 0)),
+        margin=dict(l=(0 if horizontal_switch.value else 10), r=10, t=0),
+        #margin=dict(l=(0 if horizontal_switch.value else 10), r=10, t=(0 if horizontal_switch.value else 40), b=(10 if horizontal_switch.value else 0)),
         yaxis={'categoryorder':'total ascending'}
     )
 
     mo.ui.plotly(_category_sales_fig, config={"displayModeBar": False})
-    return
-
-
-@app.cell
-def _():
-    mo.Html("<hr>")
-    return
-
-
-@app.cell
-def _(horizontal_bar_slider, my_utils):
-    _message = my_utils.callout_neutral("TODO")
-    mo.hstack([_message,horizontal_bar_slider],gap=2,align="center",widths=[2,.75])
     return
 
 
@@ -838,14 +844,13 @@ def _():
 def _():
     mo.md(r"""
     ## Pie Charts
-
-    TODO: direct labeling and hard to process arcs
     """)
     return
 
 
 @app.cell
 async def _(my_utils):
+    # TODO: direct labeling and hard to process arcs
     _img = await my_utils.gh_pages_load_image("pie.jpg")
     mo.hstack([_img,mo.md("**Pie Chart:** This chart type is great for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret with too many categories** or **similar values**. Consider using a pie chart when you have a small number of categories (ideally 3 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.")],gap=2,align="center",widths=[.25,1])
     return
@@ -1012,6 +1017,8 @@ def _():
     ## Donut Charts and Gauge Charts
 
     These two chart types are great for quick diagnostic visualization of single continuous values in relationship to the whole (or another target value). Consider the story you're trying to tell with this single value chart.
+
+    TODO: translate to below text.
     """)
     return
 
@@ -1038,7 +1045,7 @@ def _():
 
 @app.cell
 def _(my_utils):
-    _message = my_utils.callout_neutral("Depending on the goal of the chart, how might you represent the data of a single category?")
+    _message = my_utils.callout_neutral("TODO: Depending on the goal of the chart, how might you represent the data of a single category?")
 
     donut_slider = mo.ui.slider(start=0, stop=1, step=.01, value=.50, label = "Percentage of Sales", show_value = True, debounce=True,full_width=True)
     mo.hstack([_message,donut_slider],gap=2,align="center",widths=[2,.75])
