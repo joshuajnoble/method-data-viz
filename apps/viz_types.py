@@ -337,6 +337,26 @@ def _():
 
 
 @app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("horizontal.jpg")
+    mo.hstack([_img,mo.md("**Traditional**: TODO")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("horizontal_small_multiples.jpg")
+    mo.hstack([_img,mo.md("**Small Multiples**: TODO")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell
 def _(my_utils):
     horizontal_bar_slider = mo.ui.slider(
         start=3,
