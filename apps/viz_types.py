@@ -117,10 +117,10 @@ async def _(my_utils):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("small_multiples.jpg")
-    mo.hstack([_img,mo.md("**Small Multiples**: In this format, each category gets its own individual chart (or subplot) that shares the same axes. This allows for *easier comparison of trends across categories* without the visual clutter of a grouped bar chart. However, it can be more difficult to compare values across categories since they are not visually grouped together. Tip: consider adding darker axis lines to allow easier comparison across groups.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Small Multiples**: In this format, each category gets its own individual chart (or subplot/facet) that shares the same axis scales. This allows for *easier comparison of trends across categories* without the visual clutter of a grouped bar chart. However, it can be more difficult to compare values across categories since they are not visually grouped together.<br>**Tip: consider arranging the facets in a meaningful order and adding darker axis lines for easier comparison.**")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -345,7 +345,7 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("line.jpg")
-    mo.hstack([_img,mo.md("**Line Chart**: TODO")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Line Chart**: In this format, individual data points are connected by lines to commuinicate trends, fluctuations, and patterns. Primarily used for **showing change over time**, this chart type is most appropriate for data that has a **natural sequential order along the horizontal axis**. The best-practice of [\"starting the y-axis at zero\"](https://stephanieevergreen.com/non-zero-axis-rules/) can be adjusted here to \"zoom in\" on the dataset.<br>**Tip: for high density time-series data, consider reducing the point radius or removing it entirely.**")],gap=2,align="center",widths=[.25,1])
     return
 
 
