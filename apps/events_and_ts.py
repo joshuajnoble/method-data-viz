@@ -84,7 +84,7 @@ def _():
     def get_daily_sales():
 
         #path_to_csv = mo.notebook_location() / "public" / "daily_sales.csv"
-        path_to_csv = "https://joshuajnoble.github.io/method-data-viz/apps/public/daily_sales.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/daily_sales.csv"
         daily = pd.read_csv(path_to_csv)
         daily['Order Date'] = pd.to_datetime(daily['Order Date'])
         return daily
@@ -93,7 +93,7 @@ def _():
     def get_event_data():
 
         #path_to_csv = mo.notebook_location() / "public" / "events_2014.csv"
-        path_to_csv = "https://joshuajnoble.github.io/method-data-viz/apps/public/events_2014.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/events_2014.csv"
         events = pd.read_csv(path_to_csv)
         events['Order Date'] = pd.to_datetime(events['Order Date'])
         return events
@@ -116,6 +116,9 @@ def _():
         """
         # Data with time
         
+        Time is a data feature that naturally lends itself to grouping or filtering and because of that, it's a powerful tool for creating aggregate views. 
+        For instance: all sales in 2012 or the aggregated sales on the first day of a month. It's also potentially very confusing.
+
         Not all data that includes time is the same. For instance, if your data has irregular time stamps like tracking when earthquakes happen, 
         then that's event data. If your data has regular time stamps, like tracking the temperature inside your house every hour, then that's a 
         time series. Because they're pretty different types of data, they should different sorts of visualization.

@@ -28,7 +28,8 @@ def _():
     @mo.cache
     def raw_sales():
 
-        path_to_csv = mo.notebook_location() / "public" / "raw_sales.csv"
+        #path_to_csv = mo.notebook_location() / "public" / "raw_sales.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/raw_sales.csv"
         raw_sales = pd.read_csv(path_to_csv)
         return raw_sales
     
@@ -61,7 +62,7 @@ def _():
 
 @app.cell
 def _():
-    path_to_img = mo.notebook_location() / "public" / 'distribution_frame.png'
+    path_to_img = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/distribution_frame.png"
     mo.image(path_to_img)
     return
 
