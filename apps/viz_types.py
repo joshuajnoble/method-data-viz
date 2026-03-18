@@ -1143,8 +1143,52 @@ def _():
     return
 
 
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("scatter.jpg")
+    mo.hstack([_img,mo.md("**Scatter Plot**: TODO")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("bubble.jpg")
+    mo.hstack([_img,mo.md("**Bubble Chart**: TODO")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+def _(my_utils):
+    bubble_count_slider = mo.ui.slider(
+        start=8,
+        stop=18,
+        value=10,
+        label="Number of products",
+        show_value=True,
+        full_width=True,
+    )
+
+
+    bubble_radius_slider = mo.ui.slider(
+        start=0,
+        stop=12,
+        value=0,
+        label="Radius size factor",
+        show_value=True,
+        full_width=True,
+    )
+
+
+    scatterplot_message = my_utils.callout_neutral(
+        "TODO"
+    )
+
+    mo.hstack([scatterplot_message, mo.vstack([bubble_count_slider,bubble_radius_slider])], gap=2, align="center", widths=[2, 0.75])
+    return bubble_count_slider, bubble_radius_slider
+
+
 @app.cell(hide_code=True)
-def _(base_df):
+def _(base_df, bubble_count_slider):
     scatterplot_subcategory_metrics_df = (
         base_df.groupby(["Category", "Sub-Category"], as_index=False)
         .agg(
@@ -1157,60 +1201,26 @@ def _(base_df):
         )
         .rename(columns={"Sub-Category": "SubCategory", "Shipping Cost": "ShippingCost"})
         .sort_values("Sales", ascending=False)
-        .head(10)
+        .head(bubble_count_slider.value)
         .assign(ProfitMargin=lambda d: d["Profit"].div(d["Sales"]).fillna(0.0))
     )
     return (scatterplot_subcategory_metrics_df,)
 
 
-@app.cell
-async def _(my_utils):
-    _img = await my_utils.gh_pages_load_image("donut.jpg")
-    mo.hstack([_img,mo.md("**Scatter Plot**: TODO")],gap=2,align="center",widths=[.25,1])
-    return
-
-
-@app.cell
-async def _(my_utils):
-    _img = await my_utils.gh_pages_load_image("donut.jpg")
-    mo.hstack([_img,mo.md("**Bubble Chart**: TODO")],gap=2,align="center",widths=[.25,1])
-    return
-
-
 @app.cell(hide_code=True)
-def _(radius_slider):
-    mo.md(r"""### **Bubble Plot** (Sales by Profit)""") if radius_slider.value > 0 else mo.md(r"""### **Scatter Plot** (Sales by Profit, with Quantity as Size)""")
+def _(bubble_radius_slider):
+    mo.md(r"""### 🫧 **Bubble Plot** (Product Sales by Profit, *Sized by Quantity*)""") if bubble_radius_slider.value > 0 else mo.md(r"""### 🔵 **Scatter Plot** (Product Sales by Profit)""")
     return
 
 
 @app.cell
-def _(my_utils):
-    radius_slider = mo.ui.slider(
-        start=0,
-        stop=16,
-        value=0,
-        label="Radius size",
-        show_value=True,
-        full_width=True,
-    )
-
-
-    scatterplot_message = my_utils.callout_neutral(
-        "TODO"
-    )
-
-    mo.hstack([scatterplot_message, radius_slider], gap=2, align="center", widths=[2, 0.75])
-    return (radius_slider,)
-
-
-@app.cell
-def _(my_utils, radius_slider, scatterplot_subcategory_metrics_df):
+def _(bubble_radius_slider, my_utils, scatterplot_subcategory_metrics_df):
     _scatterplot_fig = px.scatter(
         scatterplot_subcategory_metrics_df,
         x="Sales",
         y="Profit",
-        size=(None if radius_slider.value == 0 else "Quantity"),
-        size_max=(None if radius_slider.value == 0 else (radius_slider.value * 5) + 10),
+        size=(None if bubble_radius_slider.value == 0 else "Quantity"),
+        size_max=(None if bubble_radius_slider.value == 0 else (bubble_radius_slider.value * 5) + 15),
         color="Category",
         hover_name="SubCategory",
         hover_data={
@@ -1219,7 +1229,7 @@ def _(my_utils, radius_slider, scatterplot_subcategory_metrics_df):
         color_discrete_sequence=my_utils.COLOR_PALETTE
     )
 
-    if radius_slider.value == 0:
+    if bubble_radius_slider.value == 0:
         _scatterplot_fig.update_traces(
             marker=dict(size=15, opacity=.7)
         )
