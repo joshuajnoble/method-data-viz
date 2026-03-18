@@ -844,15 +844,16 @@ def _():
 def _():
     mo.md(r"""
     ## Pie Charts
+
+    TODO: potentially add stacked bar charts to this section since they're similar.
     """)
     return
 
 
 @app.cell
 async def _(my_utils):
-    # TODO: direct labeling and hard to process arcs
     _img = await my_utils.gh_pages_load_image("pie.jpg")
-    mo.hstack([_img,mo.md("**Pie Chart:** This chart type is great for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret with too many categories** or **similar values**. Consider using a pie chart when you have a small number of categories (ideally 3 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Pie Chart:** This chart type is good for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret** because **comparing angles is challenging for humans**, **too many categories are overwhelming**, and **similar values are diffifcult to discern**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.<br><b>Tip: start the first slice at 12 o'clock and arrange slices clockwise. Direct labeling (inside or outide) rather than legends can increase legibility.</b>")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -865,8 +866,8 @@ def _():
 @app.cell
 def _(category_slider, my_utils):
     _message_by_range = [
-        {"min": 1, "max": 3, "message": my_utils.callout_info("TODO")},
-        {"min": 4, "max": float("inf"), "message": my_utils.callout_danger("TODO")},
+        {"min": 1, "max": 3, "message": my_utils.callout_info("Consider how <b>simple the presentation is with a small number of categories.</b> The story is clear and the visual is easy to interpret.")},
+        {"min": 4, "max": float("inf"), "message": my_utils.callout_danger("As more categories are added, the <b>visual becomes more complex and harder to interpret.</b> Consider how a different chart type like a <b>stacked bar chart or horizontal bar chart might be more effective</b> for showing the comparison of many categories to the whole.")},
     ]
 
     _message = next(
@@ -1015,10 +1016,6 @@ def _():
 def _():
     mo.md(r"""
     ## Donut Charts and Gauge Charts
-
-    These two chart types are great for quick diagnostic visualization of single continuous values in relationship to the whole (or another target value). Consider the story you're trying to tell with this single value chart.
-
-    TODO: translate to below text.
     """)
     return
 
@@ -1026,14 +1023,14 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("donut.jpg")
-    mo.hstack([_img,mo.md("**Donut Chart**: This chart type is useful for representing **single values as a percentage of the whole**. A quick glance at a single donut chart can emphasize impact. While not represented in this guide, splitting a donut chart into multiple categories should follow the same rules of pie charts: **too many categories introduces visual overwhelm**.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Donut Chart**: This chart type is useful for representing **single values in comparison to the whole**. Using a donut chart instead of a text-based value can immediately increase impact. While not represented in this guide, splitting a donut chart into multiple categories should follow the same rules of pie charts: **too many categories introduces visual overwhelm, start the first slice at 12 o'clock, and label slices directly**.")],gap=2,align="center",widths=[.25,1])
     return
 
 
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("gauge.jpg")
-    mo.hstack([_img,mo.md("**Gauge Chart**: This chart type is useful for comparing a value against a target or a set of milestones. It emphasizes the coninuum of values along a desired goal or risk factors.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Gauge Chart**: This chart type is useful for comparing a value against a target or a set of milestones. It emphasizes the coninuum of values along a desired goal or risk factors. Since a gauge chart can introduce a lot of digital \"ink\", consider how a donut chart, cumulative line chart, or text-based value can achieve a similar goal. <br><b>Tip: ensure tick markers enhance the feeling of progression along the goal.</b>")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -1045,7 +1042,7 @@ def _():
 
 @app.cell
 def _(my_utils):
-    _message = my_utils.callout_neutral("TODO: Depending on the goal of the chart, how might you represent the data of a single category?")
+    _message = my_utils.callout_neutral("As the value increases and decreases, <b>consider how each chart type might draw the user's attention in different ways.</b> If the value is very small or very big in a donut chart, how might you <b>add additional text for explanation?</b> If the target value in a gauge chart needs to be highlighted, how might you <b>emphasize different components of the chart?</b>")
 
     donut_slider = mo.ui.slider(start=0, stop=1, step=.01, value=.50, label = "Percentage of Sales", show_value = True, debounce=True,full_width=True)
     mo.hstack([_message,donut_slider],gap=2,align="center",widths=[2,.75])
