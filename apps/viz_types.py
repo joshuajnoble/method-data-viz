@@ -10,7 +10,7 @@
 
 import marimo
 
-__generated_with = "0.21.0"
+__generated_with = "0.21.1"
 app = marimo.App(width="medium", css_file="custom.css")
 
 with app.setup(hide_code=True):
@@ -1132,6 +1132,119 @@ def _(donut_slider, my_utils):
 @app.cell
 def _():
     mo.Html("<hr>")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Scatter Plots and Bubble Charts
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(base_df):
+    scatterplot_subcategory_metrics_df = (
+        base_df.groupby(["Category", "Sub-Category"], as_index=False)
+        .agg(
+            {
+                "Sales": "sum",
+                "Profit": "sum",
+                "Quantity": "sum",
+                "Shipping Cost": "sum",
+            }
+        )
+        .rename(columns={"Sub-Category": "SubCategory", "Shipping Cost": "ShippingCost"})
+        .sort_values("Sales", ascending=False)
+        .head(10)
+        .assign(ProfitMargin=lambda d: d["Profit"].div(d["Sales"]).fillna(0.0))
+    )
+    return (scatterplot_subcategory_metrics_df,)
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("donut.jpg")
+    mo.hstack([_img,mo.md("**Scatter Plot**: TODO")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("donut.jpg")
+    mo.hstack([_img,mo.md("**Bubble Chart**: TODO")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell(hide_code=True)
+def _(radius_slider):
+    mo.md(r"""### **Bubble Plot** (Sales by Profit)""") if radius_slider.value > 0 else mo.md(r"""### **Scatter Plot** (Sales by Profit, with Quantity as Size)""")
+    return
+
+
+@app.cell
+def _(my_utils):
+    radius_slider = mo.ui.slider(
+        start=0,
+        stop=16,
+        value=0,
+        label="Radius size",
+        show_value=True,
+        full_width=True,
+    )
+
+
+    scatterplot_message = my_utils.callout_neutral(
+        "TODO"
+    )
+
+    mo.hstack([scatterplot_message, radius_slider], gap=2, align="center", widths=[2, 0.75])
+    return (radius_slider,)
+
+
+@app.cell
+def _(my_utils, radius_slider, scatterplot_subcategory_metrics_df):
+    _scatterplot_fig = px.scatter(
+        scatterplot_subcategory_metrics_df,
+        x="Sales",
+        y="Profit",
+        size=(None if radius_slider.value == 0 else "Quantity"),
+        size_max=(None if radius_slider.value == 0 else (radius_slider.value * 5) + 10),
+        color="Category",
+        hover_name="SubCategory",
+        hover_data={
+            "Quantity": ":,.0f"
+        },
+        color_discrete_sequence=my_utils.COLOR_PALETTE
+    )
+
+    if radius_slider.value == 0:
+        _scatterplot_fig.update_traces(
+            marker=dict(size=15, opacity=.7)
+        )
+    _scatterplot_fig.update_xaxes(tickformat="$,.2s")
+    _scatterplot_fig.update_yaxes(tickformat="$,.2s", zeroline=True, zerolinecolor="rgba(0,0,0,0.3)",zerolinewidth=1)
+    _scatterplot_fig.add_vline(
+        x=1000000,
+        line_width=1,
+        line_color="rgba(0,0,0,0.3)"
+    )
+    _scatterplot_fig.update_layout(
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            title="",
+            xanchor="left",
+            x=0,
+            font=dict(size=13),
+            itemsizing="constant"
+        ),
+        height=450,
+    )
+
+    mo.ui.plotly(_scatterplot_fig, config={"displayModeBar": False})
     return
 
 
