@@ -4,7 +4,6 @@
 #     "marimo>=0.20.2",
 #     "plotly",
 #     "pandas",
-#     "numerize==0.12",
 # ]
 # ///
 
@@ -19,7 +18,6 @@ with app.setup(hide_code=True):
     import plotly.graph_objects as go
     import pandas as pd
     import marimo as mo
-    from numerize import numerize
 
 
 @app.cell(hide_code=True)
@@ -671,7 +669,7 @@ def _(base_df, horizontal_bar_slider, horizontal_switch, my_utils):
     )
 
     _category_legend_labels = {
-        _cat: f"{_cat} (${numerize.numerize(_total)})"
+        _cat: f"{_cat} (${my_utils.numerize(_total)})"
         for _cat, _total in _category_totals_for_legend.items()
     }
 
@@ -779,7 +777,7 @@ def _(base_df, horizontal_bar_slider, make_subplots, my_utils):
     )
 
     _small_multiples_subplot_titles = [
-        f"<b>{_cat} (${numerize.numerize(_small_multiples_category_totals[_cat])})</b>"
+        f"<b>{_cat} (${my_utils.numerize(_small_multiples_category_totals[_cat])})</b>"
         for _cat in _top_categories_for_small_multiples
     ]
 
@@ -1044,7 +1042,7 @@ def _():
 def _(my_utils):
     _message = my_utils.callout_neutral("As the value increases and decreases, <b>consider how each chart type might draw the user's attention in different ways.</b> If the value is very small or very big in a donut chart, how might you <b>add additional text for explanation?</b> If the target value in a gauge chart needs to be highlighted, how might you <b>emphasize different components of the chart?</b>")
 
-    donut_slider = mo.ui.slider(start=0, stop=1, step=.01, value=.50, label = "Percentage of Sales", show_value = True, debounce=True,full_width=True)
+    donut_slider = mo.ui.slider(start=0, stop=1, step=.01, value=.50, label = "Percentage of sales", show_value = True, debounce=True,full_width=True)
     mo.hstack([_message,donut_slider],gap=2,align="center",widths=[2,.75])
     return (donut_slider,)
 
@@ -1052,7 +1050,7 @@ def _(my_utils):
 @app.cell
 def _(donut_slider, my_utils):
     _phone_share = min(max(float(donut_slider.value), 0.0), 1.0)
-    _phone_share_dollar = "$" + numerize.numerize(_phone_share * 11000000)
+    _phone_share_dollar = "$" + my_utils.numerize(_phone_share * 11000000)
 
     _phone_donut_fig = px.pie(
         names=["Phone", "Other"],
@@ -1173,7 +1171,7 @@ def _(my_utils):
         start=0,
         stop=12,
         value=0,
-        label="Radius size factor",
+        label="Radius size factor (0 = scatter plot)",
         show_value=True,
         full_width=True,
     )
@@ -1209,7 +1207,7 @@ def _(base_df, bubble_count_slider):
 
 @app.cell(hide_code=True)
 def _(bubble_radius_slider):
-    mo.md(r"""### 🫧 **Bubble Plot** (Product Sales by Profit, *Sized by Quantity*)""") if bubble_radius_slider.value > 0 else mo.md(r"""### 🔵 **Scatter Plot** (Product Sales by Profit)""")
+    mo.md(r"""### 🫧 **Bubble Plot** (Product Sales by Profit, <u>Sized by Quantity Sold</u>)""") if bubble_radius_slider.value > 0 else mo.md(r"""### 🔵 **Scatter Plot** (Product Sales by Profit)""")
     return
 
 
@@ -1241,6 +1239,8 @@ def _(bubble_radius_slider, my_utils, scatterplot_subcategory_metrics_df):
         line_color="rgba(0,0,0,0.3)"
     )
     _scatterplot_fig.update_layout(
+        xaxis_title="<b>Sales</b>",
+        yaxis_title="<b>Profit</b>",
         legend=dict(
             orientation="h",
             yanchor="bottom",
