@@ -341,7 +341,7 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("line.jpg")
-    mo.hstack([_img,mo.md("**Line Chart**: In this format, individual data points are connected by lines to commuinicate trends, fluctuations, and patterns. Primarily used for **showing change over time**, this chart type is most appropriate for data that has a **natural sequential order along the horizontal axis**. The best-practice of [\"starting the y-axis at zero\"](https://stephanieevergreen.com/non-zero-axis-rules/) can be adjusted here to \"zoom in\" on the dataset.<br>**Tip: consider reducing the point radius or entirely removing the point for high density time-series data.**")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Line Chart**: In this format, individual data points are connected by lines to communicate trends, fluctuations, and patterns. Primarily used for **showing change over time**, this chart type is most appropriate for data that has a **natural sequential order along the horizontal axis**. The best-practice of [\"starting the y-axis at zero\"](https://stephanieevergreen.com/non-zero-axis-rules/) can be adjusted here to \"zoom in\" on the dataset.<br>**Tip: consider reducing the point radius or entirely removing the point for high density time-series data.**")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -603,7 +603,7 @@ async def _(my_utils):
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("horizontal_small_multiples.jpg")
-    mo.hstack([_img,mo.md("**Small Multiples**: In this format, the data is split into a **regular grid of smaller, individual horizontal bar charts** (sometimes called a trellis plot or faceting). Each *panel* shares the same axis sclaes to ensure accurate comparisons. Breaking a dense graph into smaller pieces makes it much easier for readers to comprehend trends within distinct subsets of data without the visual clutter of a massive, heavily grouped chart. **Tip: consider the natural sequence of groupings and grid lines to help separate the panels.**")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Small Multiples**: In this format, the data is split into a **regular grid of smaller, individual horizontal bar charts** (sometimes called a trellis plot or faceting). Each *panel* shares the same axis scales to ensure accurate comparisons. Breaking a dense graph into smaller pieces makes it much easier for readers to comprehend trends within distinct subsets of data without the visual clutter of a massive, heavily grouped chart. **Tip: consider the natural sequence of groupings and grid lines to help separate the panels.**")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -851,7 +851,13 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("pie.jpg")
-    mo.hstack([_img,mo.md("**Pie Chart:** This chart type is good for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret** because **comparing angles is challenging for humans**, **too many categories are overwhelming**, and **similar values are diffifcult to discern**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.<br><b>Tip: start the first slice at 12 o'clock and arrange slices clockwise. Direct labeling (inside or outide) rather than legends can increase legibility.</b>")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Pie Chart:** This chart type is good for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret** because **comparing angles is challenging for humans**, **too many categories are overwhelming**, and **similar values are difficult to discern**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.<br><b>Tip: start the first slice at 12 o'clock and arrange slices clockwise. Direct labeling (inside or outside) rather than legends can increase legibility.</b>")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
     return
 
 
@@ -1028,7 +1034,7 @@ async def _(my_utils):
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("gauge.jpg")
-    mo.hstack([_img,mo.md("**Gauge Chart**: This chart type is useful for comparing a value against a target or a set of milestones. It emphasizes the coninuum of values along a desired goal or risk factors. Since a gauge chart can introduce a lot of digital \"ink\", consider how a donut chart, cumulative line chart, or text-based value can achieve a similar goal. <br><b>Tip: ensure tick markers enhance the feeling of progression along the goal.</b>")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Gauge Chart**: This chart type is useful for comparing a value against a target or a set of milestones. It emphasizes the continuum of values along a desired goal or risk factors. Since a gauge chart can introduce a lot of digital \"ink\", consider how a donut chart, cumulative line chart, or text-based value can achieve a similar goal. <br><b>Tip: ensure tick markers enhance the feeling of progression along the goal.</b>")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -1144,23 +1150,29 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("scatter.jpg")
-    mo.hstack([_img,mo.md("**Scatter Plot**: TODO")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Scatter Plot**: In this format, individual data points are plotted along **two quantitative axes (x and y)**. Scatterplots are the tool for identifying **relationships, correlations, clusters, and outliers** between data. While highly effective, **they are considered an \"advanced\" chart type** and generally require an audience with a slightly higher level of data literacy to easily interpret.<br>**Tips: make axis labels even more obvious in titles. Baselines do not have to start at zero since the view is \"zoomed in\".**")],gap=2,align="center",widths=[.25,1])
     return
 
 
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("bubble.jpg")
-    mo.hstack([_img,mo.md("**Bubble Chart**: TODO")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Bubble Chart**: In this format, a standard scatterplot is expanded by mapping a **third quantitative variable onto the size of the data markers.** This **adds another major level of visual complexity** and is an even more **\"advanced\" version of a scatter plot.** Ensure nodes have some transparency and shape outline to clearly reveal overlapping node position.<br>**Tips: direct labeling and categorical sizing (ie: 0-10k=5px, 10k-20k=10px, etc.) help with legibility but use this chart type with caution! ⚠️**")],gap=2,align="center",widths=[.25,1])
     return
 
 
 @app.cell
-def _(my_utils):
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell
+def _():
     bubble_count_slider = mo.ui.slider(
         start=8,
         stop=18,
-        value=10,
+        value=12,
         label="Number of products",
         show_value=True,
         full_width=True,
@@ -1175,14 +1187,25 @@ def _(my_utils):
         show_value=True,
         full_width=True,
     )
-
-
-    scatterplot_message = my_utils.callout_neutral(
-        "TODO"
-    )
-
-    mo.hstack([scatterplot_message, mo.vstack([bubble_count_slider,bubble_radius_slider])], gap=2, align="center", widths=[2, 0.75])
     return bubble_count_slider, bubble_radius_slider
+
+
+@app.cell
+def _(bubble_count_slider, bubble_radius_slider, my_utils):
+    # callout
+    _message_by_range = [
+        {"min": 0, "max": 0, "message": my_utils.callout_info("<b>Constant radius</b>: Scatter plots have the same size for all nodes and which makes <b>insight gathering easier than bubble charts.</b> As you <b>increase the number of products</b>, how does the visual complexity change?")},
+        {"min": 1, "max": float("inf"), "message": my_utils.callout_danger("<b>Variable radius</b>: Bubble charts with closely related radius sizes can make it <b>difficult to see the differences</b> between products. Consider how the number of nodes and changes in radius size <b>affects the readability</b> of the chart and the <b>insights you can gather from it.<b>")}
+    ]
+
+    _message = next(
+        item["message"]
+        for item in _message_by_range
+        if item["min"] <= bubble_radius_slider.value <= item["max"]
+    ) 
+
+    mo.hstack([_message, mo.vstack([bubble_count_slider,bubble_radius_slider])], gap=2, align="center", widths=[2, 0.75])
+    return
 
 
 @app.cell(hide_code=True)
@@ -1206,8 +1229,18 @@ def _(base_df, bubble_count_slider):
 
 
 @app.cell(hide_code=True)
-def _(bubble_radius_slider):
-    mo.md(r"""### 🫧 **Bubble Plot** (Product Sales by Profit, <u>Sized by Quantity Sold</u>)""") if bubble_radius_slider.value > 0 else mo.md(r"""### 🔵 **Scatter Plot** (Product Sales by Profit)""")
+def bubble_title(bubble_radius_slider, my_utils):
+    bubble_title = (
+        mo.md(
+            f"""### ☑️ <span style="color: {my_utils.COLOR_PALETTE[0]};"> <b>Scatter Plot</b> (Product Sales by Profit)</span>"""
+        )
+        if bubble_radius_slider.value == 0
+        else mo.md(
+            f"""### ⚠️ <span style="color: {my_utils.COLOR_PALETTE[7]};"> <b>Bubble Chart</b> (Product Sales by Profit, <u>Sized by Quantity Sold</u>)</span>"""
+        )
+    )
+
+    bubble_title
     return
 
 
@@ -1229,7 +1262,7 @@ def _(bubble_radius_slider, my_utils, scatterplot_subcategory_metrics_df):
 
     if bubble_radius_slider.value == 0:
         _scatterplot_fig.update_traces(
-            marker=dict(size=15, opacity=.7)
+            marker=dict(size=15, opacity=.7, line=dict(width=1, color="white"))
         )
     _scatterplot_fig.update_xaxes(tickformat="$,.2s")
     _scatterplot_fig.update_yaxes(tickformat="$,.2s", zeroline=True, zerolinecolor="rgba(0,0,0,0.3)",zerolinewidth=1)
