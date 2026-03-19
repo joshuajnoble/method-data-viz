@@ -841,9 +841,7 @@ def _():
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    ## Pie Charts
-
-    TODO: potentially add stacked bar charts to this section since they're similar.
+    ## Pie Charts and Stacked Bar Charts
     """)
     return
 
@@ -852,6 +850,20 @@ def _():
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("pie.jpg")
     mo.hstack([_img,mo.md("**Pie Chart:** This chart type is good for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret** because **comparing angles is challenging for humans**, **too many categories are overwhelming**, and **similar values are difficult to discern**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.<br><b>Tip: start the first slice at 12 o'clock and arrange slices clockwise. Direct labeling (inside or outside) rather than legends can increase legibility.</b>")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("v_stacked_bar.jpg")
+    mo.hstack([_img,mo.md("**Vertical Stacked Bar Chart:** This format is also good for showing how a total is divided into parts. There is a **major drawback** in that each segment (with the exception of the first) does not share a common flat baseline. This makes it difficult for readers to accurately compare the sizes of the internal segments. <br>**Tip: Place the most important category at the baseline and use highlighting colors to emphasize certain slices.**")],gap=2, align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("h_stacked_bar.jpg")
+    mo.hstack([_img,mo.md("**Horizontal Stacked Bar Chart:** TODO")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -917,7 +929,7 @@ def pie_prep(base_df, category_slider):
 @app.cell
 def _(category_slider, my_utils, segment_sales_df):
     _total_sales = segment_sales_df["Sales"].sum()
-    my_utils.title_with_icon(value = category_slider.value, cutoff_value = 3, no_icon="⚠️",no_color=my_utils.COLOR_PALETTE[7], title = "Pie Chart", subtitle=f"(Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)")
+    my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, no_icon="⚠️",no_color=my_utils.COLOR_PALETTE[7], title = "Pie Chart", subtitle=f"(Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)")
     return
 
 
@@ -956,9 +968,13 @@ def pie(my_utils, segment_sales_base_df, segment_sales_df):
     )
 
     other_categories_detail_df = (
-        segment_sales_base_df.loc[
-            ~segment_sales_base_df["Category"].isin(selected_categories_for_pie)
-        ]
+        segment_sales_base_df.assign(
+            Category=lambda df: df["Category"].where(
+                ~df["Category"].isin(selected_categories_for_pie), "Other"
+            )
+        )
+        .groupby("Category", as_index=False, sort=False)["Sales"]
+        .sum()
         .sort_values("Sales", ascending=False)
         .reset_index(drop=True)
     )
@@ -974,12 +990,16 @@ def pie(my_utils, segment_sales_base_df, segment_sales_df):
         other_categories_stack_df["Category"]
     )
 
+    selected_categories_for_pie = ["Other",selected_categories_for_pie]
+
     other_stacked_bar_fig = px.bar(
         other_categories_stack_df,
         x="Group",
         y="_percent",
         color="Category",
         barmode="stack",
+        title="<b>Other Categories</b>",
+        range_y=[0,1],
         color_discrete_sequence=my_utils.COLOR_PALETTE[
             len(selected_categories_for_pie) : len(selected_categories_for_pie) + len(other_categories_stack_df)
         ][::1],
@@ -1000,13 +1020,87 @@ def pie(my_utils, segment_sales_base_df, segment_sales_df):
         legend_title=None,
         showlegend=False,
         height=450,
-        width=350
+        width=350,
+        margin=dict(t=15),
+        title = dict(y=.95,x=.495,xanchor='center',yanchor='bottom')
     )
 
     other_stacked_bar_fig.update_yaxes(tickformat=".1%")
+    other_stacked_bar_fig.update_xaxes(showticklabels=False)
 
 
     mo.hstack([_pie_fig,other_stacked_bar_fig],gap=0,align="center",justify="center",widths=[.65,.35])
+    return other_categories_stack_df, selected_categories_for_pie
+
+
+@app.cell
+def _(category_slider, my_utils):
+    _title = my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, yes_icon="⚠️",no_icon="☑️",yes_color=my_utils.COLOR_PALETTE[7],no_color=my_utils.COLOR_PALETTE[0], title = "Horizontal Stacked Bar Chart",subtitle="(Other Categories Only)")
+
+    mo.vstack(
+        [mo.Html("<hr style='border: 0; border-top: 1px solid black; opacity: 0.1;'>"),
+         _title
+        ],
+        gap=1.5
+    )
+    return
+
+
+@app.cell
+def horizontal_bar(
+    my_utils,
+    other_categories_stack_df,
+    selected_categories_for_pie,
+):
+    _other_stacked_bar_horizontal_fig = px.bar(
+        other_categories_stack_df,
+        y="Group",
+        x="_percent",
+        color="Category",
+        orientation="h",
+        barmode="stack",
+        color_discrete_sequence=my_utils.COLOR_PALETTE[
+            len(selected_categories_for_pie) : len(selected_categories_for_pie) + len(other_categories_stack_df)
+        ][::1]
+    )
+
+    _other_legend_values = (
+        other_categories_stack_df.set_index("Category")[["_percent", "Sales"]].to_dict("index")
+    )
+
+    for _trace in _other_stacked_bar_horizontal_fig.data:
+        _category = _trace.name
+        _pct = _other_legend_values[_category]["_percent"]
+        _sales = _other_legend_values[_category]["Sales"]
+        _label = f"{_category} {_pct:.1%} (${my_utils.numerize(_sales)})"
+        _trace.name = _label
+        _trace.hovertext = [_label] * len(_trace.x)
+
+    _other_stacked_bar_horizontal_fig.update_traces(
+        hovertemplate="%{hovertext}<extra></extra>"
+    )
+
+    _other_stacked_bar_horizontal_fig.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        legend_title=None,
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=-.015,
+            font=dict(size=14),
+        ),
+        height=225,
+        margin=dict(t=0, r=0, b=0, l=0),
+    )
+
+    _other_stacked_bar_horizontal_fig.update_xaxes(tickformat=".1%")
+    _other_stacked_bar_horizontal_fig.update_yaxes(tickprefix="<b>",ticksuffix="</b>   ",tickfont=dict(size=15))
+
+    mo.ui.plotly(_other_stacked_bar_horizontal_fig, config={"displayModeBar": False})
     return
 
 
