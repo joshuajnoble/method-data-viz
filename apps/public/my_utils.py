@@ -2,7 +2,6 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "marimo>=0.20.4",
-#     "decimal"
 # ]
 # ///
 import marimo as mo
