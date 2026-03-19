@@ -875,15 +875,15 @@ def _():
 
 @app.cell
 def _():
-    category_slider = mo.ui.slider(start=1, stop=8, value=1, label = "Number of highlighted categories", show_value = True,full_width=True)
+    category_slider = mo.ui.slider(start=1, stop=8, value=1, label = "Number of highlighted categories in <b>pie chart</b>", show_value = True,full_width=True)
     return (category_slider,)
 
 
 @app.cell
 def _(category_slider, my_utils):
     _message_by_range = [
-        {"min": 1, "max": 3, "message": my_utils.callout_info("Consider how <b>simple the presentation is with a small number of categories.</b> The story is clear and the visual is easy to interpret.")},
-        {"min": 4, "max": float("inf"), "message": my_utils.callout_danger("As more categories are added, the <b>visual becomes more complex and harder to interpret.</b> Consider how a different chart type like a <b>stacked bar chart or horizontal bar chart might be more effective</b> for showing the comparison of many categories to the whole.")},
+        {"min": 1, "max": 4, "message": my_utils.callout_neutral("Consider how <b>simple the presentation is in the bar chart with a small number of categories.</b> The story is clear and the visual is easy to interpret.<br><br>The <b>stacked bar charts have too many categories and are visually overwhelming</b>.")},
+        {"min": 5, "max": float("inf"), "message": my_utils.callout_neutral("As more categories are added, the <b>pie chart becomes more complex and harder to interpret while the stacked bar charts become easier to interpret.</b><br><br>Consider how the <b>number of categories impacts your ability to gather insights.</b>")},
     ]
 
     _message = next(
@@ -892,7 +892,7 @@ def _(category_slider, my_utils):
         if item["min"] <= category_slider.value <= item["max"]
     ) 
 
-    mo.hstack([_message,category_slider],gap=2,align="center",widths=[2,.75])
+    mo.hstack([_message,category_slider],gap=2,align="center",widths=[2,1])
     return
 
 
@@ -902,7 +902,7 @@ def pie_prep(base_df, category_slider):
         base_df.groupby(["Sub-Category"], as_index=False)["Sales"]
         .sum()
         # filter all categories out with under 700k of sales
-        .query("Sales >= 400000")
+        .query("Sales >= 470000")
         .rename(columns={"Sub-Category": "Category"})
         .sort_values("Sales", ascending=False)
     )
@@ -926,15 +926,8 @@ def pie_prep(base_df, category_slider):
     return segment_sales_base_df, segment_sales_df
 
 
-@app.cell
-def _(category_slider, my_utils, segment_sales_df):
-    _total_sales = segment_sales_df["Sales"].sum()
-    my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, no_icon="⚠️",no_color=my_utils.COLOR_PALETTE[7], title = "Pie Chart", subtitle=f"(Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)")
-    return
-
-
 @app.cell(hide_code=True)
-def pie(my_utils, segment_sales_base_df, segment_sales_df):
+def pie(category_slider, my_utils, segment_sales_base_df, segment_sales_df):
     _pie_color_map = {
         category: my_utils.COLOR_PALETTE[i % len(my_utils.COLOR_PALETTE)]
         for i, category in enumerate(segment_sales_df["Category"])
@@ -970,7 +963,7 @@ def pie(my_utils, segment_sales_base_df, segment_sales_df):
     other_categories_detail_df = (
         segment_sales_base_df.assign(
             Category=lambda df: df["Category"].where(
-                ~df["Category"].isin(selected_categories_for_pie), "Other"
+                ~df["Category"].isin(selected_categories_for_pie), "Pie Chart"
             )
         )
         .groupby("Category", as_index=False, sort=False)["Sales"]
@@ -990,7 +983,7 @@ def pie(my_utils, segment_sales_base_df, segment_sales_df):
         other_categories_stack_df["Category"]
     )
 
-    selected_categories_for_pie = ["Other",selected_categories_for_pie]
+    selected_categories_for_pie = ["Pie Chart"] + [selected_categories_for_pie]
 
     other_stacked_bar_fig = px.bar(
         other_categories_stack_df,
@@ -998,11 +991,10 @@ def pie(my_utils, segment_sales_base_df, segment_sales_df):
         y="_percent",
         color="Category",
         barmode="stack",
-        title="<b>Other Categories</b>",
+        #title="<b>Other Categories</b>",
         range_y=[0,1],
-        color_discrete_sequence=my_utils.COLOR_PALETTE[
-            len(selected_categories_for_pie) : len(selected_categories_for_pie) + len(other_categories_stack_df)
-        ][::1],
+        color_discrete_sequence=(["#D2D2D2"] + my_utils.COLOR_PALETTE[
+               category_slider.value: (category_slider.value + len(other_categories_stack_df))]),
         hover_data={"Sales": ":,.0f", "Group": False, "_percent_label": True},
         text="_segment_label"
     )
@@ -1021,21 +1013,25 @@ def pie(my_utils, segment_sales_base_df, segment_sales_df):
         showlegend=False,
         height=450,
         width=350,
-        margin=dict(t=15),
-        title = dict(y=.95,x=.495,xanchor='center',yanchor='bottom')
+        margin=dict(t=30),
+        title = dict(y=.97,x=.495,xanchor='center',yanchor='bottom')
     )
 
     other_stacked_bar_fig.update_yaxes(tickformat=".1%")
     other_stacked_bar_fig.update_xaxes(showticklabels=False)
 
+    _total_sales = segment_sales_df["Sales"].sum()
+    _pie_title = my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, no_icon="⚠️",no_color=my_utils.COLOR_PALETTE[7], title = "Pie Chart", subtitle=f"(Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)")
 
-    mo.hstack([_pie_fig,other_stacked_bar_fig],gap=0,align="center",justify="center",widths=[.65,.35])
-    return other_categories_stack_df, selected_categories_for_pie
+    _other_stacked_bar_title = my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, yes_icon="⚠️",no_icon="☑️",yes_color=my_utils.COLOR_PALETTE[7],no_color=my_utils.COLOR_PALETTE[0], title = "Vertical Stacked Bar Chart",subtitle="<br>(\"Other\" Categories Only)")
+
+    mo.hstack([mo.vstack([_pie_title,_pie_fig]),mo.vstack([_other_stacked_bar_title,other_stacked_bar_fig])],gap=3,align="center",justify="center",widths=[.65,.35])
+    return (other_categories_stack_df,)
 
 
 @app.cell
 def _(category_slider, my_utils):
-    _title = my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, yes_icon="⚠️",no_icon="☑️",yes_color=my_utils.COLOR_PALETTE[7],no_color=my_utils.COLOR_PALETTE[0], title = "Horizontal Stacked Bar Chart",subtitle="(Other Categories Only)")
+    _title = my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, yes_icon="⚠️",no_icon="☑️",yes_color=my_utils.COLOR_PALETTE[7],no_color=my_utils.COLOR_PALETTE[0], title = "Horizontal Stacked Bar Chart",subtitle="(\"Other\" Categories Only)")
 
     mo.vstack(
         [mo.Html("<hr style='border: 0; border-top: 1px solid black; opacity: 0.1;'>"),
@@ -1047,11 +1043,7 @@ def _(category_slider, my_utils):
 
 
 @app.cell
-def horizontal_bar(
-    my_utils,
-    other_categories_stack_df,
-    selected_categories_for_pie,
-):
+def horizontal_bar(category_slider, my_utils, other_categories_stack_df):
     _other_stacked_bar_horizontal_fig = px.bar(
         other_categories_stack_df,
         y="Group",
@@ -1059,9 +1051,8 @@ def horizontal_bar(
         color="Category",
         orientation="h",
         barmode="stack",
-        color_discrete_sequence=my_utils.COLOR_PALETTE[
-            len(selected_categories_for_pie) : len(selected_categories_for_pie) + len(other_categories_stack_df)
-        ][::1]
+        color_discrete_sequence=(["#D2D2D2"] + my_utils.COLOR_PALETTE[
+               category_slider.value: (category_slider.value + len(other_categories_stack_df))]),
     )
 
     _other_legend_values = (
