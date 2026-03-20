@@ -116,7 +116,7 @@ async def _(my_utils):
 @app.cell(hide_code=True)
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("small_multiples.jpg")
-    mo.hstack([_img,mo.md("**Small Multiples**: In this format, each category gets its own individual chart (or subplot/facet) that shares the same axis scales. This allows for *easier comparison of trends across categories* without the visual clutter of a grouped bar chart. However, it can be more difficult to compare values across categories since they are not visually grouped together.<br>**Tip: consider arranging the facets in a meaningful order and adding darker axis lines for easier comparison.**")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Small Multiples**: In this format, each category gets its own individual chart (or subplot/facet) that shares the same axis scales. This allows for *easier comparison of trends across categories* without the visual clutter of a grouped bar chart. However, it can be more difficult to compare values across categories since they are not visually grouped together.<hr>Tip: arrange facets in a meaningful order and add darker axis lines for easier comparison.")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -313,8 +313,10 @@ def _(chart_slider, my_utils, segment_year_sales_df):
                 col=_col_idx,
             )
 
-    category_sales_subplots_fig.update_yaxes(tickformat="$,.0s", title="", gridcolor="rgba(0, 0, 0, 0.15)",gridwidth=1.05)
-    category_sales_subplots_fig.update_xaxes(title="")
+    _year_ticks = sorted({str(x_val) for tr in category_sales_subplots_fig.data for x_val in tr.x})
+
+    category_sales_subplots_fig.update_yaxes(tickformat="$,.0s", title="", gridcolor="rgba(0, 0, 0, 0.15)",gridwidth=1.05, rangemode="tozero")
+    category_sales_subplots_fig.update_xaxes(title="",tickmode="array", tickvals=_year_ticks, ticktext=[f"'{y[-2:]}" for y in _year_ticks] if chart_slider.value >= 5 else _year_ticks)
     category_sales_subplots_fig.update_layout(barmode="group",
                                               showlegend=False,
                                               margin = dict(t=30),
@@ -341,14 +343,14 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("line.jpg")
-    mo.hstack([_img,mo.md("**Line Chart**: In this format, individual data points are connected by lines to communicate trends, fluctuations, and patterns. Primarily used for **showing change over time**, this chart type is most appropriate for data that has a **natural sequential order along the horizontal axis**. The best-practice of [\"starting the y-axis at zero\"](https://stephanieevergreen.com/non-zero-axis-rules/) can be adjusted here to \"zoom in\" on the dataset.<br>**Tip: consider reducing the point radius or entirely removing the point for high density time-series data.**")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Line Chart**: In this format, individual data points are connected by lines to communicate trends, fluctuations, and patterns. Primarily used for **showing change over time**, this chart type is most appropriate for data that has a **natural sequential order along the horizontal axis**. The best-practice of [\"starting the y-axis at zero\"](https://stephanieevergreen.com/non-zero-axis-rules/) can be adjusted here to \"zoom in\" on the dataset.<hr>Tip: reduce the individual datapoint radius (or removing it altogether) for high density time-series data.")],gap=2,align="center",widths=[.25,1])
     return
 
 
 @app.cell(hide_code=True)
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("line_labeling.png")
-    mo.hstack([mo.md("> Although not represented in the examples below due to technical limitations of the visualization library, [directly labeling lines with category labels](https://depictdatastudio.com/directly-labeling-line-graphs/) reduces the need for a legend and decreases cognitive load.<br>**Tip: Consider adding final values; ie: \"Computer Sciences (20%)\".**"),_img],gap=2,align="center",widths=[.65,.35])
+    mo.hstack([mo.md("> Although not represented in the examples below due to technical limitations of the visualization library, [directly labeling lines with category labels](https://depictdatastudio.com/directly-labeling-line-graphs/) reduces the need for a legend and decreases cognitive load. Consider adding final values to label to increase legibility; ie: \"Computer Sciences (20%)\"."),_img],gap=2,align="center",widths=[.65,.35])
     return
 
 
@@ -596,14 +598,14 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("horizontal.jpg")
-    mo.hstack([_img,mo.md("**Standard Horizontal Bar Chart**: This format is highly recommended when you have many items to compare since **vertical scanning is easier and faster than horizontal**. Additionally, this chart type works well for long category labels that would otherwise need to be awkwardly rotated or squished on a vertical x-axis work well here. This layout acts as an excellent tool for showing rankings or clear differences in magnitude. **Tip: consider the natural sequence of the categories and remember to right align labels.**")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Standard Horizontal Bar Chart**: This format is highly recommended when you have many items to compare since **vertical scanning is easier and faster than horizontal**. Additionally, this chart type works well for long category labels that would otherwise need to be awkwardly rotated or squished on a vertical x-axis work well here. This layout acts as an excellent tool for showing rankings or clear differences in magnitude.<hr>Tip: consider the natural sequence of the categories and remember to right align labels.")],gap=2,align="center",widths=[.25,1])
     return
 
 
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("horizontal_small_multiples.jpg")
-    mo.hstack([_img,mo.md("**Small Multiples**: In this format, the data is split into a **regular grid of smaller, individual horizontal bar charts** (sometimes called a trellis plot or faceting). Each *panel* shares the same axis scales to ensure accurate comparisons. Breaking a dense graph into smaller pieces makes it much easier for readers to comprehend trends within distinct subsets of data without the visual clutter of a massive, heavily grouped chart. **Tip: consider the natural sequence of groupings and grid lines to help separate the panels.**")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Small Multiples**: In this format, the data is split into a **regular grid of smaller, individual horizontal bar charts** (sometimes called a trellis plot or faceting). Each *panel* shares the same axis scales to ensure accurate comparisons. Breaking a dense graph into smaller pieces makes it much easier for readers to comprehend trends within distinct subsets of data without the visual clutter of a massive, heavily grouped chart.<hr>Tip: consider the natural sequence of groupings and grid lines to help separate the panels.")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -849,21 +851,21 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("pie.jpg")
-    mo.hstack([_img,mo.md("**Pie Chart:** This chart type is good for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret** because **comparing angles is challenging for humans**, **too many categories are overwhelming**, and **similar values are difficult to discern**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.<br><b>Tip: start the first slice at 12 o'clock and arrange slices clockwise. Direct labeling (inside or outside) rather than legends can increase legibility.</b>")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Pie Chart:** This chart type is good for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret** because **comparing angles is challenging for humans**, **too many categories are overwhelming**, and **similar values are difficult to discern**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.<hr>Tips: start the first slice at 12 o'clock and arrange slices clockwise. Direct labeling (inside or outside) rather than legends can increase legibility.")],gap=2,align="center",widths=[.25,1])
     return
 
 
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("v_stacked_bar.jpg")
-    mo.hstack([_img,mo.md("**Vertical Stacked Bar Chart:** This format is also good for showing how a total is divided into parts. There is a **major drawback** in that each segment (with the exception of the first) does not share a common flat baseline. This makes it difficult for readers to accurately compare the sizes of the internal segments. <br>**Tip: Place the most important category at the baseline and use highlighting colors to emphasize certain slices.**")],gap=2, align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Vertical Stacked Bar Chart:** This format is also good for showing how a total is divided into parts. There is a **major drawback** in that each segment (with the exception of the first) does not share a common flat baseline. This makes it difficult for readers to accurately compare the sizes of the internal segments. <hr>Tips: Add direct labeling, place the most important category at the baseline, and use highlighting colors to emphasize certain slices.")],gap=2, align="center",widths=[.25,1])
     return
 
 
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("h_stacked_bar.jpg")
-    mo.hstack([_img,mo.md("**Horizontal Stacked Bar Chart:** TODO")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Horizontal Stacked Bar Chart:** Similar to the vertically stacked bar chart, a horizontal view lends itself well to **scanning left to right.** When category labels are long, this view is preferred over its vertical counterpart.<hr>Tips: Add direct labeling, place the most important category at the baseline, and use highlighting colors to emphasize certain slices.")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -1119,7 +1121,7 @@ async def _(my_utils):
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("gauge.jpg")
-    mo.hstack([_img,mo.md("**Gauge Chart**: This chart type is useful for comparing a value against a target or a set of milestones. It emphasizes the continuum of values along a desired goal or risk factors. Since a gauge chart can introduce a lot of digital \"ink\", consider how a donut chart, cumulative line chart, or text-based value can achieve a similar goal. <br><b>Tip: ensure tick markers enhance the feeling of progression along the goal.</b>")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Gauge Chart**: This chart type is useful for comparing a value against a target or a set of milestones. It emphasizes the continuum of values along a desired goal or risk factors. Since a gauge chart can introduce a lot of digital \"ink\", consider how a donut chart, cumulative line chart, or text-based value can achieve a similar goal. <hr>Tip: ensure tick markers enhance the feeling of progression along the goal.")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -1235,14 +1237,14 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("scatter.jpg")
-    mo.hstack([_img,mo.md("**Scatter Plot**: In this format, individual data points are plotted along **two quantitative axes (x and y)**. Scatterplots are the tool for identifying **relationships, correlations, clusters, and outliers** between data. While highly effective, **they are considered an \"advanced\" chart type** and generally require an audience with a slightly higher level of data literacy to easily interpret.<br>**Tips: make axis labels even more obvious in titles. Baselines do not have to start at zero since the view is \"zoomed in\".**")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Scatter Plot**: In this format, individual data points are plotted along **two quantitative axes (x and y)**. Scatterplots are the tool for identifying **relationships, correlations, clusters, and outliers** between data. While highly effective, **they are considered an \"advanced\" chart type** and generally require an audience with a slightly higher level of data literacy to easily interpret.<hr>Tips: make axis labels even more obvious in titles. Baselines do not have to start at zero.")],gap=2,align="center",widths=[.25,1])
     return
 
 
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("bubble.jpg")
-    mo.hstack([_img,mo.md("**Bubble Chart**: In this format, a standard scatterplot is expanded by mapping a **third quantitative variable onto the size of the data markers.** This **adds another major level of visual complexity** and is an even more **\"advanced\" version of a scatter plot.** Ensure nodes have some transparency and shape outline to clearly reveal overlapping node position.<br>**Tips: direct labeling and categorical sizing (ie: 0-10k=5px, 10k-20k=10px, etc.) help with legibility but use this chart type with caution! ⚠️**")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Bubble Chart**: In this format, a standard scatterplot is expanded by mapping a **third quantitative variable onto the size of the data markers.** This **adds another major level of visual complexity** and is an even more **\"advanced\" version of a scatter plot.** Ensure nodes have some transparency and shape outline to clearly reveal overlapping node position.<hr>Tips: direct labeling and categorical sizing (ie: values in range 0-10k=5px, 10k-20k=10px, etc.) help with legibility. Generally, use this chart type with caution! ⚠️ ")],gap=2,align="center",widths=[.25,1])
     return
 
 
