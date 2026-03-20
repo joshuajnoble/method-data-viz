@@ -78,18 +78,17 @@ def _():
 
 @app.cell(hide_code=True)
 async def _(my_utils):
-    # prep data
-    base_df = await my_utils.gh_pages_read_csv_into_df("superstore.csv")
-
-    base_df_with_year = base_df.assign(
-        _order_year=pd.to_datetime(base_df["Order Date"], format="%m/%d/%y").dt.year
+    # import data
+    segment_year_sales_df = await my_utils.gh_pages_read_csv_into_df("segment_year_sales_df.csv")
+    category_subcategory_sales_df = await my_utils.gh_pages_read_csv_into_df("category_subcategory_sales_df.csv")
+    category_subcategory_agg_df = await my_utils.gh_pages_read_csv_into_df("category_subcategory_agg_df.csv")
+    subcategory_sales_df = await my_utils.gh_pages_read_csv_into_df("subcategory_sales_df.csv")
+    return (
+        category_subcategory_agg_df,
+        category_subcategory_sales_df,
+        segment_year_sales_df,
+        subcategory_sales_df,
     )
-    segment_year_sales_df = (
-        base_df_with_year.groupby(["_order_year", "Sub-Category"], as_index=False)["Sales"]
-        .sum()
-        .rename(columns={"_order_year": "Year","Sub-Category":"Category"})
-    )
-    return base_df, segment_year_sales_df
 
 
 @app.cell
@@ -651,10 +650,14 @@ def _(horizontal_switch):
 
 
 @app.cell
-def _(base_df, horizontal_bar_slider, horizontal_switch, my_utils):
+def _(
+    category_subcategory_sales_df,
+    horizontal_bar_slider,
+    horizontal_switch,
+    my_utils,
+):
     category_sales_df = (
-        base_df.groupby(["Category","Sub-Category"], as_index=False)["Sales"]
-        .sum()
+        category_subcategory_sales_df
         .rename(columns={"Sub-Category": "SubCategory"})
         .sort_values("Sales", ascending=False)
         .head(horizontal_bar_slider.value)
@@ -734,11 +737,15 @@ def _():
 
 
 @app.cell
-def _(base_df, horizontal_bar_slider, make_subplots, my_utils):
+def _(
+    category_subcategory_sales_df,
+    horizontal_bar_slider,
+    make_subplots,
+    my_utils,
+):
 
     _small_multiples_source_df = (
-        base_df.groupby(["Category", "Sub-Category"], as_index=False)["Sales"]
-        .sum()
+        category_subcategory_sales_df
         .rename(columns={"Sub-Category": "SubCategory"})
         .sort_values("Sales", ascending=False)
         .head(horizontal_bar_slider.value)
@@ -899,11 +906,10 @@ def _(category_slider, my_utils):
 
 
 @app.cell(hide_code=True)
-def pie_prep(base_df, category_slider):
+def pie_prep(category_slider, subcategory_sales_df):
     segment_sales_base_df = (
-        base_df.groupby(["Sub-Category"], as_index=False)["Sales"]
-        .sum()
-        # filter all categories out with under 700k of sales
+        subcategory_sales_df
+        # filter all categories out with under 470k of sales
         .query("Sales >= 470000")
         .rename(columns={"Sub-Category": "Category"})
         .sort_values("Sales", ascending=False)
@@ -1296,17 +1302,9 @@ def _(bubble_count_slider, bubble_radius_slider, my_utils):
 
 
 @app.cell(hide_code=True)
-def _(base_df, bubble_count_slider):
+def _(bubble_count_slider, category_subcategory_agg_df):
     scatterplot_subcategory_metrics_df = (
-        base_df.groupby(["Category", "Sub-Category"], as_index=False)
-        .agg(
-            {
-                "Sales": "sum",
-                "Profit": "sum",
-                "Quantity": "sum",
-                "Shipping Cost": "sum",
-            }
-        )
+        category_subcategory_agg_df
         .rename(columns={"Sub-Category": "SubCategory", "Shipping Cost": "ShippingCost"})
         .sort_values("Sales", ascending=False)
         .head(bubble_count_slider.value)
