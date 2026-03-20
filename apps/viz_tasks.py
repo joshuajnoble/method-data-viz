@@ -159,7 +159,7 @@ def _():
         y=forecasts['p50'],
         mode='lines',
         line=dict(color='blue', width=2),
-        name='Median forecast',
+        name='Forecast',
         hoverlabel=dict(
             bgcolor="blue", # Set the background color
             font=dict(
@@ -177,6 +177,7 @@ def _():
     ))
 
     forecast_fig.update_traces(hovertemplate="<b>Sales:</b> %{y:$.2f}")
+    forecast_fig.add_vline(x=weeklies['Order Date'].max(), line_width=2, line_dash="dash", line_color="orange")
 
     return (forecasts, weeklies)
 
@@ -189,6 +190,8 @@ def _():
 
         In this chart we're saying that there's an 80% chance that the actual sales will be within the 80% range and a 50% chance that it will be within the 50% range.
         The median forecast is just the middle, it's not the most likely per se, it's just the middle of our forecasts.
+        As we go further in time, our forecasts become more and more uncertain, which makes sense. I can usually guess what the weather will be tomorrow but it's much harder to guess what it will be in a month or in 5 years.
+        The uncertainty range helps us express that and tell the story of our forecasts and how they should be understood.
 
         """
     )
@@ -284,21 +287,9 @@ def _(forecasts, weeklies):
         line=dict(color='black'),
         name='Actuals'
     ))
-
+    forecast_w_prob_fig.add_vline(x=weeklies['Order Date'].max(), line_width=2, line_dash="dash", line_color="orange")
     forecast_w_prob_fig.update_traces(hovertemplate="<b>Sales:</b> %{y:$.2f}")
 
-
-@app.cell
-def _():
-    mo.md(
-        """
-        ## Causal Stories
-
-        Let's think of this story as: "which of these things cause one another?"
-
-        """
-    )
-    return
 
 @app.cell
 def _():
