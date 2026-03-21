@@ -1,0 +1,8 @@
+[tool.marimo.formatting]
+line_length = 160
+
+[tool.marimo.display]
+default_width = "full"
+
+[tool.marimo.runtime]
+default_sql_output = "native"
