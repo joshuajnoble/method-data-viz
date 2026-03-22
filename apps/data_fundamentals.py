@@ -26,30 +26,23 @@ def _():
     cell_width = 800
 
     @mo.cache
+    def get_fundamentals():
+
+        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/yearly_sales_by_segment.csv"
+        path_to_csv = mo.notebook_location() / "public" / "data_fundamentals.csv"
+        fundies = pd.read_csv(path_to_csv)
+        fundies['Order Date'] = pd.to_datetime(fundies['Order Date'])
+        return fundies
+
+    @mo.cache
     def get_yearly():
 
-        #path_to_csv = mo.notebook_location() / "public" / "yearly_sales.csv"
-        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/yearly_sales.csv"
-        yearly_sales = pd.read_csv(path_to_csv)
-        yearly_sales = yearly_sales.sort_values("year")
-        return yearly_sales
+        path_to_csv = mo.notebook_location() / "public" / "yearly_sales.csv"
+        yearly = pd.read_csv(path_to_csv)
+        yearly['Order Date'] = pd.to_datetime(yearly['Order Date'])
+        yearly['year'] = yearly['year'].astype(str)
+        return yearly
 
-    @mo.cache
-    def get_yearly_by_segment():
-
-        #path_to_csv = mo.notebook_location() / "public" / "yearly_sales_by_segment.csv"
-        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/yearly_sales_by_segment.csv"
-        yearly_by_segment = pd.read_csv(path_to_csv)
-        return yearly_by_segment
-    
-    @mo.cache
-    def get_weekly_by_segment():
-
-        #path_to_csv = mo.notebook_location() / "public" / "weekly_sales_by_segment.csv"
-        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/weekly_sales_by_segment.csv"
-        weekly_sales_by_segment = pd.read_csv(path_to_csv)
-        return weekly_sales_by_segment
-    
     return (mo,px)
 
 # @app.cell(hide_code=True)
@@ -129,17 +122,6 @@ def _(mo):
     return
 
 
-@app.cell
-def _(mo):
-    _date_picker = mo.md("{start} → {end}").batch(
-        start=mo.ui.date(label="Start Date", value ="2026-01-01"),
-        end=mo.ui.date(label="End Date", value ="2026-02-01")
-    )
-    _dropdown = mo.ui.dropdown(options=["All Locations", "Charlotte, NC", "London, UK", "New York, NY", "Santa Clara, CA", "Atlanta, GA"], label="Choose location", value="All Locations")
-
-    mo.hstack([_date_picker, _dropdown], align="center", gap=2, widths=[.5, .5])
-    return
-
 
 @app.cell(hide_code=True)
 def __(mo):
@@ -159,26 +141,104 @@ def __(mo):
         ## Filtering
           
           This means looking at something like "sales in New York City" or "all computer purchases on Jan 12, 2025". Almost any chart you've ever seen does this. You filter out items to try to find insights about a specific category of items or range of numeric or temporal values. This can be static, "here are sales from Asia", or interactive, "select which region you want to see sales from".
-          
+    """)
+
+@app.cell
+def _(mo):
+    date_picker_filter = mo.md("{start} → {end}").batch(
+        start=mo.ui.date(label="Start Date", value ="2012-01-01"),
+        end=mo.ui.date(label="End Date", value ="2012-02-01")
+    )
+    dropdown_filter = mo.ui.dropdown(options=["All Locations", "Charlotte", "London", "New York City", "Santa Clara", "Atlanta"], label="Choose location", value="All Locations")
+
+    mo.hstack([date_picker_filter, dropdown_filter], align="center", gap=2, widths=[.5, .5])
+    
+    #dropdown_filter
+
+@app.cell
+def _(mo):
+    #_ = _dropdown
+    fundamentals = get_fundamentals()
+
+    filtered_df = (
+        fundamentals if dropdown_filter.value == "All Locations" else fundamentals[fundamentals["City"] == dropdown_filter.value]
+    )
+
+    filtered_df = filtered_df[(filtered_df['Order Date'].dt.date > date_picker_filter['start'].value) & (filtered_df['Order Date'].dt.date < date_picker_filter['end'].value)]
+    mo.ui.table(data=filtered_df, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False)
+
+
+@app.cell(hide_code=True)
+def __(mo):
+    mo.md("""
         ## Sorting
           
           This means arranging values according to one or more variables, for instance, individual sales ranked from highest dollar amount to lowest. You've seen this when you looked at the standings of teams in a league or sorted by cost at an retailers website. When you sort data, you give an ordering that it doesn't naturally contain, 
           so it's important to make sure that you know what fields you're sorting on. Putting a classroom of students in order by age is different ordering them by height or grade point average. The point of sorting is to see how one feature of the data relates
           to others.
+    """)
+
+
+@app.cell(hide_code=True)
+def __(mo):      
+    mo.ui.table(data=fundamentals, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False)
           
+@app.cell(hide_code=True)
+def __(mo):
+    mo.md("""
         ## Aggregating
           
           This goes along with filtering. Usually when we look at "sales in New York City" we say something like "all sales in New York City". Any bar chart you've ever seen is aggregating. When we aggregate, we group information about an event by one of its values to reduce what we're looking at.
           That can be simple, like adding together all the sales, or complicated, like grouping together all sales to East Asia except Korea by category to compare monitor sales to projector sales. 
           Aggregation often gets combined with other operations: find the biggest sales and sort them, find the least expensive items to ship that are consumer electronics, the average order amount in December vs April. 
           By combining different operations, we can use visualization to explore for ourselves and communicate to others.
+          """)
+    return
 
+@app.cell(hide_code=True)
+def __(mo):
+    multiselect_aggregate = mo.ui.multiselect(options=["Charlotte", "London", "New York City", "Santa Clara", "Atlanta"], label="Choose location")
+    multiselect_aggregate
+
+@app.cell(hide_code=True)
+def __(mo):
+    
+    count = len(fundamentals[fundamentals['City'].isin(multiselect_aggregate.value)])
+    total = round(fundamentals[fundamentals['City'].isin(multiselect_aggregate.value)]["Sales"].sum())
+
+    mo.md(
+        f'''
+        - **Number of Sales: {count}**
+        - **Total Sales: ${total}**
+        '''
+        )
+          
+@app.cell(hide_code=True)
+def __(mo):
+    mo.md("""
         ## Feature Engineering
           
           Any time you've seen a line chart showing "profit" or "Annual Run Revenue" or, for NFL fans, "Quarterback Rating", you've understood this. It's a number made from other numbers.
           Often times the information about filtered or aggregated values alone isn't quite enough, sometimes we need to make up new kinds of information. An easy example is profit: purchase price minus cost to seller. Profit margin is just profit divided by sales. 
-          Complex metrics like Annual Run Rate are made from aggregating and filtering data. These are new features built from existing data. Building new feature
+          Complex metrics like Annual Run Rate are made from aggregating and filtering data. These are new features built from existing data. Building new feature is a part of telling a story about what your data could be telling you.
+    """)
 
+
+@app.cell(hide_code=True)
+def __(mo):
+
+    features = fundamentals[["Order ID", "Sales", "Profit", "Quantity"]]
+    features["Cost"] = round(features['Sales'] - features['Profit'], 2)
+
+    features["Profit Ratio"] = round(features['Profit'] / features['Sales'], 2)
+    features["Per Unit Profit"] = round(features['Profit'] / features['Quantity'], 2)
+
+    mo.ui.table(data=features, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False)
+
+
+@app.cell(hide_code=True)
+def __(mo):    
+    mo.md("""            
         ## What do I need to know about these?
           
           You don't need to be a data analyst or data scientist to do data visualization well. However, understanding what people have done to create certain views into data or how insights might come from certain operations on that data is very helpful to communicate effectively.
