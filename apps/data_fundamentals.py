@@ -159,6 +159,7 @@ def _(mo):
 def _(mo):
     #_ = _dropdown
     fundamentals = get_fundamentals()
+    fundamentals = fundamentals.rename({"Quantity":"Items In Order"}, axis=1)
 
     filtered_df = (
         fundamentals if dropdown_filter.value == "All Locations" else fundamentals[fundamentals["City"] == dropdown_filter.value]
@@ -227,11 +228,11 @@ def __(mo):
 @app.cell(hide_code=True)
 def __(mo):
 
-    features = fundamentals[["Order ID", "Sales", "Profit", "Quantity"]]
+    features = fundamentals[["Order ID", "Sales", "Profit", "Items In Order"]]
     features["Cost"] = round(features['Sales'] - features['Profit'], 2)
 
-    features["Profit Ratio"] = round(features['Profit'] / features['Sales'], 2)
-    features["Per Unit Profit"] = round(features['Profit'] / features['Quantity'], 2)
+    features["Profit Ratio (Calculated)"] = round(features['Profit'] / features['Sales'], 2)
+    features["Per Unit Profit (Calculated)"] = round(features['Profit'] / features['Items In Order'], 2)
 
     mo.ui.table(data=features, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False)
 
