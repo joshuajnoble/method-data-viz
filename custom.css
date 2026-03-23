@@ -22,6 +22,7 @@
   --color-blue-500: #4442e3;
   --color-red-500: #ff584e;
   --color-gray-500: #d9d9d9;
+  --color-yellow-500: #f97316;
 }
 
 /* Base Colors */
@@ -104,7 +105,8 @@ h2 {
 
 .callout-info,
 .callout-danger,
-.callout-neutral {
+.callout-neutral,
+.callout-warning {
   padding: 1rem;
   margin: 1rem;
   border-radius: 0.5rem;
@@ -124,6 +126,10 @@ h2 {
 
 .callout-neutral {
   --callout-color: var(--color-gray-500);
+}
+
+.callout-warning {
+  --callout-color: var(--color-yellow-500);
 }
 
 /* hide the actions dropdown in the top right of the page */

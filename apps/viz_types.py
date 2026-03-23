@@ -1,0 +1,1380 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "marimo>=0.21.0",
+#     "plotly",
+#     "pandas",
+# ]
+# ///
+
+import marimo
+
+__generated_with = "0.21.0"
+app = marimo.App(width="medium", css_file="custom.css")
+
+with app.setup(hide_code=True):
+    # imports
+    import plotly.express as px
+    import plotly.graph_objects as go
+    import pandas as pd
+    import marimo as mo
+
+
+@app.cell(hide_code=True)
+async def setup_wasm():
+    import sys
+    import types
+    import importlib.util
+    from pathlib import Path
+
+    module_name = "my_utils"
+
+    if sys.platform == "emscripten":
+        from pyodide.http import pyfetch
+
+        print("WASM detected: Fetching local modules...")
+        # needs to be ../public because of how the assets dir is created during build
+        response = await pyfetch("../public/my_utils.py")
+        if not response.ok:
+            print("Attempted to fetch:", response.url)
+            raise RuntimeError(f"Failed to load my_utils.py. Status: {response.status}")
+
+        source = await response.text()
+        module = types.ModuleType(module_name)
+        module.__file__ = "/virtual/my_utils.py"
+        exec(compile(source, module.__file__, "exec"), module.__dict__)
+        sys.modules[module_name] = module
+        my_utils = module
+        print("Successfully loaded my_utils.py!")
+    else:
+        # Local Python: load from apps/public/my_utils.py
+        module_path = Path("./apps/public/my_utils.py").resolve()
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Could not load module spec from {module_path}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        my_utils = module
+        print("Local Python environment detected. Loaded my_utils.py from public/.")
+
+    my_utils.run_plotly_defaults()
+    return (my_utils,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    # Types of Visualizations
+
+    When it comes to types of visualizations, there are [so many to choose from](https://datavizproject.com/). Many flashy examples of charts require a certain level of literacy; **domain literacy, data literacy, and visualization literacy.** In order to minimize data misunderstanding and maximize informed decision-making, starting with well-designed *standard* visualization types works best in most use cases.
+
+    This section is **meant to deepen familiarity with standard chart types** and covers commonly used ones like bar charts (vertical and horizontal), line charts, pie charts, donut, and gauge charts.
+
+    **Interactive sliders** are provided to experiment with how the number of categories or values being plotted can impact the **effectiveness of a chart type**. In dynamic digital products, consider how you might implement **logic to auto-select chart types** or **adjust the number of categories shown** to create a more personalized and effective data experience.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+async def _(my_utils):
+    # import data
+    segment_year_sales_df = await my_utils.gh_pages_read_csv_into_df("segment_year_sales_df.csv")
+    category_subcategory_sales_df = await my_utils.gh_pages_read_csv_into_df("category_subcategory_sales_df.csv")
+    category_subcategory_agg_df = await my_utils.gh_pages_read_csv_into_df("category_subcategory_agg_df.csv")
+    subcategory_sales_df = await my_utils.gh_pages_read_csv_into_df("subcategory_sales_df.csv")
+    return (
+        category_subcategory_agg_df,
+        category_subcategory_sales_df,
+        segment_year_sales_df,
+        subcategory_sales_df,
+    )
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Vertical Bar Charts
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("grouped_bar.jpg")
+    mo.hstack([_img,mo.md("**Grouped or Clustered Bar Chart**: In this format, bars representing different categories are placed side by side for each group (e.g., year). This allows for easy *comparison of categories within the same group/cluster* while still getting a sense for the overall trend. However, if there are too many categories, it can become *visually overwhelming* and difficult to interpret.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell(hide_code=True)
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("small_multiples.jpg")
+    mo.hstack([_img,mo.md("**Small Multiples**: In this format, each category gets its own individual chart (or subplot/facet) that shares the same axis scales. This allows for *easier comparison of trends across categories* without the visual clutter of a grouped bar chart. However, it can be more difficult to compare values across categories since they are not visually grouped together.<hr>Tip: arrange facets in a meaningful order and add darker axis lines for easier comparison.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    **The slider below** 👇 changes the number of categories shown in the associated chart. Experiment with which chart type might be the most effective for the **number of categories** as they relate to the **goal of the visual**. How might you focus the experience on showing **intra-year comparisons** vs. **individual trends**?
+    """)
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    chart_slider = mo.ui.slider(
+        start=1,
+        stop=10,
+        value=3,
+        label="Number of categories",
+        show_value = True,
+        full_width=True
+    )
+    return (chart_slider,)
+
+
+@app.cell
+def callout_barchart(chart_slider, my_utils):
+    # callout
+    _message_by_range = [
+        {"min": 1, "max": 3, "message": my_utils.callout_info("<b>1-3 categories</b>: This number of categories is typically manageable in a <b>grouped bar chart</b>. It focuses on <b>intra-year comparisons of categories</b> and allows for comparison of an individual category's value across the whole timeline. <b>Small multiples</b> (below) will also work well and can help to emphasize <b>individual category trends</b>.")},
+        {"min": 4, "max": 7, "message": my_utils.callout_danger("<b>4-7 categories</b>: This number of categories is on the higher end for a <b>grouped bar chart</b> and can introduce <b>visual overwhelm</b>. Consider <b>small multiples</b> (below) to enable comparing <b>individual trends</b> across categories.")},
+        {"min": 8, "max": float("inf"), "message": my_utils.callout_danger("<b>8+ categories</b>: This number of categories will introduce <b>visual overwhelm with either chart type</b>. If you need more than 7 categories, try <b>consolidating categories or providing a table view instead.</b>")},
+    ]
+
+    _message = next(
+        item["message"]
+        for item in _message_by_range
+        if item["min"] <= chart_slider.value <= item["max"]
+    ) 
+
+    mo.hstack([_message,chart_slider],gap=2,align="center",widths=[2,.75])
+    return
+
+
+@app.cell(hide_code=True)
+def _(chart_slider, my_utils):
+    my_utils.title_with_icon(value = chart_slider.value, cutoff_value = 3, title = "Grouped Bar Chart", subtitle="(Category Sales by Year)")
+    return
+
+
+@app.cell(hide_code=True)
+def _(chart_slider, my_utils, segment_year_sales_df):
+    top_subcats = (
+        segment_year_sales_df.groupby("Category", as_index=False)["Sales"]
+        .sum()
+        .sort_values("Sales", ascending=False)
+        .head(chart_slider.value)["Category"]
+    )
+
+    filtered_segment_year_sales_df = segment_year_sales_df[
+        segment_year_sales_df["Category"].isin(top_subcats)
+    ]
+
+    bar_fig = px.bar(
+        filtered_segment_year_sales_df,
+        x="Year",
+        y="Sales",
+        color="Category",
+        barmode="group",
+        text_auto=chart_slider.value <= 5,
+        color_discrete_sequence=my_utils.COLOR_PALETTE[:len(top_subcats)]
+    )
+    bar_fig.update_traces(textposition="outside", cliponaxis=False)
+
+    _year_ticks = sorted(filtered_segment_year_sales_df["Year"].unique())
+    bar_fig.update_xaxes(
+        tickmode="array",
+        tickvals=_year_ticks,
+        ticktext=_year_ticks
+    )
+    bar_fig.update_yaxes(tickformat="$,.3s", gridcolor="rgba(0, 0, 0, 0.15)",
+        gridwidth=1.1)
+    bar_fig.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            title = "",
+            xanchor="left",
+            x=0,
+            font=dict(size=14),
+        ),
+        height=400,
+    )
+    mo.ui.plotly(bar_fig, config={"displayModeBar": False})
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell
+def _(chart_slider, my_utils):
+    # callout
+    _message_by_range = [
+        {"min": 1, "max": 3, "message": my_utils.callout_info("<b>1-3 categories</b>: This number of categories is also well-suited for a <b>small multiples chart</b>. It focuses on <b>yearly trend</b> of an individual category while still allowing for comparison against other categories. <b>Grouped bar charts</b> (above) also work well for this number of categories and can help to emphasize <b>intra-year comparisons</b>.")},
+        {"min": 4, "max": 7, "message": my_utils.callout_info("<b>4-7 categories</b>: This number of categories is great for a <b>small multiples chart</b> and showing <b>individual trends</b> while still allowing for comparison across categories.")},
+        {"min": 8, "max": float("inf"), "message": my_utils.callout_danger("<b>8+ categories</b>: This number of categories will introduce <b>visual overwhelm with either chart type</b>. If you need more than 7 categories, try <b>consolidating categories or providing a table view instead.</b>")},
+    ]
+
+    _message = next(
+        item["message"]
+        for item in _message_by_range
+        if item["min"] <= chart_slider.value <= item["max"]
+    ) 
+
+    mo.hstack([_message,chart_slider],gap=2,align="center",widths=[2,.75])
+    return
+
+
+@app.cell(hide_code=True)
+def _(chart_slider, my_utils):
+    my_utils.title_with_icon(value = chart_slider.value, cutoff_value = 7, title = "Small Multiples", subtitle="(Yearly Sales by Category)")
+    return
+
+
+@app.cell(hide_code=True)
+def _(chart_slider, my_utils, segment_year_sales_df):
+    from plotly.subplots import make_subplots
+
+    segment_year_sales_df_with_year_cat = segment_year_sales_df.assign(
+        Year=segment_year_sales_df["Year"].astype(str)
+    )
+
+    top_categories = (
+        segment_year_sales_df_with_year_cat.groupby("Category", as_index=False)["Sales"]
+        .sum()
+        .sort_values("Sales", ascending=False)
+        .head(chart_slider.value)["Category"]
+    )
+
+    filtered_category_sales_df = segment_year_sales_df_with_year_cat[
+        segment_year_sales_df_with_year_cat["Category"].isin(top_categories)
+    ]
+
+    years = sorted(filtered_category_sales_df["Year"].unique())
+    categories = sorted(top_categories.tolist())
+    category_colors = {
+        category: my_utils.COLOR_PALETTE[i % len(my_utils.COLOR_PALETTE)]
+        for i, category in enumerate(categories)
+    }
+
+    category_sales_subplots_fig = make_subplots(
+        rows=1,
+        cols=len(categories),
+        shared_yaxes=True,
+        subplot_titles=categories,
+    )
+
+    for _col_idx, _category in enumerate(categories, start=1):
+        _category_df = filtered_category_sales_df[
+            filtered_category_sales_df["Category"] == _category
+        ].sort_values("Year")
+        for year in years:
+            _year_value = _category_df[_category_df["Year"] == year]
+            category_sales_subplots_fig.add_trace(
+                go.Bar(
+                    x=_year_value["Year"],
+                    y=_year_value["Sales"],
+                    name=_category,
+                    marker_color=category_colors[_category],
+                    text=_year_value["Sales"] if chart_slider.value <= 5 else None,
+                    texttemplate="%{text:$,.3s}" if chart_slider.value <= 5 else "",
+                    textposition="outside",
+                    cliponaxis=False,
+                    showlegend=_col_idx == 1 and year == years[0],
+                    hovertemplate=(f"Category={_category}<br>"
+                    "Year=%{x}<br>"
+                    "Sales=%{y:$,.3s}"
+                    "<extra></extra>"
+                    )
+                ),
+                row=1,
+                col=_col_idx,
+            )
+
+    _year_ticks = sorted({str(x_val) for tr in category_sales_subplots_fig.data for x_val in tr.x})
+
+    category_sales_subplots_fig.update_yaxes(tickformat="$,.0s", title="", gridcolor="rgba(0, 0, 0, 0.15)",gridwidth=1.05, rangemode="tozero")
+    category_sales_subplots_fig.update_xaxes(title="",tickmode="array", tickvals=_year_ticks, ticktext=[f"'{y[-2:]}" for y in _year_ticks] if chart_slider.value >= 5 else _year_ticks)
+    category_sales_subplots_fig.update_layout(barmode="group",
+                                              showlegend=False,
+                                              margin = dict(t=30),
+                                              height=400)
+    category_sales_subplots_fig.update_annotations(font_size=14)
+    mo.ui.plotly(category_sales_subplots_fig, config={"displayModeBar": False})
+    return make_subplots, segment_year_sales_df_with_year_cat
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Line Charts
+    """)
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("line.jpg")
+    mo.hstack([_img,mo.md("**Line Chart**: In this format, individual data points are connected by lines to communicate trends, fluctuations, and patterns. Primarily used for **showing change over time**, this chart type is most appropriate for data that has a **natural sequential order along the horizontal axis**. The best-practice of [\"starting the y-axis at zero\"](https://stephanieevergreen.com/non-zero-axis-rules/) can be adjusted here to \"zoom in\" on the dataset.<hr>Tip: reduce the individual datapoint radius (or removing it altogether) for high density time-series data.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell(hide_code=True)
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("line_labeling.png")
+    mo.hstack([mo.md("> Although not represented in the examples below due to technical limitations of the visualization library, [directly labeling lines with category labels](https://depictdatastudio.com/directly-labeling-line-graphs/) reduces the need for a legend and decreases cognitive load. Consider adding final values to label to increase legibility; ie: \"Computer Sciences (20%)\"."),_img],gap=2,align="center",widths=[.65,.35])
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell
+def _(my_utils):
+    line_chart_slider = mo.ui.slider(
+        start=1,
+        stop=7,
+        value=3,
+        label="Number of categories",
+        show_value = True,
+        full_width=True
+    )
+
+    mo.center(line_chart_slider)
+
+    _message = my_utils.callout_neutral("Similar to the vertical bar chart section, consider a <b>line chart</b> of the same information. How does the choice between a single line chart with <b>all categories</b> vs. <b>small multiples</b> of line charts affect your ability to <b>compare trends</b> across categories and within categories? Does the number of categories shown change <b>which chart type is more effective</b> for the story you're trying to tell with the data?")
+
+    mo.hstack([_message,line_chart_slider],gap=2,align="center",widths=[2,.75])
+    return (line_chart_slider,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### **Overlapping** (Yearly Sales by Category)
+    """)
+    return
+
+
+@app.cell
+def _():
+    fig_switch = mo.ui.switch(value=False, label=f"Highlighting a single category within many overlapping lines can focus the story.")
+    return (fig_switch,)
+
+
+@app.cell
+def _(fig_switch, line_chart_slider):
+    _pointer = mo.md((line_chart_slider.value - 3) * "👈👈")
+    mo.hstack([fig_switch,_pointer],align="start",justify="start",gap=0)
+    return
+
+
+@app.cell
+def lines_overlapping(
+    fig_switch,
+    line_chart_slider,
+    my_utils,
+    segment_year_sales_df_with_year_cat,
+):
+    line_top_categories = (
+        segment_year_sales_df_with_year_cat.groupby("Category", as_index=False)["Sales"]
+        .sum()
+        .sort_values("Sales", ascending=False)
+        .head(line_chart_slider.value)["Category"]
+    )
+
+    line_filtered_category_sales_df = segment_year_sales_df_with_year_cat[
+        segment_year_sales_df_with_year_cat["Category"].isin(line_top_categories)
+    ]
+
+    line_years = sorted(line_filtered_category_sales_df["Year"].unique())
+    line_categories = line_top_categories.tolist()
+    line_category_colors = {
+        category: my_utils.COLOR_PALETTE[i % len(my_utils.COLOR_PALETTE)]
+        for i, category in enumerate(line_categories)
+    }
+
+
+    line_all_categories_fig = px.line(
+        line_filtered_category_sales_df,
+        x="Year",
+        y="Sales",
+        color="Category",
+        markers=True,
+        title="",
+        color_discrete_sequence=my_utils.COLOR_PALETTE[:len(line_categories)]
+    )
+    line_all_categories_fig.update_traces(marker=dict(size=8))
+    line_all_categories_fig.update_yaxes(tickformat="$,.0s",rangemode="tozero")
+    line_all_categories_fig.update_xaxes(title="")
+    line_all_categories_fig.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            title = "",
+            xanchor="left",
+            x=0,
+            font=dict(size=14),
+        ),
+        height=400,
+    )
+
+
+
+
+    first_category = line_categories[-1]
+
+    line_highlight_fig = px.line(
+        line_filtered_category_sales_df,
+        x="Year",
+        y="Sales",
+        color="Category",
+        markers=True,
+        title=(
+            f"One of the biggest categories, "
+            f"<span style='color: {line_category_colors[first_category]}; text-decoration: underline;'>"
+            f"{first_category}</span>, needs more attention."
+        ),
+        subtitle="Category sales by year"
+    )
+
+    for trace in line_highlight_fig.data:
+        is_focus = trace.name == first_category
+        trace.update(
+            line=dict(
+                color=line_category_colors[first_category] if is_focus else "rgba(180, 180, 180, 0.75)",
+                width=4 if is_focus else 2
+            ),
+            marker=dict(
+                color=line_category_colors[first_category] if is_focus else "rgba(180, 180, 180, 0.75)",
+                size=9 if is_focus else 5
+            ),
+            opacity=1.0 if is_focus else 0.5
+        )
+
+    line_highlight_fig.update_yaxes(tickformat="$,.0s", rangemode="tozero")
+    line_highlight_fig.update_xaxes(title="")
+    line_highlight_fig.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        showlegend=False,
+        margin=dict(t=50,b=0,l=0,r=0),
+        title=dict(font=dict(size=20, weight="bold")),
+        # legend=dict(
+        #     orientation="h",
+        #     yanchor="bottom",
+        #     y=1.02,
+        #     title = "",
+        #     xanchor="left",
+        #     x=0,
+        #     font=dict(size=14),
+        # ),
+        height=400,
+    )
+
+    # Cell B: choose which already-prepared figure to show
+    _selected_line_fig = line_highlight_fig if fig_switch.value else line_all_categories_fig
+    mo.ui.plotly(_selected_line_fig,config={"displayModeBar": False})
+    return (
+        line_categories,
+        line_category_colors,
+        line_filtered_category_sales_df,
+    )
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### **Small Multiples** (Category Sales by Year)
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def lines_small_multiples(
+    line_categories,
+    line_category_colors,
+    line_chart_slider,
+    line_filtered_category_sales_df,
+    make_subplots,
+):
+    line_category_sales_subplots_fig = make_subplots(
+        rows=1,
+        cols=len(line_categories),
+        shared_yaxes=True,
+        subplot_titles=line_categories,
+    )
+
+    for _col_idx, _category in enumerate(line_categories, start=1):
+        _category_df = line_filtered_category_sales_df[
+            line_filtered_category_sales_df["Category"] == _category
+        ].sort_values("Year")
+        line_category_sales_subplots_fig.add_trace(
+            go.Scatter(
+                x=_category_df["Year"],
+                y=_category_df["Sales"],
+                mode="lines+markers",
+                name=_category,
+                line=dict(color=line_category_colors[_category]),
+                marker=dict(color=line_category_colors[_category],size=8),
+                showlegend=False,
+                hovertemplate=(f"Category={_category}<br>"
+                    "Year=%{x}<br>"
+                    "Sales=%{y:$,.3s}"
+                    "<extra></extra>"
+                )
+            ),
+            row=1,
+            col=_col_idx,
+        )
+
+    _year_ticks = sorted({str(x_val) for tr in line_category_sales_subplots_fig.data for x_val in tr.x})
+
+    line_category_sales_subplots_fig.update_yaxes(tickformat="$,.0s", title="", rangemode="tozero")
+    line_category_sales_subplots_fig.update_xaxes(title="",tickmode="array", tickvals=_year_ticks, ticktext=[f"'{y[-2:]}" for y in _year_ticks] if line_chart_slider.value >= 5 else _year_ticks)
+    line_category_sales_subplots_fig.update_layout(barmode="group",
+                                              showlegend=False,
+                                              margin = dict(t=30,b=0),
+                                              height=400)
+    line_category_sales_subplots_fig.update_annotations(font_size=14)
+    mo.ui.plotly(line_category_sales_subplots_fig,config={"displayModeBar": False})
+    return
+
+
+@app.cell
+def _(line_chart_slider):
+    mo.hstack([mo.Html("&nbsp;"),mo.md("💡 Notice the shortening of x-axis year labels from **2011** to **'11** when the available space starts to decrease.")],gap=3,justify="start") if line_chart_slider.value >= 5 else None
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Horizontal Bar Charts
+    """)
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("horizontal.jpg")
+    mo.hstack([_img,mo.md("**Standard Horizontal Bar Chart**: This format is highly recommended when you have many items to compare since **vertical scanning is easier and faster than horizontal**. Additionally, this chart type works well for long category labels that would otherwise need to be awkwardly rotated or squished on a vertical x-axis work well here. This layout acts as an excellent tool for showing rankings or clear differences in magnitude.<hr>Tip: consider the natural sequence of the categories and remember to right align labels.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("horizontal_small_multiples.jpg")
+    mo.hstack([_img,mo.md("**Small Multiples**: In this format, the data is split into a **regular grid of smaller, individual horizontal bar charts** (sometimes called a trellis plot or faceting). Each *panel* shares the same axis scales to ensure accurate comparisons. Breaking a dense graph into smaller pieces makes it much easier for readers to comprehend trends within distinct subsets of data without the visual clutter of a massive, heavily grouped chart.<hr>Tip: consider the natural sequence of groupings and grid lines to help separate the panels.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell
+def _(my_utils):
+    horizontal_bar_slider = mo.ui.slider(
+        start=3,
+        stop=12,
+        value=7,
+        label="Number of categories",
+        show_value = True,
+        full_width=True
+    )
+    _message = my_utils.callout_neutral("How does the <b>number of categories</b> impact the ability to quickly gain insights? How does <b>emphasizing groupings with bar color</b> affect the story being told with the data?")
+    mo.hstack([_message,horizontal_bar_slider],gap=2,align="center",widths=[2,.75])
+    return (horizontal_bar_slider,)
+
+
+@app.cell
+def _():
+    horizontal_switch = mo.ui.switch(value=False, label=f"Emphasize differences in categories by highlighting their groupings.")
+    return (horizontal_switch,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### <b>Standard Horizontal Bar Chart</b> (Total Sales by Category)
+    """)
+    return
+
+
+@app.cell
+def _(horizontal_switch):
+    horizontal_switch
+    return
+
+
+@app.cell
+def _(
+    category_subcategory_sales_df,
+    horizontal_bar_slider,
+    horizontal_switch,
+    my_utils,
+):
+    category_sales_df = (
+        category_subcategory_sales_df
+        .rename(columns={"Sub-Category": "SubCategory"})
+        .sort_values("Sales", ascending=False)
+        .head(horizontal_bar_slider.value)
+        .sort_values("Sales", ascending=False)
+    )
+
+    # get the count of unique categories
+
+    _category_totals_for_legend = (
+        category_sales_df.groupby("Category", as_index=False)["Sales"]
+        .sum()
+        .set_index("Category")["Sales"]
+        .to_dict()
+    )
+
+    _category_legend_labels = {
+        _cat: f"{_cat} (${my_utils.numerize(_total)})"
+        for _cat, _total in _category_totals_for_legend.items()
+    }
+
+    _category_sales_fig = px.bar(
+        category_sales_df,
+        x="Sales",
+        y="SubCategory",
+        orientation="h",
+        text="Sales",
+        color="Category" if horizontal_switch.value else None,
+        title=None,
+        color_discrete_sequence=my_utils.COLOR_PALETTE
+    )
+
+    for _trace in _category_sales_fig.data:
+        _original_category = _trace.name
+        _trace.hovertemplate = (
+            f"Category={_original_category}<br>"
+            "SubCategory=%{y}<br>"
+            "Sales=%{x:$,.3s}"
+            "<extra></extra>"
+        )
+        _trace.name = _category_legend_labels.get(_original_category, _original_category)
+
+    _category_sales_fig.update_traces(
+        texttemplate="%{text:$,.3s}",
+        textposition="outside",
+    )
+
+    _category_sales_fig.update_xaxes(title=None, tickformat="$,.0s")
+    _category_sales_fig.update_yaxes(title=None, ticksuffix="   ")
+    _category_sales_fig.update_layout(
+        showlegend=True,
+        height = 325,
+        #height=max(320, int(horizontal_bar_slider.value * 36 + (category_sales_df["Category"].nunique() * 40))),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            title = "",
+            xanchor="left",
+            x=0,
+            font=dict(size=14),
+        ),
+        margin=dict(l=(0 if horizontal_switch.value else 10), r=10, t=0),
+        #margin=dict(l=(0 if horizontal_switch.value else 10), r=10, t=(0 if horizontal_switch.value else 40), b=(10 if horizontal_switch.value else 0)),
+        yaxis={'categoryorder':'total ascending'}
+    )
+
+    mo.ui.plotly(_category_sales_fig, config={"displayModeBar": False})
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ### <b>Small Multiples</b> (Category Sales by Grouping)
+    """)
+    return
+
+
+@app.cell
+def _(
+    category_subcategory_sales_df,
+    horizontal_bar_slider,
+    make_subplots,
+    my_utils,
+):
+
+    _small_multiples_source_df = (
+        category_subcategory_sales_df
+        .rename(columns={"Sub-Category": "SubCategory"})
+        .sort_values("Sales", ascending=False)
+        .head(horizontal_bar_slider.value)
+        .sort_values("Sales", ascending=False)
+    )
+
+    _top_categories_for_small_multiples = (
+        _small_multiples_source_df.groupby("Category", as_index=False)["Sales"]
+        .sum()
+        .sort_values("Sales", ascending=False)
+        .head(min(4, _small_multiples_source_df["Category"].nunique()))["Category"]
+        .tolist()
+    )
+
+    _small_multiples_filtered_df = _small_multiples_source_df[
+        _small_multiples_source_df["Category"].isin(_top_categories_for_small_multiples)
+    ].copy()
+
+    _small_multiples_color_map = {
+        _cat: my_utils.COLOR_PALETTE[i % len(my_utils.COLOR_PALETTE)]
+        for i, _cat in enumerate(_top_categories_for_small_multiples)
+    }
+
+    _small_multiples_bar_counts = (
+        _small_multiples_filtered_df.groupby("Category")["SubCategory"]
+        .nunique()
+        .reindex(_top_categories_for_small_multiples)
+        .fillna(0)
+        .astype(int)
+    )
+
+    _small_multiples_row_heights = _small_multiples_bar_counts.tolist()
+
+    _small_multiples_category_totals = (
+        _small_multiples_filtered_df.groupby("Category")["Sales"]
+        .sum()
+        .reindex(_top_categories_for_small_multiples)
+    )
+
+    _small_multiples_subplot_titles = [
+        f"<b>{_cat} (${my_utils.numerize(_small_multiples_category_totals[_cat])})</b>"
+        for _cat in _top_categories_for_small_multiples
+    ]
+
+    _small_multiples_fig = make_subplots(
+        rows=len(_top_categories_for_small_multiples),
+        cols=1,
+        shared_xaxes=True,
+        subplot_titles=_small_multiples_subplot_titles,
+        vertical_spacing=0.12,
+        row_heights=_small_multiples_row_heights,
+    )
+
+    for _row_idx, _cat in enumerate(_top_categories_for_small_multiples, start=1):
+        _cat_df = (
+            _small_multiples_filtered_df[_small_multiples_filtered_df["Category"] == _cat]
+            .sort_values("Sales", ascending=True)
+        )
+
+        _small_multiples_fig.add_trace(
+            go.Bar(
+                x=_cat_df["Sales"],
+                y=_cat_df["SubCategory"],
+                orientation="h",
+                marker_color=_small_multiples_color_map[_cat],
+                text=_cat_df["Sales"],
+                texttemplate="%{text:$,.2s}",
+                textposition="outside",
+                cliponaxis=False,
+                hovertemplate=(
+                    f"Group={_cat}<br>"
+                    "Category=%{y}<br>"
+                    "Sales=%{x:$,.2s}"
+                    "<extra></extra>"
+                ),
+                showlegend=False,
+            ),
+            row=_row_idx,
+            col=1,
+        )
+
+    _small_multiples_fig.update_xaxes(
+        tickformat="$,.0s", title=None, showgrid=True, gridcolor="rgba(0,0,0,0.1)"
+    )
+    _small_multiples_fig.update_yaxes(title=None, ticksuffix="   ")
+    _small_multiples_fig.update_layout(
+        height = 475,
+        #height=max(320, int(_small_multiples_bar_counts.sum() * 36 + len(_top_categories_for_small_multiples) * 40)),
+        margin=dict(t=40, l=20, r=20, b=20),
+    )
+
+    mo.ui.plotly(_small_multiples_fig, config={"displayModeBar": False})
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Pie Charts and Stacked Bar Charts
+    """)
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("pie.jpg")
+    mo.hstack([_img,mo.md("**Pie Chart:** This chart type is good for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret** because **comparing angles is challenging for humans**, **too many categories are overwhelming**, and **similar values are difficult to discern**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.<hr>Tips: start the first slice at 12 o'clock and arrange slices clockwise. Direct labeling (inside or outside) rather than legends can increase legibility.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("v_stacked_bar.jpg")
+    mo.hstack([_img,mo.md("**Vertical Stacked Bar Chart:** This format is also good for showing how a total is divided into parts. There is a **major drawback** in that each segment (with the exception of the first) does not share a common flat baseline. This makes it difficult for readers to accurately compare the sizes of the internal segments. <hr>Tips: Add direct labeling, place the most important category at the baseline, and use highlighting colors to emphasize certain slices.")],gap=2, align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("h_stacked_bar.jpg")
+    mo.hstack([_img,mo.md("**Horizontal Stacked Bar Chart:** Similar to the vertically stacked bar chart, a horizontal view lends itself well to **scanning left to right.** When category labels are long, this view is preferred over its vertical counterpart.<hr>Tips: Add direct labeling, place the most important category at the baseline, and use highlighting colors to emphasize certain slices.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell
+def _():
+    category_slider = mo.ui.slider(start=1, stop=8, value=1, label = "Number of highlighted categories in <b>pie chart</b>", show_value = True,full_width=True)
+    return (category_slider,)
+
+
+@app.cell
+def _(category_slider, my_utils):
+    _message_by_range = [
+        {"min": 1, "max": 4, "message": my_utils.callout_neutral("Consider how <b>simple the presentation is in the bar chart with a small number of categories.</b> The story is clear and the visual is easy to interpret.<br><br>The <b>stacked bar charts have too many categories and are visually overwhelming</b>.")},
+        {"min": 5, "max": float("inf"), "message": my_utils.callout_neutral("As more categories are added, the <b>pie chart becomes more complex and harder to interpret while the stacked bar charts become easier to interpret.</b><br><br>Consider how the <b>number of categories impacts your ability to gather insights.</b>")},
+    ]
+
+    _message = next(
+        item["message"]
+        for item in _message_by_range
+        if item["min"] <= category_slider.value <= item["max"]
+    ) 
+
+    mo.hstack([_message,category_slider],gap=2,align="center",widths=[2,1])
+    return
+
+
+@app.cell(hide_code=True)
+def pie_prep(category_slider, subcategory_sales_df):
+    segment_sales_base_df = (
+        subcategory_sales_df
+        # filter all categories out with under 470k of sales
+        .query("Sales >= 470000")
+        .rename(columns={"Sub-Category": "Category"})
+        .sort_values("Sales", ascending=False)
+    )
+
+    _top_categories_df = segment_sales_base_df.head(category_slider.value).copy()
+    _other_sales = segment_sales_base_df.iloc[category_slider.value:]["Sales"].sum()
+
+    segment_sales_df = (
+        pd.concat(
+            [
+                _top_categories_df,
+                pd.DataFrame([{"Category": "Other", "Sales": _other_sales}])
+                if _other_sales > 0
+                else pd.DataFrame(columns=["Category", "Sales"]),
+            ],
+            ignore_index=True,
+        )
+        #.sort_values("Sales", ascending=True)
+        .reset_index(drop=True)
+    )
+    return segment_sales_base_df, segment_sales_df
+
+
+@app.cell(hide_code=True)
+def pie(category_slider, my_utils, segment_sales_base_df, segment_sales_df):
+    _pie_color_map = {
+        category: my_utils.COLOR_PALETTE[i % len(my_utils.COLOR_PALETTE)]
+        for i, category in enumerate(segment_sales_df["Category"])
+        if category != "Other"
+    }
+    _pie_color_map["Other"] = "#D9DCFA"
+
+    _pie_fig = px.pie(
+        segment_sales_df.reset_index(drop=True),
+        names="Category",
+        values="Sales",
+        title="",
+        color="Category",
+        color_discrete_map=_pie_color_map,
+        height=450,
+    )
+    _pie_fig.update_traces(
+        textposition="inside",
+        texttemplate="%{label}<br>%{percent} (%{value:$.3s})",
+        sort=False,
+        direction="clockwise",
+        hoverinfo="skip",
+        hovertemplate=None
+    )
+    _pie_fig.update_layout(showlegend = False)
+
+
+    # START SEGMENT FOR STACKED BAR CHART OF OTHER CATEGORIES
+    selected_categories_for_pie = set(
+        segment_sales_df.loc[segment_sales_df["Category"] != "Other", "Category"].tolist()
+    )
+
+    other_categories_detail_df = (
+        segment_sales_base_df.assign(
+            Category=lambda df: df["Category"].where(
+                ~df["Category"].isin(selected_categories_for_pie), "Pie Chart"
+            )
+        )
+        .groupby("Category", as_index=False, sort=False)["Sales"]
+        .sum()
+        .sort_values("Sales", ascending=False)
+        .reset_index(drop=True)
+    )
+
+    other_categories_stack_df = other_categories_detail_df.assign(Group="Other Categories")
+    _all_total_sales = segment_sales_base_df["Sales"].sum()
+    other_categories_stack_df["_percent"] = (
+        other_categories_stack_df["Sales"] / _all_total_sales
+    )
+    other_categories_stack_df["_percent_label"] = (
+        other_categories_stack_df["_percent"].map(lambda x: f"{x:.1%}"))
+    other_categories_stack_df["_segment_label"] = (
+        other_categories_stack_df["Category"]
+    )
+
+    selected_categories_for_pie = ["Pie Chart"] + [selected_categories_for_pie]
+
+    other_stacked_bar_fig = px.bar(
+        other_categories_stack_df,
+        x="Group",
+        y="_percent",
+        color="Category",
+        barmode="stack",
+        #title="<b>Other Categories</b>",
+        range_y=[0,1],
+        color_discrete_sequence=(["#D2D2D2"] + my_utils.COLOR_PALETTE[
+               category_slider.value: (category_slider.value + len(other_categories_stack_df))]),
+        hover_data={"Sales": ":,.0f", "Group": False, "_percent_label": True},
+        text="_segment_label"
+    )
+
+    other_stacked_bar_fig.update_traces(
+        texttemplate="%{text}<br>%{value:.1%} (%{customdata[0]:$.2s})",
+        textposition="inside",
+        hoverinfo="skip",
+        hovertemplate=None
+    )
+
+    other_stacked_bar_fig.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        legend_title=None,
+        showlegend=False,
+        height=450,
+        width=350,
+        margin=dict(t=30),
+        title = dict(y=.97,x=.495,xanchor='center',yanchor='bottom')
+    )
+
+    other_stacked_bar_fig.update_yaxes(tickformat=".1%")
+    other_stacked_bar_fig.update_xaxes(showticklabels=False)
+
+    _total_sales = segment_sales_df["Sales"].sum()
+    _pie_title = my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, no_icon="⚠️",no_color=my_utils.COLOR_PALETTE[7], title = "Pie Chart", subtitle=f"(Category Sales Split, Total: ${_total_sales / 1_000_000:,.2f}M)")
+
+    _other_stacked_bar_title = my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, yes_icon="⚠️",no_icon="☑️",yes_color=my_utils.COLOR_PALETTE[7],no_color=my_utils.COLOR_PALETTE[0], title = "Vertical Stacked Bar Chart",subtitle="<br>(\"Other\" Categories Only)")
+
+    mo.hstack([mo.vstack([_pie_title,_pie_fig]),mo.vstack([_other_stacked_bar_title,other_stacked_bar_fig])],gap=3,align="center",justify="center",widths=[.65,.35])
+    return (other_categories_stack_df,)
+
+
+@app.cell
+def _(category_slider, my_utils):
+    _title = my_utils.title_with_icon(value = category_slider.value, cutoff_value = 4, yes_icon="⚠️",no_icon="☑️",yes_color=my_utils.COLOR_PALETTE[7],no_color=my_utils.COLOR_PALETTE[0], title = "Horizontal Stacked Bar Chart",subtitle="(\"Other\" Categories Only)")
+
+    mo.vstack(
+        [mo.Html("<hr style='border: 0; border-top: 1px solid black; opacity: 0.1;'>"),
+         _title
+        ],
+        gap=1.5
+    )
+    return
+
+
+@app.cell
+def horizontal_bar(category_slider, my_utils, other_categories_stack_df):
+    _other_stacked_bar_horizontal_fig = px.bar(
+        other_categories_stack_df,
+        y="Group",
+        x="_percent",
+        color="Category",
+        orientation="h",
+        barmode="stack",
+        color_discrete_sequence=(["#D2D2D2"] + my_utils.COLOR_PALETTE[
+               category_slider.value: (category_slider.value + len(other_categories_stack_df))]),
+    )
+
+    _other_legend_values = (
+        other_categories_stack_df.set_index("Category")[["_percent", "Sales"]].to_dict("index")
+    )
+
+    for _trace in _other_stacked_bar_horizontal_fig.data:
+        _category = _trace.name
+        _pct = _other_legend_values[_category]["_percent"]
+        _sales = _other_legend_values[_category]["Sales"]
+        _label = f"{_category} {_pct:.1%} (${my_utils.numerize(_sales)})"
+        _trace.name = _label
+        _trace.hovertext = [_label] * len(_trace.x)
+
+    _other_stacked_bar_horizontal_fig.update_traces(
+        hovertemplate="%{hovertext}<extra></extra>"
+    )
+
+    _other_stacked_bar_horizontal_fig.update_layout(
+        xaxis_title=None,
+        yaxis_title=None,
+        legend_title=None,
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="left",
+            x=-.015,
+            font=dict(size=14),
+        ),
+        height=225,
+        margin=dict(t=0, r=0, b=0, l=0),
+    )
+
+    _other_stacked_bar_horizontal_fig.update_xaxes(tickformat=".1%")
+    _other_stacked_bar_horizontal_fig.update_yaxes(tickprefix="<b>",ticksuffix="</b>   ",tickfont=dict(size=15))
+
+    mo.ui.plotly(_other_stacked_bar_horizontal_fig, config={"displayModeBar": False})
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Donut Charts and Gauge Charts
+    """)
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("donut.jpg")
+    mo.hstack([_img,mo.md("**Donut Chart**: This chart type is useful for representing **single values in comparison to the whole**. Using a donut chart instead of a text-based value can immediately increase impact. While not represented in this guide, splitting a donut chart into multiple categories should follow the same rules of pie charts: **too many categories introduces visual overwhelm, start the first slice at 12 o'clock, and label slices directly**.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("gauge.jpg")
+    mo.hstack([_img,mo.md("**Gauge Chart**: This chart type is useful for comparing a value against a target or a set of milestones. It emphasizes the continuum of values along a desired goal or risk factors. Since a gauge chart can introduce a lot of digital \"ink\", consider how a donut chart, cumulative line chart, or text-based value can achieve a similar goal. <hr>Tip: ensure tick markers enhance the feeling of progression along the goal.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell
+def _(my_utils):
+    _message = my_utils.callout_neutral("As the value increases and decreases, <b>consider how each chart type might draw the user's attention in different ways.</b> If the value is very small or very big in a donut chart, how might you <b>add additional text for explanation?</b> If the target value in a gauge chart needs to be highlighted, how might you <b>emphasize different components of the chart?</b>")
+
+    donut_slider = mo.ui.slider(start=0, stop=1, step=.01, value=.50, label = "Percentage of sales", show_value = True, debounce=True,full_width=True)
+    mo.hstack([_message,donut_slider],gap=2,align="center",widths=[2,.75])
+    return (donut_slider,)
+
+
+@app.cell
+def _(donut_slider, my_utils):
+    _phone_share = min(max(float(donut_slider.value), 0.0), 1.0)
+    _phone_share_dollar = "$" + my_utils.numerize(_phone_share * 11000000)
+
+    _phone_donut_fig = px.pie(
+        names=["Phone", "Other"],
+        values=[_phone_share, 1 - _phone_share],
+        color=["Phone", "Other"],
+        color_discrete_map={"Phone": my_utils.COLOR_PALETTE[0], "Other": "#d9dcfa"},
+        hole=0.5,
+        height=350,
+        title="Share of Phones"
+    )
+
+    _phone_donut_fig.update_traces(
+        #textposition="inside",
+        #texttemplate="%{label}<br>%{percent}",
+        #hoverinfo="none",
+        textinfo="none",
+        sort=False,
+    )
+
+    _phone_donut_fig.update_layout(showlegend=False,title_x=0.5,margin=dict(t=60),title_font=dict(size=22,weight="bold"))
+
+    _label = f"{_phone_share:.0%}<br>({_phone_share_dollar})"
+    _phone_donut_fig.add_annotation(
+        x=0.5,
+        y=0.51,
+        text=_label,
+        showarrow=False,
+        font=dict(size=26,weight="bold"),
+    )
+
+    #Use Plotly Indicator’s `number.prefix` (and optionally `delta.prefix`) fields.
+
+    _gauge_fig = go.Figure(
+        go.Indicator(
+            mode="gauge+number+delta",
+            value=donut_slider.value * 11000000,
+            number={"valueformat": "$.3s","font": {"size": 40, "weight": "bold"}},
+            delta={
+                "reference": 7500000,
+                "valueformat": "$.3s",
+                "increasing": {"color": my_utils.COLOR_PALETTE[0]},
+                "decreasing": {"color": my_utils.COLOR_PALETTE[2]},
+                "font": {"size": 26, "weight": "bold"}
+            },
+            domain={"x": [0, 1], "y": [0, 1]},
+            title={"text": "Phone Sales (vs. Target)", "font": {"size": 20, "weight": "bold"}},
+            gauge={
+                "axis": {
+                    "range": [None, 11000000],
+                    "tickwidth": 1,
+                    "tickcolor": "darkblue",
+                    "tickformat": "$.3s",
+                    "tickvals": [0, 2500000, 5000000, 7500000, 10000000,11000000], # Specify the values where ticks appear
+
+                },
+                "bar": {"color": my_utils.COLOR_PALETTE[0]},
+                "bordercolor": "gray",
+                "steps": [
+                    {"range": [0, 7500000], "color": "#d9dcfa"}
+                ],
+                "threshold": {
+                    "line": {"color": my_utils.COLOR_PALETTE[1], "width": 8},
+                    "thickness": 1,
+                    "value": 7500000
+                },
+            },
+        )
+    )
+
+    # add margin
+    _gauge_fig.update_layout(height=325)
+
+    mo.hstack([mo.ui.plotly(_phone_donut_fig, config={"displayModeBar": False}),mo.ui.plotly(_gauge_fig, config={"displayModeBar": False})],gap=0,widths=[.45,.55],align="center",justify="center")
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## Scatter Plots and Bubble Charts
+    """)
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("scatter.jpg")
+    mo.hstack([_img,mo.md("**Scatter Plot**: In this format, individual data points are plotted along **two quantitative axes (x and y)**. Scatterplots are the tool for identifying **relationships, correlations, clusters, and outliers** between data. While highly effective, **they are considered an \"advanced\" chart type** and generally require an audience with a slightly higher level of data literacy to easily interpret.<hr>Tips: make axis labels even more obvious in titles. Baselines do not have to start at zero.")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+async def _(my_utils):
+    _img = await my_utils.gh_pages_load_image("bubble.jpg")
+    mo.hstack([_img,mo.md("**Bubble Chart**: In this format, a standard scatterplot is expanded by mapping a **third quantitative variable onto the size of the data markers.** This **adds another major level of visual complexity** and is an even more **\"advanced\" version of a scatter plot.** Ensure nodes have some transparency and shape outline to clearly reveal overlapping node position.<hr>Tips: direct labeling and categorical sizing (ie: values in range 0-10k=5px, 10k-20k=10px, etc.) help with legibility. Generally, use this chart type with caution! ⚠️ ")],gap=2,align="center",widths=[.25,1])
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell
+def _():
+    bubble_count_slider = mo.ui.slider(
+        start=8,
+        stop=18,
+        value=12,
+        label="Number of products",
+        show_value=True,
+        full_width=True,
+    )
+
+
+    bubble_radius_slider = mo.ui.slider(
+        start=0,
+        stop=12,
+        value=0,
+        label="Radius size factor (0 = scatter plot)",
+        show_value=True,
+        full_width=True,
+    )
+    return bubble_count_slider, bubble_radius_slider
+
+
+@app.cell
+def _(bubble_count_slider, bubble_radius_slider, my_utils):
+    # callout
+    _message_by_range = [
+        {"min": 0, "max": 0, "message": my_utils.callout_info("<b>Constant radius</b>: Scatter plots have the same size for all nodes and which makes <b>insight gathering easier than bubble charts.</b> As you <b>increase the number of products</b>, how does the visual complexity change?")},
+        {"min": 1, "max": float("inf"), "message": my_utils.callout_danger("<b>Variable radius</b>: Bubble charts with closely related radius sizes can make it <b>difficult to see the differences</b> between products. Consider how the number of nodes and changes in radius size <b>affects the readability</b> of the chart and the <b>insights you can gather from it.<b>")}
+    ]
+
+    _message = next(
+        item["message"]
+        for item in _message_by_range
+        if item["min"] <= bubble_radius_slider.value <= item["max"]
+    ) 
+
+    mo.hstack([_message, mo.vstack([bubble_count_slider,bubble_radius_slider])], gap=2, align="center", widths=[2, 0.75])
+    return
+
+
+@app.cell(hide_code=True)
+def _(bubble_count_slider, category_subcategory_agg_df):
+    scatterplot_subcategory_metrics_df = (
+        category_subcategory_agg_df
+        .rename(columns={"Sub-Category": "SubCategory", "Shipping Cost": "ShippingCost"})
+        .sort_values("Sales", ascending=False)
+        .head(bubble_count_slider.value)
+        .assign(ProfitMargin=lambda d: d["Profit"].div(d["Sales"]).fillna(0.0))
+    )
+    return (scatterplot_subcategory_metrics_df,)
+
+
+@app.cell(hide_code=True)
+def bubble_title(bubble_radius_slider, my_utils):
+    bubble_title = (
+        mo.md(
+            f"""### ☑️ <span style="color: {my_utils.COLOR_PALETTE[0]};"> <b>Scatter Plot</b> (Product Sales by Profit)</span>"""
+        )
+        if bubble_radius_slider.value == 0
+        else mo.md(
+            f"""### ⚠️ <span style="color: {my_utils.COLOR_PALETTE[7]};"> <b>Bubble Chart</b> (Product Sales by Profit, <u>Sized by Quantity Sold</u>)</span>"""
+        )
+    )
+
+    bubble_title
+    return
+
+
+@app.cell
+def _(bubble_radius_slider, my_utils, scatterplot_subcategory_metrics_df):
+    _scatterplot_fig = px.scatter(
+        scatterplot_subcategory_metrics_df,
+        x="Sales",
+        y="Profit",
+        size=(None if bubble_radius_slider.value == 0 else "Quantity"),
+        size_max=(None if bubble_radius_slider.value == 0 else (bubble_radius_slider.value * 5) + 15),
+        color="Category",
+        hover_name="SubCategory",
+        hover_data={
+            "Quantity": ":,.0f"
+        },
+        color_discrete_sequence=my_utils.COLOR_PALETTE
+    )
+
+    if bubble_radius_slider.value == 0:
+        _scatterplot_fig.update_traces(
+            marker=dict(size=15, opacity=.7, line=dict(width=1, color="white"))
+        )
+    _scatterplot_fig.update_xaxes(tickformat="$,.2s")
+    _scatterplot_fig.update_yaxes(tickformat="$,.2s", zeroline=True, zerolinecolor="rgba(0,0,0,0.3)",zerolinewidth=1)
+    _scatterplot_fig.add_vline(
+        x=1000000,
+        line_width=1,
+        line_color="rgba(0,0,0,0.3)"
+    )
+    _scatterplot_fig.update_layout(
+        xaxis_title="<b>Sales</b>",
+        yaxis_title="<b>Profit</b>",
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            title="",
+            xanchor="left",
+            x=0,
+            font=dict(size=13),
+            itemsizing="constant"
+        ),
+        height=450,
+    )
+
+    mo.ui.plotly(_scatterplot_fig, config={"displayModeBar": False})
+    return
+
+
+if __name__ == "__main__":
+    app.run()
