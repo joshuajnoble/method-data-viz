@@ -411,7 +411,7 @@ def _(get_yearly, mo, px):
     yearly_sales = get_yearly()
     yearly_sales = yearly_sales.sort_values(by='year')
 
-    yearly_sales_fig_labeled = px.bar(yearly_sales, x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
+    yearly_sales_fig_labeled = px.bar(yearly_sales, x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD"})
 
     yearly_sales_fig_labeled.update_layout(yaxis_tickprefix = '$', yaxis_tickformat = ',.2s')
     yearly_sales_fig_labeled.update_yaxes(tickformat=".2s") 
@@ -445,7 +445,7 @@ def _(mo):
 
 @app.cell
 def _(mo, px, yearly_sales):
-    yearly_line = px.line(yearly_sales, x="year", y="sales", labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
+    yearly_line = px.line(yearly_sales, x="year", y="sales", labels={"year": "Financial Year","sales": "Total Sales in USD"})
 
     yearly_line.update_traces(mode='lines+markers')
     yearly_line.update_yaxes(tickformat="$,.2s")
