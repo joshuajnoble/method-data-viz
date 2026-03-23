@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "marimo>=0.20.2",
+#     "marimo>=0.21.0",
 #     "plotly",
 #     "pandas",
 # ]
@@ -9,7 +9,7 @@
 
 import marimo
 
-__generated_with = "0.21.1"
+__generated_with = "0.21.0"
 app = marimo.App(width="medium", css_file="custom.css")
 
 with app.setup(hide_code=True):
