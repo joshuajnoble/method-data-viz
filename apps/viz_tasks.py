@@ -7,15 +7,11 @@
 #     "numpy"
 # ]
 # ///
-import marimo as mo
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import matplotlib.dates as mdates
-import matplotlib.ticker as ticker
 
-__generated_with = "0.19.7"
-app = mo.App(width="medium", css_file="custom.css")
+import marimo
+
+__generated_with = "0.21.1"
+app = marimo.App(width="medium", css_file="custom.css")
 
 with app.setup(hide_code=True):
     # imports
@@ -76,79 +72,192 @@ def _():
         path_to_csv = mo.notebook_location() / "public" / "clusters.csv"
         clusters = pd.read_csv(path_to_csv)
         return clusters
-    
+
     @mo.cache
     def get_cluster_centers():
         #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales_by_segment.csv"
         path_to_csv = mo.notebook_location() / "public" / "centers.csv"
         centers = pd.read_csv(path_to_csv)
         return centers
-    
+
     @mo.cache
     def get_sales_forecasts():
         #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales_by_segment.csv"
         path_to_csv = mo.notebook_location() / "public" / "sales_forecasts.csv"
         centers = pd.read_csv(path_to_csv)
         return centers
-    
+
+
+    @mo.cache
+    def raw_sales():
+
+        #path_to_csv = mo.notebook_location() / "public" / "raw_sales.csv"
+        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/raw_sales.csv"
+        raw_sales = pd.read_csv(path_to_csv)
+        return raw_sales
+
     @mo.cache
     def get_weekly_sales():
         #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales_by_segment.csv"
         path_to_csv = mo.notebook_location() / "public" / "weekly_sales.csv"
         centers = pd.read_csv(path_to_csv)
         return centers
-    
-    return ()
 
-@app.cell
-def _():
-    mo.md(
-        """
-        # Visualization Tasks
 
-        Making visualizations is about telling a story but that story needs a _point_, a "why are we hearing this?". Those points have typologies, just like movies can be a comedy, horror, action, etc, data stories tend to have a broad type.
-
-        ## The Snapshot
-
-        One of those kinds of stories could be framed as "How are things going right now?".
-
-        """
+    return (
+        get_cluster_centers,
+        get_cluster_results,
+        get_sales_forecasts,
+        get_weekly_sales,
+        raw_sales,
     )
-    return
-
 
 
 @app.cell
 def _():
-    mo.md(
-        """
-        ## The Breakdown
+    mo.md("""
+    # Visualization Tasks
 
-        Another story is "What is this made out of?" 
-        
-        (grouped bar chart for composition)
+    Making visualizations is about telling a story but that story needs a _point_, a "why are we hearing this?". Those points have typologies, just like movies can be a comedy, horror, action, etc, data stories tend to have a broad type.
 
-        """
-    )
+    ## The Snapshot
+
+    One of those kinds of stories could be framed as "How are things going right now?".
+    """)
     return
 
 
 @app.cell
 def _():
-    mo.md(
-        """
-        ## Fortune-teller
+    mo.md("""
+    ## The Breakdown
 
-        We all love a "where are things going?" story. We can tell this is a popular story because of how common the 'up and to the right' line-chart is our visual culture.
+    Another story is "What is this made out of?"
 
-        """
+    (grouped bar chart for composition)
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    Another way of "breaking things down" is to use a distribution. With the sales data, we might want to see how often different sale amounts occur. Do customers tend to make larger purchases or smaller purchases? We'll use a bar chart to visualize this but each bar will represent a range of values, for instance, 'all sales between $1 and $100'.
+    """)
+    return
+
+
+@app.cell
+def _(raw_sales):
+    raw = raw_sales()
+
+    lin_counts, lin_bins = np.histogram(raw, bins=50)
+
+    # Compute bin centers and widths
+    lin_bin_centers = (lin_bins[:-1] + lin_bins[1:]) / 2
+    lin_bin_widths = lin_bins[1:] - lin_bins[:-1]
+
+    lin_bin_fig = go.Figure()
+
+    # Stack bin edges for hover info
+    lin_bin_ranges = np.stack([lin_bins[:-1], lin_bins[1:]], axis=-1)
+
+    lin_bin_fig.add_trace(go.Bar(
+        x=lin_bin_centers,
+        y=lin_counts,
+        width=lin_bin_widths,
+        customdata=lin_bin_ranges
+    ))
+
+    #sales_hist = px.histogram(raw, x="Sales", nbins=100)
+
+    lin_bin_fig.update_layout(
+        title="Amount of Sales",
+        xaxis_title="Amount of sale",
+        yaxis_title="Number of sales",
+        showlegend=True
     )
+
+    lin_bin_fig.update_traces(hovertemplate="<b>%{y}</b> Sales between $%{customdata[0]:.2f} and $%{customdata[1]:.2f}<extra></extra>")
+
+    return (raw,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    Now, that's sort of helpful, most of our sales are small and a few are very large (people often refer to this as a 'long-tail' distribution). It's also really hard to read. We might want to just change how our groups are structured. For instance, instead of $1 - $250 and then $250-$750 we could do $1 - $10 and then $10 - $100 and then $100-1000.
+    """)
+    return
+
+
+@app.cell
+def _(raw):
+
+    # Compute histogram in log space
+    log_x = np.log10(raw['Sales'])
+    counts, log_bins = np.histogram(log_x, bins=30)
+
+    # Convert bin edges back to original scale
+    bins = 10**log_bins
+
+    # Compute bin centers and widths
+    bin_centers = (bins[:-1] + bins[1:]) / 2
+    bin_widths = bins[1:] - bins[:-1]
+
+    log_bin_fig = go.Figure()
+
+    # Stack bin edges for hover info
+    bin_ranges = np.stack([bins[:-1], bins[1:]], axis=-1)
+
+    log_bin_fig.add_trace(go.Bar(
+        x=bin_centers,
+        y=counts,
+        width=bin_widths,
+        customdata=bin_ranges
+    ))
+
+    log_bin_fig.update_xaxes(
+        type="log",
+        title="Sales"
+    )
+
+    log_bin_fig.update_yaxes(
+        title="Count"
+    )
+
+    log_bin_fig.update_layout(
+        title="Histogram of Sales with Log-Spaced Bins"
+    )
+
+    tick_vals = [1, 10, 100, 1000, 10000, 100000]
+
+    log_bin_fig.update_xaxes(
+        tickmode="array",
+        tickvals=tick_vals,
+        ticktext=[f"${v:,}" for v in tick_vals]
+    )
+
+    log_bin_fig.update_traces(hovertemplate="<b>%{y}</b> Sales between $%{customdata[0]:.2f} and $%{customdata[1]:.2f}<extra></extra>")
+
+
+    mo.ui.plotly(log_bin_fig, config={"displayModeBar": False})
     return
 
 
 @app.cell
 def _():
-    
+    mo.md("""
+    ## Fortune-teller
+
+    We all love a "where are things going?" story. We can tell this is a popular story because of how common the 'up and to the right' line-chart is our visual culture.
+    """)
+    return
+
+
+@app.cell
+def _(get_sales_forecasts, get_weekly_sales):
+
     forecasts = get_sales_forecasts()
     weeklies = get_weekly_sales()
 
@@ -178,28 +287,25 @@ def _():
 
     forecast_fig.update_traces(hovertemplate="<b>Sales:</b> %{y:$.2f}")
     forecast_fig.add_vline(x=weeklies['Order Date'].max(), line_width=2, line_dash="dash", line_color="orange")
+    return forecasts, weeklies
 
-    return (forecasts, weeklies)
 
 @app.cell
 def _():
-    mo.md(
-        """
+    mo.md("""
+    One of the challenges of forecasting though is that you can make a prediction, but you know that there's a chance it may not be right. To express this, we often use confidcence intervals to say how likely it is that the true number will be within a range.
 
-        One of the challenges of forecasting though is that you can make a prediction, but you know that there's a chance it may not be right. To express this, we often use confidcence intervals to say how likely it is that the true number will be within a range.
-
-        In this chart we're saying that there's an 80% chance that the actual sales will be within the 80% range and a 50% chance that it will be within the 50% range.
-        The median forecast is just the middle, it's not the most likely per se, it's just the middle of our forecasts.
-        As we go further in time, our forecasts become more and more uncertain, which makes sense. I can usually guess what the weather will be tomorrow but it's much harder to guess what it will be in a month or in 5 years.
-        The uncertainty range helps us express that and tell the story of our forecasts and how they should be understood.
-
-        """
-    )
+    In this chart we're saying that there's an 80% chance that the actual sales will be within the 80% range and a 50% chance that it will be within the 50% range.
+    The median forecast is just the middle, it's not the most likely per se, it's just the middle of our forecasts.
+    As we go further in time, our forecasts become more and more uncertain, which makes sense. I can usually guess what the weather will be tomorrow but it's much harder to guess what it will be in a month or in 5 years.
+    The uncertainty range helps us express that and tell the story of our forecasts and how they should be understood.
+    """)
     return
+
 
 @app.cell
 def _(forecasts, weeklies):
-    
+
     forecast_w_prob_fig = go.Figure()
 
     forecast_w_prob_fig.add_trace(go.Scatter(
@@ -289,36 +395,35 @@ def _(forecasts, weeklies):
     ))
     forecast_w_prob_fig.add_vline(x=weeklies['Order Date'].max(), line_width=2, line_dash="dash", line_color="orange")
     forecast_w_prob_fig.update_traces(hovertemplate="<b>Sales:</b> %{y:$.2f}")
+    return
 
 
 @app.cell
 def _():
     return
 
+
 @app.cell
 def _():
-    mo.md(
-        """
-        ## The Grouping
+    mo.md("""
+    ## The Grouping
 
-        Yet another story is "Which of these things are like one another?" 
+    Yet another story is "Which of these things are like one another?"
 
-        Let's take our shopper data and find some clusters of customers. We'll say that we have 4:
+    Let's take our shopper data and find some clusters of customers. We'll say that we have 4:
 
-        * High Profit Buyers - these are customers who make the company money and don't worry too much about shopping for discounts. 'High value'
-        * Bargain Hunters - these are customers who pop in for the sales, but won't buy without one.
-        * The Reliable Middle - these shoppers are mid-profit, mid-frequency, and like a bargain but buy what they need even if it's not on sale.
-        * Frugal Frequent Buyers - these shoppers buy often but don't make the company much profit and love a discount.
+    * High Profit Buyers - these are customers who make the company money and don't worry too much about shopping for discounts. 'High value'
+    * Bargain Hunters - these are customers who pop in for the sales, but won't buy without one.
+    * The Reliable Middle - these shoppers are mid-profit, mid-frequency, and like a bargain but buy what they need even if it's not on sale.
+    * Frugal Frequent Buyers - these shoppers buy often but don't make the company much profit and love a discount.
 
-        To visualize these clusters, we'll use a scatterplot with circles around the center of the clusters. First, show how the Profit vs Number of Orders breaks down:
-
-        """
-    )
+    To visualize these clusters, we'll use a scatterplot with circles around the center of the clusters. First, show how the Profit vs Number of Orders breaks down:
+    """)
     return
 
 
 @app.cell
-def _():
+def _(get_cluster_centers, get_cluster_results):
 
     clusters = get_cluster_results()
     centers = get_cluster_centers()
@@ -358,23 +463,21 @@ def _():
                                     font=dict(size=14),
                                     margin=dict(t=100, b=50, l=50, r=50),
                                     legend_title_text="Cluster Name")
-    
-    mo.ui.plotly(profit_x_orders, config={"displayModeBar": False})
 
-    return (clusters, centers, color_map)
+    mo.ui.plotly(profit_x_orders, config={"displayModeBar": False})
+    return centers, clusters, color_map
+
 
 @app.cell
 def _():
-    mo.md(
-        """
-        Next we'll use a second scatterplot with our clusters to show how the Profit vs Percentage of Discounts breaks down:
-
-        """
-    )
+    mo.md("""
+    Next we'll use a second scatterplot with our clusters to show how the Profit vs Percentage of Discounts breaks down:
+    """)
     return
 
+
 @app.cell
-def _(clusters, centers, color_map):
+def _(centers, clusters, color_map):
 
     profit_x_discounts = px.scatter(clusters, 
                     x='Profit', 
@@ -407,16 +510,14 @@ def _(clusters, centers, color_map):
                                      margin=dict(t=100, b=50, l=50, r=50),
                                      legend_title_text="Cluster Name")
     mo.ui.plotly(profit_x_discounts, config={"displayModeBar": False})
-          
+    return
+
+
 @app.cell
 def _():
-    mo.md(
-        """
-        
-        The cluster + center combo tells the truth about our buyers, which is that they have rough categories but also there are outliers in each category. In some ways their behaviors overlap and in others each group is pretty distinct. 
-
-        """
-    )
+    mo.md("""
+    The cluster + center combo tells the truth about our buyers, which is that they have rough categories but also there are outliers in each category. In some ways their behaviors overlap and in others each group is pretty distinct.
+    """)
     return
 
 
