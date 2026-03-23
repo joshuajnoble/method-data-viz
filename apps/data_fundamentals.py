@@ -12,7 +12,7 @@
 import marimo
 
 __generated_with = "0.21.1"
-app = marimo.App(width="medium")
+app = marimo.App(width="medium", css_file="custom.css")
 
 
 @app.cell
@@ -31,6 +31,7 @@ def _():
         fundies = pd.read_csv(path_to_csv)
         fundies['Order Date'] = pd.to_datetime(fundies['Order Date'])
         fundies = fundies.rename({"Quantity":"Items In Order"}, axis=1)
+        fundies['Ship Mode'] = pd.Categorical(fundies['Ship Mode'], categories=['First Class', 'Second Class', 'Same Day', 'Standard Class'], ordered=True)
         return fundies
 
     df_format_mapping = {
@@ -95,7 +96,7 @@ async def _():
         print("Local Python environment detected. Loaded my_utils.py from public/.")
 
     my_utils.run_plotly_defaults()
-    return
+    return (my_utils,)
 
 
 @app.cell
@@ -171,9 +172,9 @@ def _(mo):
 def _(mo):
     date_picker_filter = mo.md("{start} → {end}").batch(
         start=mo.ui.date(label="Start Date", value ="2012-01-01"),
-        end=mo.ui.date(label="End Date", value ="2012-02-01")
+        end=mo.ui.date(label="End Date", value ="2013-01-01")
     )
-    dropdown_filter = mo.ui.dropdown(options=["All locations", "London", "New York City", "Charlotte"], label="Choose Location", value="All locations")
+    dropdown_filter = mo.ui.dropdown(options=["All locations", "Charlotte", "London", "New York City", "Santa Clara", "Atlanta"], label="Choose Location", value="All locations")
 
     mo.hstack([date_picker_filter, dropdown_filter], align="center", gap=2, widths=[.5, .5])    
     #dropdown_filter
@@ -195,7 +196,10 @@ def _(
         fundamentals if dropdown_filter.value == "All locations" else fundamentals[fundamentals["City"] == dropdown_filter.value]
     )
 
+    filtered_df = filtered_df[["Order ID", "Order Date", "Ship Mode", "Region", "Category", "Sub-Category", "Product ID", "Sales"]]
+
     filtered_df = filtered_df[(filtered_df['Order Date'].dt.date > date_picker_filter['start'].value) & (filtered_df['Order Date'].dt.date < date_picker_filter['end'].value)]
+
     mo.ui.table(data=filtered_df.reset_index(drop=True), pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None, format_mapping=df_format_mapping)
     return (fundamentals,)
 
@@ -209,6 +213,12 @@ def _(mo):
       so it's important to make sure that you know what fields you're sorting on. Putting a classroom of students in order by age is different ordering them by height or grade point average. The point of sorting is to see how one feature of the data relates
       to others.
     """)
+    return
+
+
+@app.cell
+def _(my_utils):
+    my_utils.callout_neutral("👆 Click the field headers to sort the table")
     return
 
 
@@ -227,9 +237,9 @@ def _(mo):
 
     This goes along with filtering. Usually when we look at "sales in New York City" we say something like "all sales in New York City". Any bar chart you've ever seen is aggregating. When we aggregate, we group information about an event by one of its values to reduce what we're looking at. That can be simple, like adding together all the sales, or complicated, like grouping together all sales to East Asia except Korea by category to compare monitor sales to projector sales. Aggregation often gets combined with other operations:
 
-    - Find the biggest sales and sort them.
-    - Find the least expensive items to ship that are consumer electronics.
-    - Find the average order amount in December vs April.
+    - **Find the biggest sales and sort them.**
+    - **Find the least expensive items to ship that are consumer electronics.**
+    - **Find the average order amount in December vs April.**
 
     By combining different operations, we can use visualization to explore for ourselves and communicate to others.
     """)
@@ -238,7 +248,7 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(mo):
-    multiselect_aggregate = mo.ui.multiselect(options=["Charlotte", "London", "New York City", "Atlanta"], label="Choose location(s)")
+    multiselect_aggregate = mo.ui.multiselect(options=["Charlotte", "London", "New York City", "Santa Clara", "Atlanta"], label="Choose location(s)")
     multiselect_aggregate
     return (multiselect_aggregate,)
 
@@ -284,7 +294,8 @@ def _(df_format_mapping, fundamentals, mo):
 
     features["Profit Ratio (Calculated)"] = round(features['Profit'] / features['Sales'], 3)
     features["Per Unit Profit (Calculated)"] = round(features['Profit'] / features['Items In Order'], 2)
-    features.insert(4, 'Profit Ratio (Calculated)', features.pop("Profit Ratio (Calculated)"))
+    features.insert(4, 'Profit Ratio\n(Calculated)', features.pop("Profit Ratio (Calculated)"))
+    features.insert(6, 'Per Unit Profit\n(Calculated)', features.pop("Per Unit Profit (Calculated)"))
 
     def style_cell(_rowId, _columnName, value):
         if "(Calculated)" in _columnName:
@@ -387,22 +398,25 @@ def _(mo):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Sales Per Year (Bar Chart)
+    """)
+    return
+
+
 @app.cell
 def _(get_yearly, mo, px):
-
     yearly_sales = get_yearly()
+    yearly_sales = yearly_sales.sort_values(by='year')
+
     yearly_sales_fig_labeled = px.bar(yearly_sales, x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
 
-    tick_vals = [2011, 2012, 2013, 2014]
-    yearly_sales_fig_labeled.update_xaxes(
-        tickmode="array",
-        tickvals=tick_vals,
-        ticktext=[f"{v}" for v in tick_vals]
-    )
-    yearly_sales_fig_labeled.update_layout(yaxis_tickprefix = 'USD$', yaxis_tickformat = ',.')
+    yearly_sales_fig_labeled.update_layout(yaxis_tickprefix = '$', yaxis_tickformat = ',.2s')
     yearly_sales_fig_labeled.update_yaxes(tickformat=".2s") 
     mo.ui.plotly(yearly_sales_fig_labeled,config={"displayModeBar": False})
-    return tick_vals, yearly_sales
+    return (yearly_sales,)
 
 
 @app.cell
@@ -421,22 +435,19 @@ def _(mo):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Sales Per Year (Line Chart)
+    """)
+    return
+
+
 @app.cell
-def _(mo, px, tick_vals, yearly_sales):
-
-
-    yearly_sales['truncated'] = yearly_sales['sales']/1_000_000
-
-    yearly_line = px.line(yearly_sales, x="year", y="sales", labels={"year": "Financial Year","sales": "Total Sales in Millions ($)"}, title='Sales Per Year in Millions of USD')
+def _(mo, px, yearly_sales):
+    yearly_line = px.line(yearly_sales, x="year", y="sales", labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
 
     yearly_line.update_traces(mode='lines+markers')
-
-    yearly_line.update_xaxes(
-        tickmode="array",
-        tickvals=tick_vals,
-        ticktext=[f"{v}" for v in tick_vals]
-    )
-
     yearly_line.update_yaxes(tickformat="$,.2s")
 
     mo.ui.plotly(yearly_line,config={"displayModeBar": False})
@@ -452,16 +463,16 @@ def _(mo):
 
     We have to answer two questions first:
 
-    1. What are all the years in our dataset?
-    2. For each year, what is the total sum of sales?
+    > 1. What are all the years in our dataset?
+    > 2. For each year, what is the total sum of sales?
 
     Those operations can happen in Excel, in code, you could even do them by hand with a calculator if you felt like it. The point isn't so much how they get done as they're both what the chart is showing and what the data looked like before the chart could be created. The sales data underlying those charts looks like this:
 
     |   Row ID | Order ID       | Order Date   | Ship Date   | Ship Mode    | Customer ID   | Customer Name   | Segment   |   Sales |
     |---------:|:---------------|:-------------|:------------|:-------------|:--------------|:----------------|:----------|--------:|
-    |    32298 | CA-2012-124891 | 7/31/12      | 7/31/12     | Same Day     | RH-19495      | Rick Hansen     | Consumer  | 2309.65 |
-    |    26341 | IN-2013-77878  | 2/5/13       | 2/7/13      | Second Class | JR-16210      | Justin Ritter   | Corporate | 3709.39 |
-    |    25330 | IN-2013-71249  | 10/17/13     | 10/18/13    | First Class  | CR-12730      | Craig Reiter    | Consumer  | 5175.17 |
+    |    32298 | CA-2012-124891 | 7/31/12      | 7/31/12     | Same Day     | RH-19495      | Rick Hansen     | Consumer  | $2,309.65 |
+    |    26341 | IN-2013-77878  | 2/5/13       | 2/7/13      | Second Class | JR-16210      | Justin Ritter   | Corporate | $3,709.39 |
+    |    25330 | IN-2013-71249  | 10/17/13     | 10/18/13    | First Class  | CR-12730      | Craig Reiter    | Consumer  | $5,175.17 |
 
     This might look a little overwhelming at first but to get to the data that we're interested in, we're going to ignore most of it. All we care about is the year in the Order Date column and the Sales. Everything else doesn't matter for our chart or the story we're trying to tell.
 
