@@ -521,5 +521,105 @@ def _():
     return
 
 
+@app.cell
+def _():
+    toggle_stacked_bar_labels = mo.ui.switch(label="Toggle bar labels", value=False)
+    return (toggle_stacked_bar_labels,)
+
+
+@app.cell
+def _(toggle_stacked_bar_labels):
+    toggle_stacked_bar_labels
+    return
+
+
+@app.cell
+def _(toggle_stacked_bar_labels):
+    _research_phases = [
+        "Strategy & Intake",
+        "Analysis & Requirements",
+        "Development",
+        "Quality & Testing",
+        "Deployment & Release",
+        "Operate & Measure"
+    ]
+
+    _research_rng = np.random.default_rng(42)
+    _research_going_well = _research_rng.uniform(0.50, 0.70, size=len(_research_phases))
+    _research_remaining = 1 - _research_going_well
+    _research_undecided_share = _research_rng.uniform(0.45, 0.55, size=len(_research_phases))
+    _research_undecided = _research_remaining * _research_undecided_share
+    _research_not_going_well = _research_remaining - _research_undecided
+
+    _research_df = pd.DataFrame(
+        {
+            "Phase": _research_phases,
+            "Going well": _research_going_well,
+            "Undecided": _research_undecided,
+            "Not going well": _research_not_going_well,
+        }
+    )
+
+    _research_fig = go.Figure()
+
+    _research_color_map = {
+        "Going well": "#4442e3",
+        "Undecided": "#D2D2D2",
+        "Not going well": "#ff584e",
+    }
+
+    for _research_status in ["Going well", "Undecided", "Not going well"]:
+        _research_fig.add_trace(
+            go.Bar(
+                y=_research_df["Phase"],
+                x=_research_df[_research_status],
+                name=_research_status,
+                orientation="h",
+                marker=dict(color=_research_color_map[_research_status]),
+                text=_research_df[_research_status] if toggle_stacked_bar_labels.value else None,
+                texttemplate="%{text:.1%}" if toggle_stacked_bar_labels.value else None,
+                textposition="inside" if toggle_stacked_bar_labels.value else None,
+                insidetextanchor="middle",
+                hovertemplate=(
+                    "Phase=%{y}<br>"
+                    + _research_status
+                    + "=%{x:.1%}"
+                    + "<extra></extra>"
+                ),
+            )
+        )
+
+    _research_fig.update_layout(
+        barmode="stack",
+        height=450,
+        xaxis_title=None,
+        yaxis_title=None,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            title="",
+            xanchor="left",
+            x=0,
+            font=dict(size=16,weight="bold"),
+            traceorder="normal"
+        ),
+    )
+
+    _research_fig.update_xaxes(
+        tickformat="1%",
+        range=[0, 1]
+    )
+
+    _research_fig.update_yaxes(
+        ticksuffix="   ",
+        tickfont=dict(size=14,weight="bold"),
+        automargin=True
+    )
+
+    mo.ui.plotly(_research_fig, config={"displayModeBar": False})
+    return
+
+
 if __name__ == "__main__":
     app.run()
