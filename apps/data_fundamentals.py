@@ -26,7 +26,7 @@ def _():
     @mo.cache
     def get_fundamentals():
 
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/yearly_sales_by_segment.csv"
+        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/data_fundamentals.csv"
         path_to_csv = mo.notebook_location() / "public" / "data_fundamentals.csv"
         fundies = pd.read_csv(path_to_csv)
         fundies['Order Date'] = pd.to_datetime(fundies['Order Date'])
@@ -35,6 +35,7 @@ def _():
     @mo.cache
     def get_yearly():
 
+        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/yearly_sales.csv"
         path_to_csv = mo.notebook_location() / "public" / "yearly_sales.csv"
         yearly = pd.read_csv(path_to_csv)
         yearly['Order Date'] = pd.to_datetime(yearly['Order Date'])
@@ -202,6 +203,13 @@ def _(mo):
       Any time you've seen a line chart showing "profit" or "Annual Run Revenue" or, for NFL fans, "Quarterback Rating", you've understood this. It's a number made from other numbers.
       Often times the information about filtered or aggregated values alone isn't quite enough, sometimes we need to make up new kinds of information. An easy example is profit: purchase price minus cost to seller. Profit margin is just profit divided by sales.
       Complex metrics like Annual Run Rate are made from aggregating and filtering data. These are new features built from existing data. Building new feature is a part of telling a story about what your data could be telling you.
+
+      In the table below there are 2 new "features" (aka values) being calculated:
+
+    - **Profit Ratio** which is just `Profit` divided by `Sales`
+    - **Per Unit Profit** which is just `Profit` divided by `Items In Order`
+
+     These sorts of features help us use our data to tell a story about what's important: which orders have the highest profit ratio and thus might be interesting to a business needing to make money, and which orders might seem to have a profit but actually are just lots of small profits on many items added up.
     """)
     return
 
@@ -216,6 +224,35 @@ def _(fundamentals, mo):
     features["Per Unit Profit (Calculated)"] = round(features['Profit'] / features['Items In Order'], 2)
 
     mo.ui.table(data=features, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Distributions
+
+    A distribution shows the range of values for a variable and how often they occur. For instance, imagine that you're looking at the heights of 11 year old students in a classroom in centimeters. Just looking at the numbers isn't all that helpful:
+
+        147,164,139,155,141,141,143,150,150,151,153,156,157,148,159,163,167,171
+
+    You could sort them so you can see the highest and lowest:
+
+        139,141,141,143,147,148,150,150,151,153,155,156,157,159,163,164,167,171
+
+    That's helpful. We could find the average height:
+
+        153
+
+    But that kind of misses that most students are in the middle and a few are much shorter and a few much taller. You might group the heights into ranges and see how the heights are _distributed_.
+
+    - 135-145 = 4 students
+    - 145-155 = 7 students
+    - 155-165 = 5 students
+    - 165-175 = 2 students
+
+    That's called a distribution and it shows how a range of all the values and how likely they are to occur.
+    """)
     return
 
 
@@ -236,7 +273,7 @@ def _(mo):
     # Stages of data work
 
       Most of the time, when we're working with data we have a few different stages of doing so: we **explore**, we **diagnose**, and then we **explain**.
-      At first, we're just trying to understnad what the data is and what things we might be able to learn from it. Is the sales data complete? Can we join it with other data sources like how much stock is at our suppliers or global prices?
+      At first, we're just trying to understand what the data is and what things we might be able to learn from it. Is the sales data complete? Can we join it with other data sources like how much stock is at our suppliers or global prices?
       These kinds of visualizations are open-ended and iterative and often involve many quick visualizations and are focused on our own learning or sharing with our team rather than communicating with an audience.
 
       Once we understand what the data is and what it might tell us, then we can diagnose whether what we think is happening is actually there. Do profits have a monthly cycle? Are orders in EMEA growing faster than in LATAM? Is the information reliable and does it communicate an insight?
@@ -261,7 +298,7 @@ def _(mo):
 
     Much like good design helps people do things, good charts help people understand things. The point of making a chart isn't to make a cool chart, it's to make an aid to understanding.
 
-    ## Charts explain what
+    ## Charts tell a story
 
     You have probably made hundreds of bar charts in your life. Maybe even thousands. But why did you make them? What was the point? Why do they work? Why are charts so useful? Moreover, what makes some more useful than others?
 
@@ -287,7 +324,6 @@ def _(get_yearly, mo, px):
     yearly_sales_fig_labeled.update_layout(yaxis_tickprefix = 'USD$', yaxis_tickformat = ',.')
     yearly_sales_fig_labeled.update_yaxes(tickformat=".2s") 
     mo.ui.plotly(yearly_sales_fig_labeled,config={"displayModeBar": False})
-
     return tick_vals, yearly_sales
 
 
