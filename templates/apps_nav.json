@@ -1,7 +1,8 @@
 [
   { "path": "apps/data_fundamentals.py", "label": "Data Fundamentals" },
+  { "path": "apps/basic_principles.py", "label": "Basic Principles" },
+  { "path": "apps/viz_types.py", "label": "Chart Types" },
   { "path": "apps/segments_and_percentages.py", "label": "Parts and wholes" },
-  { "path": "apps/comparing_groups.py", "label": "Comparing Groups" },
   { "path": "apps/distributions.py", "label": "Distributions" },
   { "path": "apps/events_and_ts.py", "label": "Events and Time Series" }
 ]
