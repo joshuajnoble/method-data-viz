@@ -521,6 +521,16 @@ def _():
     return
 
 
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## The Qualitative Survey
+
+    TODO:
+    """)
+    return
+
+
 @app.cell
 def _():
     toggle_stacked_bar_labels = mo.ui.switch(label="Toggle bar labels", value=False)
@@ -551,7 +561,7 @@ def _(toggle_stacked_bar_labels):
     _research_undecided = _research_remaining * _research_undecided_share
     _research_not_going_well = _research_remaining - _research_undecided
 
-    _research_df = pd.DataFrame(
+    research_df = pd.DataFrame(
         {
             "Phase": _research_phases,
             "Going well": _research_going_well,
@@ -560,23 +570,23 @@ def _(toggle_stacked_bar_labels):
         }
     )
 
-    _research_fig = go.Figure()
-
-    _research_color_map = {
+    research_color_map = {
         "Going well": "#4442e3",
         "Undecided": "#D2D2D2",
         "Not going well": "#ff584e",
     }
 
+    _research_fig = go.Figure()
+
     for _research_status in ["Going well", "Undecided", "Not going well"]:
         _research_fig.add_trace(
             go.Bar(
-                y=_research_df["Phase"],
-                x=_research_df[_research_status],
+                y=research_df["Phase"],
+                x=research_df[_research_status],
                 name=_research_status,
                 orientation="h",
-                marker=dict(color=_research_color_map[_research_status]),
-                text=_research_df[_research_status] if toggle_stacked_bar_labels.value else None,
+                marker=dict(color=research_color_map[_research_status]),
+                text=research_df[_research_status] if toggle_stacked_bar_labels.value else None,
                 texttemplate="%{text:.1%}" if toggle_stacked_bar_labels.value else None,
                 textposition="inside" if toggle_stacked_bar_labels.value else None,
                 insidetextanchor="middle",
@@ -618,6 +628,75 @@ def _(toggle_stacked_bar_labels):
     )
 
     mo.ui.plotly(_research_fig, config={"displayModeBar": False})
+    return research_color_map, research_df
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    Now compare this to a faceted version where each status gets its own chart. Which one is easier to read? Which one makes it easier to compare across phases? Which one makes it easier to compare across status?
+    """)
+    return
+
+
+@app.cell
+def _(research_color_map, research_df):
+    from plotly.subplots import make_subplots
+
+    status_order = ["Going well", "Undecided", "Not going well"]
+
+    status_facets_fig = make_subplots(
+        rows=1,
+        cols=len(status_order),
+        shared_yaxes=True,
+        horizontal_spacing=0.06,
+        subplot_titles=status_order,
+        column_widths=[3,1,1]
+    )
+
+    for i, status_name in enumerate(status_order, start=1):
+        status_facets_fig.add_trace(
+            go.Bar(
+                y=research_df["Phase"],
+                x=research_df[status_name],
+                orientation="h",
+                marker=dict(color=research_color_map[status_name]),
+                text=research_df[status_name],
+                texttemplate="%{text:.1%}",
+                textposition="outside",
+                cliponaxis=False,
+                hovertemplate=(
+                    "Status=" + status_name + "<br>"
+                    + "Phase=%{y}<br>"
+                    + "Share=%{x:.1%}"
+                    + "<extra></extra>"
+                ),
+                showlegend=False,
+            ),
+            row=1,
+            col=i,
+        )
+
+        status_facets_fig.update_xaxes(
+            visible=False,
+        )
+
+    status_facets_fig.update_yaxes(
+        title=None,
+        ticksuffix="   ",
+        automargin=True,
+        tickfont=dict(size=14,weight="bold")
+    )
+
+    status_facets_fig.update_layout(
+        height=475,
+        margin=dict(t=30, b=0),
+        showlegend=False,
+    )
+
+    status_facets_fig.update_annotations(font_size=16,font_weight="bold")
+
+    mo.ui.plotly(status_facets_fig, config={"displayModeBar": False})
     return
 
 
