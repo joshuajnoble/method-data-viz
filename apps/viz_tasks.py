@@ -13,54 +13,50 @@ import marimo
 __generated_with = "0.21.1"
 app = marimo.App(width="medium", css_file="custom.css")
 
-with app.setup(hide_code=True):
+async with app.setup(hide_code=True):
     # imports
     import plotly.express as px
     import plotly.graph_objects as go
     import pandas as pd
     import marimo as mo
-    import plotly.io as pio
     import numpy as np
     from pathlib import Path
+    import sys
+    import types
+    import importlib.util
 
-    COLOR_PALETTE = [
-        "#4442e3", # 1. Brand Blue
-        "#ffb60c", # 2. Brand Yellow
-        "#ff584e", # 3. Brand Coral
-        "#10b981", # 4. Method Green
-        "#8b89f5", # 5. Vibrant Periwinkle
-        "#2b298c", # 6. Deep Navy
-        "#0ea5e9", # 7. Electric Teal
-        "#f97316", # 8. Vibrant Orange
-        "#ff9e99", # 9. Soft Melon
-        "#4e4e4e"  # 10. Method Slate
-    ]
+    module_name = "my_utils"
 
-    # set plotly default template and disable mode bar (copied from 'comparing_groups')
-    # set plotly default template and disable mode bar
-    pio.templates.default = "plotly_white"
-    pio.templates["plotly_white"].layout.margin = dict(t=0, b=0)
-    pio.templates["plotly_white"].layout.font.family = "var(--marimo-text-font)"
-    pio.templates["plotly_white"].layout.title.font.family = "var(--marimo-text-font)"
-    for renderer_name in pio.renderers.default.split("+"):
-        renderer_name = renderer_name.strip()
-        if not renderer_name:
-            continue
-        if renderer_name not in pio.renderers:
-            continue
-        renderer = pio.renderers[renderer_name]
-        if hasattr(renderer, "config") and renderer.config is not None:
-            renderer.config["displayModeBar"] = False
+    if sys.platform == "emscripten":
+        from pyodide.http import pyfetch
 
-    def _callout(kind: str, content: str):
-        css_class = "callout-danger" if kind == "danger" else "callout-info"
-        return mo.Html(f"<div class='{css_class}'>{content}</div>")
+        print("WASM detected: Fetching local modules...")
+        # needs to be ../public because of how the assets dir is created during build
+        response = await pyfetch("../public/my_utils.py")
+        if not response.ok:
+            print("Attempted to fetch:", response.url)
+            raise RuntimeError(f"Failed to load my_utils.py. Status: {response.status}")
 
-    def callout_info(content: str):
-        return _callout("info", content)
+        source = await response.text()
+        module = types.ModuleType(module_name)
+        module.__file__ = "/virtual/my_utils.py"
+        exec(compile(source, module.__file__, "exec"), module.__dict__)
+        sys.modules[module_name] = module
+        my_utils = module
+        print("Successfully loaded my_utils.py!")
+    else:
+        # Local Python: load from apps/public/my_utils.py
+        module_path = Path("./apps/public/my_utils.py").resolve()
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Could not load module spec from {module_path}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        my_utils = module
+        print("Local Python environment detected. Loaded my_utils.py from public/.")
 
-    def callout_danger(content: str):
-        return _callout("danger", content)
+    my_utils.run_plotly_defaults()
 
 
 @app.cell
@@ -533,6 +529,212 @@ def _():
     One strategy might be to use callout sections from this chart, another might be to follow it up with simpler charts or infographics that show the clusters without the busy-ness scatterplot points. Always do what helps you tell your story and the reader or listener understand it.
           
           """)
+    return
+
+
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    ## The Survey Results
+
+    A common type of data story in design consulting is sharing the results of a user survey. Whether it's a quantitative survey or qualitative interviews, results might be presented in a scale like "Going well", "Not going well", and "Undecided". The goal of the visualization is to show how different research categories are doing across these scale options. Readers might want to compare what's going "most well" across all categories but they also might want to quickly understand how an individual category is doing.
+    """)
+    return
+
+
+@app.cell
+def _():
+    toggle_stacked_bar_labels = mo.ui.switch(label="Toggle bar labels", value=False)
+    return (toggle_stacked_bar_labels,)
+
+
+@app.cell
+def _(toggle_stacked_bar_labels):
+    _message = my_utils.callout_neutral("At first glance, it might be easy to get a relative idea of the composition of each research category without bar labels, but are you able to easily compare values of the \"Undecided\" scale level? <b>How does adding bar labels change how you read this chart?</b> How does it impact your ability to <b>quickly gather insights?</b>")
+
+    mo.hstack([_message,toggle_stacked_bar_labels],gap=2,align="center",widths=[2,.75])
+    return
+
+
+@app.cell
+def _(toggle_stacked_bar_labels):
+    _research_phases = [
+        "Strategy & Intake",
+        "Analysis & Requirements",
+        "Development",
+        "Quality & Testing",
+        "Deployment & Release",
+        "Operate & Measure"
+    ]
+
+    _research_rng = np.random.default_rng(42)
+    _research_going_well = _research_rng.uniform(0.50, 0.70, size=len(_research_phases))
+    _research_remaining = 1 - _research_going_well
+    _research_undecided_share = _research_rng.uniform(0.45, 0.55, size=len(_research_phases))
+    _research_undecided = _research_remaining * _research_undecided_share
+    _research_not_going_well = _research_remaining - _research_undecided
+
+    research_df = pd.DataFrame(
+        {
+            "Phase": _research_phases,
+            "Going well": _research_going_well,
+            "Undecided": _research_undecided,
+            "Not going well": _research_not_going_well,
+        }
+    )
+
+    research_color_map = {
+        "Going well": "#4442e3",
+        "Undecided": "#D2D2D2",
+        "Not going well": "#ff584e",
+    }
+
+    _research_fig = go.Figure()
+
+    for _research_status in ["Going well", "Undecided", "Not going well"]:
+        _research_fig.add_trace(
+            go.Bar(
+                y=research_df["Phase"],
+                x=research_df[_research_status],
+                name=_research_status,
+                orientation="h",
+                marker=dict(color=research_color_map[_research_status]),
+                text=research_df[_research_status] if toggle_stacked_bar_labels.value else None,
+                texttemplate="%{text:.1%}" if toggle_stacked_bar_labels.value else None,
+                textposition="inside" if toggle_stacked_bar_labels.value else None,
+                textfont=dict(size=14) if toggle_stacked_bar_labels.value else None,
+                insidetextanchor="middle",
+                hovertemplate=(
+                    "Phase=%{y}<br>"
+                    + _research_status
+                    + "=%{x:.1%}"
+                    + "<extra></extra>"
+                ),
+            )
+        )
+
+    _research_fig.update_layout(
+        barmode="stack",
+        bargap=0.25,
+        height=450,
+        xaxis_title=None,
+        yaxis_title=None,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            title="",
+            xanchor="left",
+            x=-.02,
+            font=dict(size=16,weight="bold"),
+            traceorder="normal"
+        ),
+    )
+
+    _research_fig.update_xaxes(
+        tickformat="1%",
+        range=[0, 1],
+        gridcolor="#888888"
+    )
+
+    _research_fig.update_yaxes(
+        ticksuffix="   ",
+        tickfont=dict(size=14,weight="bold"),
+        automargin=True
+    )
+
+    mo.ui.plotly(_research_fig, config={"displayModeBar": False})
+    return research_color_map, research_df
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    Now compare the chart above to the "faceted" version below, where each status category gets its own facet or subchart. Thanks to the left-alignment of all columns, our eyes are immediately drawn to larger values and we can more easily gather insights about the "Undecided" level of the scale. **Compared to the version above, this version provides enhanced vertical scanning but has reduced emphases on composition.** Both versions are helpful depending on the data you're trying to highlight!
+    """)
+    return
+
+
+@app.cell
+def _(research_color_map, research_df):
+    from plotly.subplots import make_subplots
+
+    status_order = ["Going well", "Undecided", "Not going well"]
+
+    status_facets_fig = make_subplots(
+        rows=1,
+        cols=len(status_order),
+        shared_yaxes=True,
+        horizontal_spacing=0.06,
+        subplot_titles=status_order,
+        column_widths=[3, 1, 1],
+    )
+
+    _phase_count = len(research_df["Phase"])
+
+    for i, status_name in enumerate(status_order, start=1):
+        status_facets_fig.add_trace(
+            go.Bar(
+                y=research_df["Phase"],
+                x=research_df[status_name],
+                orientation="h",
+                marker=dict(color=research_color_map[status_name]),
+                text=research_df[status_name],
+                texttemplate="%{text:.1%}",
+                textposition="outside",
+                textfont=dict(size=14),
+                cliponaxis=False,
+                hovertemplate=(
+                    "Status=" + status_name + "<br>"
+                    + "Phase=%{y}<br>"
+                    + "Share=%{x:.1%}"
+                    + "<extra></extra>"
+                ),
+                showlegend=False,
+            ),
+            row=1,
+            col=i,
+        )
+
+    # line separators
+    for _sep in range(_phase_count - 1):
+        status_facets_fig.add_shape(
+            type="line",
+            x0=0,
+            x1=1,
+            xref="paper",
+            y0=_sep + 0.5,
+            y1=_sep + 0.5,
+            yref="y",
+            line=dict(color="#D9D9D9", width=.75),
+            layer="below",
+        )
+
+    status_facets_fig.update_xaxes(visible=False)
+
+    status_facets_fig.update_yaxes(
+        title=None,
+        ticksuffix="   ",
+        automargin=True,
+        tickfont=dict(size=14, weight="bold"),
+    )
+
+    status_facets_fig.update_layout(
+        height=475,
+        bargap=0.25,
+        margin=dict(t=30, b=0),
+        showlegend=False,
+    )
+
+    status_facets_fig.update_annotations(font_size=16, font_weight="bold")
+
+    mo.ui.plotly(status_facets_fig, config={"displayModeBar": False})
     return
 
 
