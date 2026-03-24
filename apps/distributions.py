@@ -157,7 +157,7 @@ def _():
         """
         ## Height
         This shows how what kinds of amounts purchases are most common on a log scale. That means the x-axis increases from in jumps of 10x: 1, 10, 100, 1000, and so on. This helps us see that most purchases are less than $100, 
-        but a few are very large. In a linear scale, it would be harder to see this distribution.
+        a few are very small, and a few are very large. In a linear scale, it would be harder to see how the values break out.
         """
     )
     return
