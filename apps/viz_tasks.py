@@ -532,12 +532,18 @@ def _():
     return
 
 
+@app.cell
+def _():
+    mo.Html("<hr>")
+    return
+
+
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    ## The Qualitative Survey
+    ## The Survey Results
 
-    TODO:
+    A common type of data story in design consulting is sharing the results of a user survey. Whether it's a quantitative survey or qualitative interviews, results might be presented in a scale like "Going well", "Not going well", and "Undecided". The goal of the visualization is to show how different research categories are doing across these scale options. Readers might want to compare what's going "most well" across all categories but they also might want to quickly understand how an individual category is doing.
     """)
     return
 
@@ -550,7 +556,9 @@ def _():
 
 @app.cell
 def _(toggle_stacked_bar_labels):
-    toggle_stacked_bar_labels
+    _message = my_utils.callout_neutral("At first glance, it might be easy to get a relative idea of the composition of each research category without bar labels, but are you able to easily compare values of the \"Undecided\" scale level? <b>How does adding bar labels change how you read this chart?</b> How does it impact your ability to <b>quickly gather insights?</b>")
+
+    mo.hstack([_message,toggle_stacked_bar_labels],gap=2,align="center",widths=[2,.75])
     return
 
 
@@ -600,6 +608,7 @@ def _(toggle_stacked_bar_labels):
                 text=research_df[_research_status] if toggle_stacked_bar_labels.value else None,
                 texttemplate="%{text:.1%}" if toggle_stacked_bar_labels.value else None,
                 textposition="inside" if toggle_stacked_bar_labels.value else None,
+                textfont=dict(size=14) if toggle_stacked_bar_labels.value else None,
                 insidetextanchor="middle",
                 hovertemplate=(
                     "Phase=%{y}<br>"
@@ -612,6 +621,7 @@ def _(toggle_stacked_bar_labels):
 
     _research_fig.update_layout(
         barmode="stack",
+        bargap=0.25,
         height=450,
         xaxis_title=None,
         yaxis_title=None,
@@ -621,7 +631,7 @@ def _(toggle_stacked_bar_labels):
             y=1.02,
             title="",
             xanchor="left",
-            x=0,
+            x=-.02,
             font=dict(size=16,weight="bold"),
             traceorder="normal"
         ),
@@ -629,7 +639,8 @@ def _(toggle_stacked_bar_labels):
 
     _research_fig.update_xaxes(
         tickformat="1%",
-        range=[0, 1]
+        range=[0, 1],
+        gridcolor="#888888"
     )
 
     _research_fig.update_yaxes(
@@ -645,7 +656,7 @@ def _(toggle_stacked_bar_labels):
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    Now compare this to a faceted version where each status gets its own chart. Which one is easier to read? Which one makes it easier to compare across phases? Which one makes it easier to compare across status?
+    Now compare the chart above to the "faceted" version below, where each status category gets its own facet or subchart. Thanks to the left-alignment of all columns, our eyes are immediately drawn to larger values and we can more easily gather insights about the "Undecided" level of the scale. **Compared to the version above, this version provides enhanced vertical scanning but has reduced emphases on composition.** Both versions are helpful depending on the data you're trying to highlight!
     """)
     return
 
@@ -662,8 +673,10 @@ def _(research_color_map, research_df):
         shared_yaxes=True,
         horizontal_spacing=0.06,
         subplot_titles=status_order,
-        column_widths=[3,1,1]
+        column_widths=[3, 1, 1],
     )
+
+    _phase_count = len(research_df["Phase"])
 
     for i, status_name in enumerate(status_order, start=1):
         status_facets_fig.add_trace(
@@ -675,6 +688,7 @@ def _(research_color_map, research_df):
                 text=research_df[status_name],
                 texttemplate="%{text:.1%}",
                 textposition="outside",
+                textfont=dict(size=14),
                 cliponaxis=False,
                 hovertemplate=(
                     "Status=" + status_name + "<br>"
@@ -688,24 +702,37 @@ def _(research_color_map, research_df):
             col=i,
         )
 
-        status_facets_fig.update_xaxes(
-            visible=False,
+    # line separators
+    for _sep in range(_phase_count - 1):
+        status_facets_fig.add_shape(
+            type="line",
+            x0=0,
+            x1=1,
+            xref="paper",
+            y0=_sep + 0.5,
+            y1=_sep + 0.5,
+            yref="y",
+            line=dict(color="#D9D9D9", width=.75),
+            layer="below",
         )
+
+    status_facets_fig.update_xaxes(visible=False)
 
     status_facets_fig.update_yaxes(
         title=None,
         ticksuffix="   ",
         automargin=True,
-        tickfont=dict(size=14,weight="bold")
+        tickfont=dict(size=14, weight="bold"),
     )
 
     status_facets_fig.update_layout(
         height=475,
+        bargap=0.25,
         margin=dict(t=30, b=0),
         showlegend=False,
     )
 
-    status_facets_fig.update_annotations(font_size=16,font_weight="bold")
+    status_facets_fig.update_annotations(font_size=16, font_weight="bold")
 
     mo.ui.plotly(status_facets_fig, config={"displayModeBar": False})
     return
