@@ -13,7 +13,7 @@ import marimo
 __generated_with = "0.21.1"
 app = marimo.App(width="medium", css_file="custom.css")
 
-with app.setup(hide_code=True):
+async with app.setup(hide_code=True):
     # imports
     import plotly.express as px
     import plotly.graph_objects as go
@@ -22,6 +22,9 @@ with app.setup(hide_code=True):
     import plotly.io as pio
     import numpy as np
     from pathlib import Path
+    import sys
+    import types
+    import importlib.util
 
     COLOR_PALETTE = [
         "#4442e3", # 1. Brand Blue
@@ -36,31 +39,38 @@ with app.setup(hide_code=True):
         "#4e4e4e"  # 10. Method Slate
     ]
 
-    # set plotly default template and disable mode bar (copied from 'comparing_groups')
-    # set plotly default template and disable mode bar
-    pio.templates.default = "plotly_white"
-    pio.templates["plotly_white"].layout.margin = dict(t=0, b=0)
-    pio.templates["plotly_white"].layout.font.family = "var(--marimo-text-font)"
-    pio.templates["plotly_white"].layout.title.font.family = "var(--marimo-text-font)"
-    for renderer_name in pio.renderers.default.split("+"):
-        renderer_name = renderer_name.strip()
-        if not renderer_name:
-            continue
-        if renderer_name not in pio.renderers:
-            continue
-        renderer = pio.renderers[renderer_name]
-        if hasattr(renderer, "config") and renderer.config is not None:
-            renderer.config["displayModeBar"] = False
+    module_name = "my_utils"
 
-    def _callout(kind: str, content: str):
-        css_class = "callout-danger" if kind == "danger" else "callout-info"
-        return mo.Html(f"<div class='{css_class}'>{content}</div>")
+    if sys.platform == "emscripten":
+        from pyodide.http import pyfetch
 
-    def callout_info(content: str):
-        return _callout("info", content)
+        print("WASM detected: Fetching local modules...")
+        # needs to be ../public because of how the assets dir is created during build
+        response = await pyfetch("../public/my_utils.py")
+        if not response.ok:
+            print("Attempted to fetch:", response.url)
+            raise RuntimeError(f"Failed to load my_utils.py. Status: {response.status}")
 
-    def callout_danger(content: str):
-        return _callout("danger", content)
+        source = await response.text()
+        module = types.ModuleType(module_name)
+        module.__file__ = "/virtual/my_utils.py"
+        exec(compile(source, module.__file__, "exec"), module.__dict__)
+        sys.modules[module_name] = module
+        my_utils = module
+        print("Successfully loaded my_utils.py!")
+    else:
+        # Local Python: load from apps/public/my_utils.py
+        module_path = Path("./apps/public/my_utils.py").resolve()
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Could not load module spec from {module_path}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        my_utils = module
+        print("Local Python environment detected. Loaded my_utils.py from public/.")
+
+    my_utils.run_plotly_defaults()
 
 
 @app.cell
