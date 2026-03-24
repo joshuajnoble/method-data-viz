@@ -134,7 +134,8 @@ def _():
 
     Another story is "What is this made out of?"
 
-    (grouped bar chart for composition)
+          
+
     """)
     return
 
@@ -175,10 +176,11 @@ def _(raw_sales):
         title="Amount of Sales",
         xaxis_title="Amount of sale",
         yaxis_title="Number of sales",
-        showlegend=True
+        showlegend=False
     )
 
     lin_bin_fig.update_traces(hovertemplate="<b>%{y}</b> Sales between $%{customdata[0]:.2f} and $%{customdata[1]:.2f}<extra></extra>")
+    mo.ui.plotly(lin_bin_fig, config={"displayModeBar": False})
 
     return (raw,)
 
@@ -245,10 +247,18 @@ def _(raw):
     return
 
 
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    Distributions are a way of understanding how widely varied something is. If all of our sales were between $100 and $200, that would be really good to know. 
+    If no one ever spent more than $500, that's a story worth telling our audience and visualizing the distribution will help you tell it.
+    """)
+    return
+
 @app.cell
 def _():
     mo.md("""
-    ## Fortune-teller
+    ## The Fortune-teller
 
     We all love a "where are things going?" story. We can tell this is a popular story because of how common the 'up and to the right' line-chart is our visual culture.
     """)
@@ -515,9 +525,14 @@ def _(centers, clusters, color_map):
 
 @app.cell
 def _():
-    mo.md("""
+    mo.md(r"""
     The cluster + center combo tells the truth about our buyers, which is that they have rough categories but also there are outliers in each category. In some ways their behaviors overlap and in others each group is pretty distinct.
-    """)
+    
+    These kinds of complex charts should be used with care, they can be hard to read and usually need some story-telling to make them make sense, but they're powerful tools to tease apart complicated topics.
+          
+    One strategy might be to use callout sections from this chart, another might be to follow it up with simpler charts or infographics that show the clusters without the busy-ness scatterplot points. Always do what helps you tell your story and the reader or listener understand it.
+          
+          """)
     return
 
 
