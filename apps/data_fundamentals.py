@@ -14,6 +14,7 @@ import marimo
 __generated_with = "0.21.1"
 app = marimo.App(width="medium", css_file="custom.css")
 
+
 @app.cell
 async def setup_wasm():
     import sys
@@ -55,6 +56,7 @@ async def setup_wasm():
     my_utils.run_plotly_defaults()
     return (my_utils,)
 
+
 @app.cell
 def _():
     import marimo as mo
@@ -63,6 +65,7 @@ def _():
 
     cell_width = 800
     return mo, pd, px
+
 
 @app.cell
 def _(mo):
@@ -152,6 +155,7 @@ async def _(date_picker_filter, dropdown_filter, mo, my_utils, pd):
     fundamentals = await my_utils.gh_pages_read_csv_into_df("data_fundamentals.csv")
     fundamentals['Order Date'] = pd.to_datetime(fundamentals['Order Date'])
     fundamentals = fundamentals.rename({"Quantity":"Items In Order"}, axis=1)
+    fundamentals = fundamentals.reset_index()
     filtered_df = (
         fundamentals if dropdown_filter.value == "All locations" else fundamentals[fundamentals["City"] == dropdown_filter.value]
     )
@@ -160,7 +164,7 @@ async def _(date_picker_filter, dropdown_filter, mo, my_utils, pd):
 
     filtered_df = filtered_df[(filtered_df['Order Date'].dt.date > date_picker_filter['start'].value) & (filtered_df['Order Date'].dt.date < date_picker_filter['end'].value)]
 
-    mo.ui.table(data=filtered_df.reset_index(drop=True), pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None, format_mapping=df_format_mapping)
+    mo.ui.table(data=filtered_df, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None)
     return (fundamentals,)
 
 
@@ -247,7 +251,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(fundamentals, mo):
+def _(df_format_mapping, fundamentals, mo):
     fundamentals.reset_index(inplace=True)
     features = fundamentals[["Order ID", "Sales", "Profit", "Items In Order"]]
     features["Cost"] = round(features['Sales'] - features['Profit'], 2)
@@ -407,7 +411,7 @@ def _(mo):
 
 
 @app.cell
-def _(mo, px, tick_vals, yearly_sales):
+def _(mo, px, yearly_sales):
 
     yearly_line = px.line(yearly_sales, x="year", y="sales", labels={"year": "Financial Year","sales": "Total Sales in Millions ($)"}, title='Sales Per Year in Millions of USD')
     yearly_line.update_traces(mode='lines+markers')
