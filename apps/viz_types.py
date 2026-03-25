@@ -9,7 +9,7 @@
 
 import marimo
 
-__generated_with = "0.21.0"
+__generated_with = "0.21.1"
 app = marimo.App(width="medium", css_file="custom.css")
 
 with app.setup(hide_code=True):
@@ -67,11 +67,11 @@ def _():
     mo.md(r"""
     # Types of Visualizations
 
-    When it comes to types of visualizations, there are [so many to choose from](https://datavizproject.com/). Many flashy examples of charts require a certain level of literacy; **domain literacy, data literacy, and visualization literacy.** In order to minimize data misunderstanding and maximize informed decision-making, starting with well-designed *standard* visualization types works best in most use cases.
+    When it comes to types of visualizations, there are [so many to choose from](https://datavizproject.com/). Many flashy examples of charts require a certain level of literacy; domain literacy, data literacy, and visualization literacy. In order to minimize data misunderstanding and maximize informed decision-making, starting with well-designed *standard* visualization types works best in most use cases.
 
-    This section is **meant to deepen familiarity with standard chart types** and covers commonly used ones like bar charts (vertical and horizontal), line charts, pie charts, donut, and gauge charts.
+    This section is meant to deepen familiarity with standard chart types and covers commonly used ones like bar charts (vertical and horizontal), line charts, pie charts, donut, and gauge charts.
 
-    **Interactive sliders** are provided to experiment with how the number of categories or values being plotted can impact the **effectiveness of a chart type**. In dynamic digital products, consider how you might implement **logic to auto-select chart types** or **adjust the number of categories shown** to create a more personalized and effective data experience.
+    Interactive sliders are provided to experiment with how the number of categories or values being plotted can impact the effectiveness of a chart type. In dynamic digital products, consider how you might implement logic to auto-select chart types or adjust the number of categories shown to create a more personalized and effective data experience.
     """)
     return
 
@@ -122,7 +122,7 @@ async def _(my_utils):
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    **The slider below** 👇 changes the number of categories shown in the associated chart. Experiment with which chart type might be the most effective for the **number of categories** as they relate to the **goal of the visual**. How might you focus the experience on showing **intra-year comparisons** vs. **individual trends**?
+    The slider below 👇 changes the number of categories shown in the associated chart. Experiment with which chart type might be the most effective for the number of categories as they relate to the goal of the visual. How might you focus the experience on showing intra-year comparisons vs. individual trends?
     """)
     return
 
@@ -150,9 +150,9 @@ def _():
 def callout_barchart(chart_slider, my_utils):
     # callout
     _message_by_range = [
-        {"min": 1, "max": 3, "message": my_utils.callout_info("<b>1-3 categories</b>: This number of categories is typically manageable in a <b>grouped bar chart</b>. It focuses on <b>intra-year comparisons of categories</b> and allows for comparison of an individual category's value across the whole timeline. <b>Small multiples</b> (below) will also work well and can help to emphasize <b>individual category trends</b>.")},
-        {"min": 4, "max": 7, "message": my_utils.callout_danger("<b>4-7 categories</b>: This number of categories is on the higher end for a <b>grouped bar chart</b> and can introduce <b>visual overwhelm</b>. Consider <b>small multiples</b> (below) to enable comparing <b>individual trends</b> across categories.")},
-        {"min": 8, "max": float("inf"), "message": my_utils.callout_danger("<b>8+ categories</b>: This number of categories will introduce <b>visual overwhelm with either chart type</b>. If you need more than 7 categories, try <b>consolidating categories or providing a table view instead.</b>")},
+        {"min": 1, "max": 3, "message": my_utils.callout_info("<b>1-3 categories</b>: This number of categories is typically manageable in a grouped bar chart. It focuses on intra-year comparisons of categories and allows for comparison of an individual category's value across the whole timeline. Small multiples (below) will also work well and can help to emphasize individual category trends.")},
+        {"min": 4, "max": 7, "message": my_utils.callout_danger("<b>4-7 categories</b>: This number of categories is on the higher end for a grouped bar chart and can introduce visual overwhelm. Consider small multiples (below) to enable comparing individual trends across categories.")},
+        {"min": 8, "max": float("inf"), "message": my_utils.callout_danger("<b>8+ categories</b>: This number of categories will introduce visual overwhelm with either chart type. If you need more than 7 categories, try consolidating categories or providing a table view instead.")},
     ]
 
     _message = next(
@@ -231,9 +231,9 @@ def _():
 def _(chart_slider, my_utils):
     # callout
     _message_by_range = [
-        {"min": 1, "max": 3, "message": my_utils.callout_info("<b>1-3 categories</b>: This number of categories is also well-suited for a <b>small multiples chart</b>. It focuses on <b>yearly trend</b> of an individual category while still allowing for comparison against other categories. <b>Grouped bar charts</b> (above) also work well for this number of categories and can help to emphasize <b>intra-year comparisons</b>.")},
-        {"min": 4, "max": 7, "message": my_utils.callout_info("<b>4-7 categories</b>: This number of categories is great for a <b>small multiples chart</b> and showing <b>individual trends</b> while still allowing for comparison across categories.")},
-        {"min": 8, "max": float("inf"), "message": my_utils.callout_danger("<b>8+ categories</b>: This number of categories will introduce <b>visual overwhelm with either chart type</b>. If you need more than 7 categories, try <b>consolidating categories or providing a table view instead.</b>")},
+        {"min": 1, "max": 3, "message": my_utils.callout_info("<b>1-3 categories</b>: This number of categories is also well-suited for a small multiples chart. It focuses on yearly trend of an individual category while still allowing for comparison against other categories. Grouped bar charts (above) also work well for this number of categories and can help to emphasize intra-year comparisons.")},
+        {"min": 4, "max": 7, "message": my_utils.callout_info("<b>4-7 categories</b>: This number of categories is great for a small multiples chart and showing individual trends while still allowing for comparison across categories.")},
+        {"min": 8, "max": float("inf"), "message": my_utils.callout_danger("<b>8+ categories</b>: This number of categories will introduce visual overwhelm with either chart type. If you need more than 7 categories, try consolidating categories or providing a table view instead.")},
     ]
 
     _message = next(
@@ -342,7 +342,7 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("line.jpg")
-    mo.hstack([_img,mo.md("**Line Chart**: In this format, individual data points are connected by lines to communicate trends, fluctuations, and patterns. Primarily used for **showing change over time**, this chart type is most appropriate for data that has a **natural sequential order along the horizontal axis**. The best-practice of [\"starting the y-axis at zero\"](https://stephanieevergreen.com/non-zero-axis-rules/) can be adjusted here to \"zoom in\" on the dataset.<hr>Tip: reduce the individual datapoint radius (or removing it altogether) for high density time-series data.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Line Chart**: In this format, individual data points are connected by lines to communicate trends, fluctuations, and patterns. Primarily used for showing change over time, this chart type is most appropriate for data that has a natural sequential order along the horizontal axis. The best-practice of [\"starting the y-axis at zero\"](https://stephanieevergreen.com/non-zero-axis-rules/) can be adjusted here to \"zoom in\" on the dataset.<hr>Tip: reduce the individual datapoint radius (or removing it altogether) for high density time-series data.")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -372,7 +372,7 @@ def _(my_utils):
 
     mo.center(line_chart_slider)
 
-    _message = my_utils.callout_neutral("Similar to the vertical bar chart section, consider a <b>line chart</b> of the same information. How does the choice between a single line chart with <b>all categories</b> vs. <b>small multiples</b> of line charts affect your ability to <b>compare trends</b> across categories and within categories? Does the number of categories shown change <b>which chart type is more effective</b> for the story you're trying to tell with the data?")
+    _message = my_utils.callout_neutral("Similar to the vertical bar chart section, consider a line chart of the same information. How does the choice between a single line chart with all categories vs. small multiples of line charts affect your ability to compare trends across categories and within categories? Does the number of categories shown change which chart type is more effective for the story you're trying to tell with the data?")
 
     mo.hstack([_message,line_chart_slider],gap=2,align="center",widths=[2,.75])
     return (line_chart_slider,)
@@ -393,9 +393,9 @@ def _():
 
 
 @app.cell
-def _(fig_switch, line_chart_slider):
-    _pointer = mo.md((line_chart_slider.value - 3) * "👈👈")
-    mo.hstack([fig_switch,_pointer],align="start",justify="start",gap=0)
+def _(fig_switch):
+    #_pointer = mo.md((line_chart_slider.value - 3) * "👈👈")
+    mo.hstack([fig_switch],align="start",justify="start",gap=0)
     return
 
 
@@ -576,7 +576,7 @@ def lines_small_multiples(
 
 @app.cell
 def _(line_chart_slider):
-    mo.hstack([mo.Html("&nbsp;"),mo.md("💡 Notice the shortening of x-axis year labels from **2011** to **'11** when the available space starts to decrease.")],gap=3,justify="start") if line_chart_slider.value >= 5 else None
+    mo.hstack([mo.Html("&nbsp;"),mo.md("> Notice the shortening of x-axis year labels from 2011 to '11 when the available space starts to decrease.")],gap=3,justify="start") if line_chart_slider.value >= 5 else None
     return
 
 
@@ -597,14 +597,14 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("horizontal.jpg")
-    mo.hstack([_img,mo.md("**Standard Horizontal Bar Chart**: This format is highly recommended when you have many items to compare since **vertical scanning is easier and faster than horizontal**. Additionally, this chart type works well for long category labels that would otherwise need to be awkwardly rotated or squished on a vertical x-axis work well here. This layout acts as an excellent tool for showing rankings or clear differences in magnitude.<hr>Tip: consider the natural sequence of the categories and remember to right align labels.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Standard Horizontal Bar Chart**: This format is highly recommended when you have many items to compare since vertical scanning is easier and faster than horizontal. Additionally, this chart type works well for long category labels that would otherwise need to be awkwardly rotated or squished on a vertical x-axis work well here. This layout acts as an excellent tool for showing rankings or clear differences in magnitude.<hr>Tip: consider the natural sequence of the categories and remember to right align labels.")],gap=2,align="center",widths=[.25,1])
     return
 
 
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("horizontal_small_multiples.jpg")
-    mo.hstack([_img,mo.md("**Small Multiples**: In this format, the data is split into a **regular grid of smaller, individual horizontal bar charts** (sometimes called a trellis plot or faceting). Each *panel* shares the same axis scales to ensure accurate comparisons. Breaking a dense graph into smaller pieces makes it much easier for readers to comprehend trends within distinct subsets of data without the visual clutter of a massive, heavily grouped chart.<hr>Tip: consider the natural sequence of groupings and grid lines to help separate the panels.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Small Multiples**: In this format, the data is split into a regular grid of smaller, individual horizontal bar charts (sometimes called a trellis plot or faceting). Each *panel* shares the same axis scales to ensure accurate comparisons. Breaking a dense graph into smaller pieces makes it much easier for readers to comprehend trends within distinct subsets of data without the visual clutter of a massive, heavily grouped chart.<hr>Tip: consider the natural sequence of groupings and grid lines to help separate the panels.")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -624,7 +624,7 @@ def _(my_utils):
         show_value = True,
         full_width=True
     )
-    _message = my_utils.callout_neutral("How does the <b>number of categories</b> impact the ability to quickly gain insights? How does <b>emphasizing groupings with bar color</b> affect the story being told with the data?")
+    _message = my_utils.callout_neutral("How does the number of categories impact the ability to quickly gain insights? How does emphasizing groupings with bar color affect the story being told with the data?")
     mo.hstack([_message,horizontal_bar_slider],gap=2,align="center",widths=[2,.75])
     return (horizontal_bar_slider,)
 
@@ -858,21 +858,21 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("pie.jpg")
-    mo.hstack([_img,mo.md("**Pie Chart:** This chart type is good for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become **difficult to interpret** because **comparing angles is challenging for humans**, **too many categories are overwhelming**, and **similar values are difficult to discern**. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.<hr>Tips: start the first slice at 12 o'clock and arrange slices clockwise. Direct labeling (inside or outside) rather than legends can increase legibility.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Pie Chart:** This chart type is good for showing how a total is divided into parts, especially when you want to emphasize the proportion of each category to the whole. However, they can become difficult to interpret because comparing angles is challenging for humans, too many categories are overwhelming, and similar values are difficult to discern. Consider using a pie chart when you have a small number of categories (ideally 4 or fewer) and when the goal is to show the relative contribution of each category to the total. For larger numbers of categories, consider alternative visualizations like a stacked bar chart.<hr>Tips: start the first slice at 12 o'clock and arrange slices clockwise. Direct labeling (inside or outside) rather than legends can increase legibility.")],gap=2,align="center",widths=[.25,1])
     return
 
 
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("v_stacked_bar.jpg")
-    mo.hstack([_img,mo.md("**Vertical Stacked Bar Chart:** This format is also good for showing how a total is divided into parts. There is a **major drawback** in that each segment (with the exception of the first) does not share a common flat baseline. This makes it difficult for readers to accurately compare the sizes of the internal segments. <hr>Tips: Add direct labeling, place the most important category at the baseline, and use highlighting colors to emphasize certain slices.")],gap=2, align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Vertical Stacked Bar Chart:** This format is also good for showing how a total is divided into parts. There is a major drawback in that each segment (with the exception of the first) does not share a common flat baseline. This makes it difficult for readers to accurately compare the sizes of the internal segments. <hr>Tips: Add direct labeling, place the most important category at the baseline, and use highlighting colors to emphasize certain slices.")],gap=2, align="center",widths=[.25,1])
     return
 
 
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("h_stacked_bar.jpg")
-    mo.hstack([_img,mo.md("**Horizontal Stacked Bar Chart:** Similar to the vertically stacked bar chart, a horizontal view lends itself well to **scanning left to right.** When category labels are long, this view is preferred over its vertical counterpart.<hr>Tips: Add direct labeling, place the most important category at the baseline, and use highlighting colors to emphasize certain slices.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Horizontal Stacked Bar Chart:** Similar to the vertically stacked bar chart, a horizontal view lends itself well to scanning left to right. When category labels are long, this view is preferred over its vertical counterpart.<hr>Tips: Add direct labeling, place the most important category at the baseline, and use highlighting colors to emphasize certain slices.")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -891,8 +891,8 @@ def _():
 @app.cell
 def _(category_slider, my_utils):
     _message_by_range = [
-        {"min": 1, "max": 4, "message": my_utils.callout_neutral("Consider how <b>simple the presentation is in the bar chart with a small number of categories.</b> The story is clear and the visual is easy to interpret.<br><br>The <b>stacked bar charts have too many categories and are visually overwhelming</b>.")},
-        {"min": 5, "max": float("inf"), "message": my_utils.callout_neutral("As more categories are added, the <b>pie chart becomes more complex and harder to interpret while the stacked bar charts become easier to interpret.</b><br><br>Consider how the <b>number of categories impacts your ability to gather insights.</b>")},
+        {"min": 1, "max": 4, "message": my_utils.callout_neutral("Consider how simple the presentation is in the bar chart with a small number of categories. The story is clear and the visual is easy to interpret.<br><br>The stacked bar charts have too many categories and are visually overwhelming.")},
+        {"min": 5, "max": float("inf"), "message": my_utils.callout_neutral("As more categories are added, the pie chart becomes more complex and harder to interpret while the stacked bar charts become easier to interpret.<br><br>Consider how the number of categories impacts your ability to gather insights.")},
     ]
 
     _message = next(
@@ -1120,7 +1120,7 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("donut.jpg")
-    mo.hstack([_img,mo.md("**Donut Chart**: This chart type is useful for representing **single values in comparison to the whole**. Using a donut chart instead of a text-based value can immediately increase impact. While not represented in this guide, splitting a donut chart into multiple categories should follow the same rules of pie charts: **too many categories introduces visual overwhelm, start the first slice at 12 o'clock, and label slices directly**.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Donut Chart**: This chart type is useful for representing single values in comparison to the whole. Using a donut chart instead of a text-based value can immediately increase impact. While not represented in this guide, splitting a donut chart into multiple categories should follow the same rules of pie charts: too many categories introduces visual overwhelm, start the first slice at 12 o'clock, and label slices directly.")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -1139,7 +1139,7 @@ def _():
 
 @app.cell
 def _(my_utils):
-    _message = my_utils.callout_neutral("As the value increases and decreases, <b>consider how each chart type might draw the user's attention in different ways.</b> If the value is very small or very big in a donut chart, how might you <b>add additional text for explanation?</b> If the target value in a gauge chart needs to be highlighted, how might you <b>emphasize different components of the chart?</b>")
+    _message = my_utils.callout_neutral("As the value increases and decreases, consider how each chart type might draw the user's attention in different ways. If the value is very small or very big in a donut chart, how might you add additional text for explanation? If the target value in a gauge chart needs to be highlighted, how might you emphasize different components of the chart?")
 
     donut_slider = mo.ui.slider(start=0, stop=1, step=.01, value=.50, label = "Percentage of sales", show_value = True, debounce=True,full_width=True)
     mo.hstack([_message,donut_slider],gap=2,align="center",widths=[2,.75])
@@ -1243,14 +1243,14 @@ def _():
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("scatter.jpg")
-    mo.hstack([_img,mo.md("**Scatter Plot**: In this format, individual data points are plotted along **two quantitative axes (x and y)**. Scatterplots are the tool for identifying **relationships, correlations, clusters, and outliers** between data. While highly effective, **they are considered an \"advanced\" chart type** and generally require an audience with a slightly higher level of data literacy to easily interpret.<hr>Tips: make axis labels even more obvious in titles. Baselines do not have to start at zero.")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Scatter Plot**: In this format, individual data points are plotted along two quantitative axes (x and y). Scatterplots are the tool for identifying relationships, correlations, clusters, and outliers between data. While highly effective, they are considered an \"advanced\" chart type and generally require an audience with a slightly higher level of data literacy to easily interpret.<hr>Tips: make axis labels even more obvious in titles. Baselines do not have to start at zero.")],gap=2,align="center",widths=[.25,1])
     return
 
 
 @app.cell
 async def _(my_utils):
     _img = await my_utils.gh_pages_load_image("bubble.jpg")
-    mo.hstack([_img,mo.md("**Bubble Chart**: In this format, a standard scatterplot is expanded by mapping a **third quantitative variable onto the size of the data markers.** This **adds another major level of visual complexity** and is an even more **\"advanced\" version of a scatter plot.** Ensure nodes have some transparency and shape outline to clearly reveal overlapping node position.<hr>Tips: direct labeling and categorical sizing (ie: values in range 0-10k=5px, 10k-20k=10px, etc.) help with legibility. Generally, use this chart type with caution! ⚠️ ")],gap=2,align="center",widths=[.25,1])
+    mo.hstack([_img,mo.md("**Bubble Chart**: In this format, a standard scatterplot is expanded by mapping a third quantitative variable onto the size of the data markers. This adds another major level of visual complexity and is an even more \"advanced\" version of a scatter plot. Ensure nodes have some transparency and shape outline to clearly reveal overlapping node position.<hr>Tips: direct labeling and categorical sizing (ie: values in range 0-10k=5px, 10k-20k=10px, etc.) help with legibility. Generally, use this chart type with caution!")],gap=2,align="center",widths=[.25,1])
     return
 
 
@@ -1287,8 +1287,8 @@ def _():
 def _(bubble_count_slider, bubble_radius_slider, my_utils):
     # callout
     _message_by_range = [
-        {"min": 0, "max": 0, "message": my_utils.callout_info("<b>Constant radius</b>: Scatter plots have the same size for all nodes and which makes <b>insight gathering easier than bubble charts.</b> As you <b>increase the number of products</b>, how does the visual complexity change?")},
-        {"min": 1, "max": float("inf"), "message": my_utils.callout_danger("<b>Variable radius</b>: Bubble charts with closely related radius sizes can make it <b>difficult to see the differences</b> between products. Consider how the number of nodes and changes in radius size <b>affects the readability</b> of the chart and the <b>insights you can gather from it.<b>")}
+        {"min": 0, "max": 0, "message": my_utils.callout_info("<b>Constant radius</b>: Scatter plots have the same size for all nodes and which makes insight gathering easier than bubble charts. As you increase the number of products, how does the visual complexity change?")},
+        {"min": 1, "max": float("inf"), "message": my_utils.callout_danger("<b>Variable radius</b>: Bubble charts with closely related radius sizes can make it difficult to see the differences between products. Consider how the number of nodes and changes in radius size affects the readability of the chart and the insights you can gather from it.")}
     ]
 
     _message = next(
