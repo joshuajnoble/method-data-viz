@@ -5,7 +5,7 @@
 #     "plotly",
 #     "pandas",
 #     "numpy",
-#     "scipy"
+#     "scipy",
 # ]
 # ///
 
@@ -13,7 +13,6 @@ import marimo
 
 __generated_with = "0.21.1"
 app = marimo.App(width="medium", css_file="custom.css")
-
 
 @app.cell
 async def setup_wasm():
@@ -56,7 +55,6 @@ async def setup_wasm():
     my_utils.run_plotly_defaults()
     return (my_utils,)
 
-
 @app.cell
 def _():
     import marimo as mo
@@ -65,7 +63,6 @@ def _():
 
     cell_width = 800
     return mo, pd, px
-
 
 @app.cell
 def _(mo):
@@ -88,7 +85,7 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    _slider = mo.ui.slider(start=-20, stop=40, step=1, value=10, label="Today's Temperature (°C)", full_width=True, show_value=True)
+    _slider = mo.ui.slider(start=-20.0, stop=40.0, step=.1, value=10.3, label="Today's Temperature (°C)", full_width=True, show_value=True)
     mo.hstack([_slider,mo.md("**Continuous Data**: These are things that can be divided into smaller and smaller units for more precision, like the weight of an item or exact instant that someone bought an item, though you don't typically see those in micrograms or nanoseconds.")],align="center", gap=2, justify="center",widths=[.25,1])
     return
 
@@ -140,9 +137,9 @@ def _(mo):
 def _(mo):
     date_picker_filter = mo.md("{start} → {end}").batch(
         start=mo.ui.date(label="Start Date", value ="2012-01-01"),
-        end=mo.ui.date(label="End Date", value ="2012-02-01")
+        end=mo.ui.date(label="End Date", value ="2013-01-01")
     )
-    dropdown_filter = mo.ui.dropdown(options=["All Locations", "Charlotte", "London", "New York City", "Santa Clara", "Atlanta"], label="Choose location", value="All Locations")
+    dropdown_filter = mo.ui.dropdown(options=["All locations", "Charlotte", "London", "New York City", "Santa Clara", "Atlanta"], label="Choose Location", value="All locations")
 
     mo.hstack([date_picker_filter, dropdown_filter], align="center", gap=2, widths=[.5, .5])    
     #dropdown_filter
@@ -155,13 +152,15 @@ async def _(date_picker_filter, dropdown_filter, mo, my_utils, pd):
     fundamentals = await my_utils.gh_pages_read_csv_into_df("data_fundamentals.csv")
     fundamentals['Order Date'] = pd.to_datetime(fundamentals['Order Date'])
     fundamentals = fundamentals.rename({"Quantity":"Items In Order"}, axis=1)
-
     filtered_df = (
-        fundamentals if dropdown_filter.value == "All Locations" else fundamentals[fundamentals["City"] == dropdown_filter.value]
+        fundamentals if dropdown_filter.value == "All locations" else fundamentals[fundamentals["City"] == dropdown_filter.value]
     )
 
+    filtered_df = filtered_df[["Order ID", "Order Date", "Ship Mode", "Region", "Category", "Sub-Category", "Product ID", "Sales"]]
+
     filtered_df = filtered_df[(filtered_df['Order Date'].dt.date > date_picker_filter['start'].value) & (filtered_df['Order Date'].dt.date < date_picker_filter['end'].value)]
-    mo.ui.table(data=filtered_df, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False)
+
+    mo.ui.table(data=filtered_df.reset_index(drop=True), pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None, format_mapping=df_format_mapping)
     return (fundamentals,)
 
 
@@ -177,9 +176,17 @@ def _(mo):
     return
 
 
+@app.cell
+def _(my_utils):
+    my_utils.callout_neutral("👆 Click the field headers to sort the table")
+    return
+
+
 @app.cell(hide_code=True)
-def _(fundamentals, mo):
-    mo.ui.table(data=fundamentals, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False)
+def _(df_format_mapping, fundamentals, mo):
+    sorting_df = fundamentals[["Order ID", "Order Date", "Ship Mode", "Product ID", "Sales"]].copy()
+
+    mo.ui.table(data=sorting_df.reset_index(drop=True), pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None, format_mapping=df_format_mapping)
     return
 
 
@@ -188,33 +195,35 @@ def _(mo):
     mo.md("""
     ## Aggregating
 
-      This goes along with filtering. Usually when we look at "sales in New York City" we say something like "all sales in New York City". Any bar chart you've ever seen is aggregating. When we aggregate, we group information about an event by one of its values to reduce what we're looking at.
-      That can be simple, like adding together all the sales, or complicated, like grouping together all sales to East Asia except Korea by category to compare monitor sales to projector sales.
-      Aggregation often gets combined with other operations: find the biggest sales and sort them, find the least expensive items to ship that are consumer electronics, the average order amount in December vs April.
-      By combining different operations, we can use visualization to explore for ourselves and communicate to others.
+    This goes along with filtering. Usually when we look at "sales in New York City" we say something like "all sales in New York City". Any bar chart you've ever seen is aggregating. When we aggregate, we group information about an event by one of its values to reduce what we're looking at. That can be simple, like adding together all the sales, or complicated, like grouping together all sales to East Asia except Korea by category to compare monitor sales to projector sales. Aggregation often gets combined with other operations:
+
+    - **Find the biggest sales and sort them.**
+    - **Find the least expensive items to ship that are consumer electronics.**
+    - **Find the average order amount in December vs April.**
+
+    By combining different operations, we can use visualization to explore for ourselves and communicate to others.
     """)
     return
 
 
 @app.cell(hide_code=True)
 def _(mo):
-    multiselect_aggregate = mo.ui.multiselect(options=["Charlotte", "London", "New York City", "Santa Clara", "Atlanta"], label="Choose location")
+    multiselect_aggregate = mo.ui.multiselect(options=["Charlotte", "London", "New York City", "Santa Clara", "Atlanta"], label="Choose location(s)")
     multiselect_aggregate
     return (multiselect_aggregate,)
 
 
 @app.cell(hide_code=True)
 def _(fundamentals, mo, multiselect_aggregate):
-
-    count = len(fundamentals[fundamentals['City'].isin(multiselect_aggregate.value)])
-    total = round(fundamentals[fundamentals['City'].isin(multiselect_aggregate.value)]["Sales"].sum())
+    count = len(fundamentals[fundamentals["City"].isin(multiselect_aggregate.value)])
+    total = fundamentals[fundamentals["City"].isin(multiselect_aggregate.value)]["Sales"].sum()
 
     mo.md(
-        f'''
-        - **Number of Sales: {count}**
-        - **Total Sales: ${total}**
-        '''
-        )
+        f"""
+        - **Number of Sales:** {count}
+        - **Total Sales:** ${total:,.0f}
+        """
+    )
     return
 
 
@@ -242,11 +251,29 @@ def _(fundamentals, mo):
     fundamentals.reset_index(inplace=True)
     features = fundamentals[["Order ID", "Sales", "Profit", "Items In Order"]]
     features["Cost"] = round(features['Sales'] - features['Profit'], 2)
+    features.insert(2, 'Cost', features.pop("Cost"))
 
-    features["Profit Ratio (Calculated)"] = round(features['Profit'] / features['Sales'], 2)
+    features["Profit Ratio (Calculated)"] = round(features['Profit'] / features['Sales'], 3)
     features["Per Unit Profit (Calculated)"] = round(features['Profit'] / features['Items In Order'], 2)
+    features.insert(4, 'Profit Ratio\n(Calculated)', features.pop("Profit Ratio (Calculated)"))
+    features.insert(6, 'Per Unit Profit\n(Calculated)', features.pop("Per Unit Profit (Calculated)"))
 
-    mo.ui.table(data=features, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False)
+    def style_cell(_rowId, _columnName, value):
+        if "(Calculated)" in _columnName:
+            return {"backgroundColor": "#D9DCFA"}
+        else:
+            return {}
+
+    mo.ui.table(
+        data=features.reset_index(drop=True),
+        pagination=True,
+        show_column_summaries=False,
+        show_data_types=False,
+        show_download=False,
+        selection=None,
+        format_mapping=df_format_mapping,
+        style_cell=style_cell
+    )
     return
 
 
@@ -332,6 +359,14 @@ def _(mo):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Sales Per Year (Bar Chart)
+    """)
+    return
+
+
 @app.cell
 async def _(mo, my_utils, px):
 
@@ -339,16 +374,12 @@ async def _(mo, my_utils, px):
     yearly_sales.sort_values("year", inplace=True)
     yearly_sales_fig_labeled = px.bar(yearly_sales, x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
 
-    tick_vals = [2011, 2012, 2013, 2014]
-    yearly_sales_fig_labeled.update_xaxes(
-        tickmode="array",
-        tickvals=tick_vals,
-        ticktext=[f"{v}" for v in tick_vals]
-    )
-    yearly_sales_fig_labeled.update_layout(yaxis_tickprefix = 'USD$', yaxis_tickformat = ',.')
+    yearly_sales_fig_labeled = px.bar(yearly_sales, x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD"})
+
+    yearly_sales_fig_labeled.update_layout(yaxis_tickprefix = '$', yaxis_tickformat = ',.2s')
     yearly_sales_fig_labeled.update_yaxes(tickformat=".2s") 
     mo.ui.plotly(yearly_sales_fig_labeled,config={"displayModeBar": False})
-    return tick_vals, yearly_sales
+    return (yearly_sales,)
 
 
 @app.cell
@@ -367,21 +398,19 @@ def _(mo):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ### Sales Per Year (Line Chart)
+    """)
+    return
+
+
 @app.cell
 def _(mo, px, tick_vals, yearly_sales):
 
-
-    #yearly_sales['truncated'] = yearly_sales['sales']/1_000_000
     yearly_line = px.line(yearly_sales, x="year", y="sales", labels={"year": "Financial Year","sales": "Total Sales in Millions ($)"}, title='Sales Per Year in Millions of USD')
-
     yearly_line.update_traces(mode='lines+markers')
-
-    yearly_line.update_xaxes(
-        tickmode="array",
-        tickvals=tick_vals,
-        ticktext=[f"{v}" for v in tick_vals]
-    )
-
     yearly_line.update_yaxes(tickformat="$,.2s")
 
     mo.ui.plotly(yearly_line,config={"displayModeBar": False})
@@ -397,16 +426,16 @@ def _(mo):
 
     We have to answer two questions first:
 
-    1. What are all the years in our dataset?
-    2. For each year, what is the total sum of sales?
+    > 1. What are all the years in our dataset?
+    > 2. For each year, what is the total sum of sales?
 
     Those operations can happen in Excel, in code, you could even do them by hand with a calculator if you felt like it. The point isn't so much how they get done as they're both what the chart is showing and what the data looked like before the chart could be created. The sales data underlying those charts looks like this:
 
     |   Row ID | Order ID       | Order Date   | Ship Date   | Ship Mode    | Customer ID   | Customer Name   | Segment   |   Sales |
     |---------:|:---------------|:-------------|:------------|:-------------|:--------------|:----------------|:----------|--------:|
-    |    32298 | CA-2012-124891 | 7/31/12      | 7/31/12     | Same Day     | RH-19495      | Rick Hansen     | Consumer  | 2309.65 |
-    |    26341 | IN-2013-77878  | 2/5/13       | 2/7/13      | Second Class | JR-16210      | Justin Ritter   | Corporate | 3709.39 |
-    |    25330 | IN-2013-71249  | 10/17/13     | 10/18/13    | First Class  | CR-12730      | Craig Reiter    | Consumer  | 5175.17 |
+    |    32298 | CA-2012-124891 | 7/31/12      | 7/31/12     | Same Day     | RH-19495      | Rick Hansen     | Consumer  | $2,309.65 |
+    |    26341 | IN-2013-77878  | 2/5/13       | 2/7/13      | Second Class | JR-16210      | Justin Ritter   | Corporate | $3,709.39 |
+    |    25330 | IN-2013-71249  | 10/17/13     | 10/18/13    | First Class  | CR-12730      | Craig Reiter    | Consumer  | $5,175.17 |
 
     This might look a little overwhelming at first but to get to the data that we're interested in, we're going to ignore most of it. All we care about is the year in the Order Date column and the Sales. Everything else doesn't matter for our chart or the story we're trying to tell.
 
