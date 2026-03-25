@@ -12,7 +12,49 @@
 import marimo
 
 __generated_with = "0.21.1"
-app = marimo.App(width="medium")
+app = marimo.App(width="medium", css_file="custom.css")
+
+
+@app.cell
+async def setup_wasm():
+    import sys
+    import types
+    import importlib.util
+    from pathlib import Path
+
+    module_name = "my_utils"
+
+    if sys.platform == "emscripten":
+        from pyodide.http import pyfetch
+
+        print("WASM detected: Fetching local modules...")
+        # needs to be ../public because of how the assets dir is created during build
+        response = await pyfetch("../public/my_utils.py")
+        if not response.ok:
+            print("Attempted to fetch:", response.url)
+            raise RuntimeError(f"Failed to load my_utils.py. Status: {response.status}")
+
+        source = await response.text()
+        module = types.ModuleType(module_name)
+        module.__file__ = "/virtual/my_utils.py"
+        exec(compile(source, module.__file__, "exec"), module.__dict__)
+        sys.modules[module_name] = module
+        my_utils = module
+        print("Successfully loaded my_utils.py!")
+    else:
+        # Local Python: load from apps/public/my_utils.py
+        module_path = Path("./apps/public/my_utils.py").resolve()
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Could not load module spec from {module_path}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        my_utils = module
+        print("Local Python environment detected. Loaded my_utils.py from public/.")
+
+    my_utils.run_plotly_defaults()
+    return (my_utils,)
 
 
 @app.cell
@@ -22,27 +64,7 @@ def _():
     import plotly.express as px
 
     cell_width = 800
-
-    @mo.cache
-    def get_fundamentals():
-
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/data_fundamentals.csv"
-        path_to_csv = mo.notebook_location() / "public" / "data_fundamentals.csv"
-        fundies = pd.read_csv(path_to_csv)
-        fundies['Order Date'] = pd.to_datetime(fundies['Order Date'])
-        return fundies
-
-    @mo.cache
-    def get_yearly():
-
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/yearly_sales.csv"
-        path_to_csv = mo.notebook_location() / "public" / "yearly_sales.csv"
-        yearly = pd.read_csv(path_to_csv)
-        yearly['Order Date'] = pd.to_datetime(yearly['Order Date'])
-        yearly['year'] = yearly['year'].astype(str)
-        return yearly
-
-    return get_fundamentals, get_yearly, mo, px
+    return mo, pd, px
 
 
 @app.cell
@@ -128,9 +150,10 @@ def _(mo):
 
 
 @app.cell
-def _(date_picker_filter, dropdown_filter, get_fundamentals, mo):
+async def _(date_picker_filter, dropdown_filter, mo, my_utils, pd):
     #_ = _dropdown
-    fundamentals = get_fundamentals()
+    fundamentals = await my_utils.gh_pages_read_csv_into_df("data_fundamentals.csv")
+    fundamentals['Order Date'] = pd.to_datetime(fundamentals['Order Date'])
     fundamentals = fundamentals.rename({"Quantity":"Items In Order"}, axis=1)
 
     filtered_df = (
@@ -216,7 +239,7 @@ def _(mo):
 
 @app.cell(hide_code=True)
 def _(fundamentals, mo):
-
+    fundamentals.reset_index(inplace=True)
     features = fundamentals[["Order ID", "Sales", "Profit", "Items In Order"]]
     features["Cost"] = round(features['Sales'] - features['Profit'], 2)
 
@@ -310,9 +333,10 @@ def _(mo):
 
 
 @app.cell
-def _(get_yearly, mo, px):
+async def _(mo, my_utils, px):
 
-    yearly_sales = get_yearly()
+    yearly_sales = await my_utils.gh_pages_read_csv_into_df("yearly_sales.csv")
+    yearly_sales.sort_values("year", inplace=True)
     yearly_sales_fig_labeled = px.bar(yearly_sales, x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
 
     tick_vals = [2011, 2012, 2013, 2014]
@@ -347,8 +371,7 @@ def _(mo):
 def _(mo, px, tick_vals, yearly_sales):
 
 
-    yearly_sales['truncated'] = yearly_sales['sales']/1_000_000
-
+    #yearly_sales['truncated'] = yearly_sales['sales']/1_000_000
     yearly_line = px.line(yearly_sales, x="year", y="sales", labels={"year": "Financial Year","sales": "Total Sales in Millions ($)"}, title='Sales Per Year in Millions of USD')
 
     yearly_line.update_traces(mode='lines+markers')
