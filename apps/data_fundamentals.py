@@ -64,7 +64,17 @@ def _():
     import plotly.express as px
 
     cell_width = 800
-    return mo, pd, px
+
+    df_format_mapping = {
+        "Order Date": "{:%Y-%m-%d}",
+        "Sales": "${:,.2f}",
+        "Profit": "${:,.2f}",
+        "Cost": "${:,.2f}",
+        "Profit Ratio (Calculated)": "{:.1%}",
+        "Per Unit Profit (Calculated)": "${:,.2f}",
+        "Items In Order": "{:,.0f}",
+    }
+    return df_format_mapping, mo, pd, px
 
 
 @app.cell
@@ -182,7 +192,7 @@ def _(mo):
 
 @app.cell
 def _(my_utils):
-    my_utils.callout_neutral("👆 Click the field headers to sort the table")
+    my_utils.callout_neutral("Click the field headers to sort the table below")
     return
 
 
