@@ -4,7 +4,7 @@
 #     "marimo",
 #     "plotly",
 #     "pandas",
-#     "numpy"
+#     "numpy",
 # ]
 # ///
 
@@ -129,9 +129,6 @@ def _():
     ## The Breakdown
 
     Another story is "What is this made out of?"
-
-          
-
     """)
     return
 
@@ -177,7 +174,6 @@ def _(raw_sales):
 
     lin_bin_fig.update_traces(hovertemplate="<b>%{y}</b> Sales between $%{customdata[0]:.2f} and $%{customdata[1]:.2f}<extra></extra>")
     mo.ui.plotly(lin_bin_fig, config={"displayModeBar": False})
-
     return (raw,)
 
 
@@ -246,26 +242,60 @@ def _(raw):
 @app.cell(hide_code=True)
 def _():
     mo.md(r"""
-    Distributions are a way of understanding how widely varied something is. If all of our sales were between $100 and $200, that would be really good to know. 
+    Distributions are a way of understanding how widely varied something is. If all of our sales were between $100 and $200, that would be really good to know.
     If no one ever spent more than $500, that's a story worth telling our audience and visualizing the distribution will help you tell it.
     """)
     return
+
 
 @app.cell
 def _():
     mo.md("""
     ## The Fortune-teller
 
-    We all love a "where are things going?" story. We can tell this is a popular story because of how common the 'up and to the right' line-chart is our visual culture.
+    We all love a "where are things going?" story. We can tell this is a popular story because of how common the 'up and to the right' line-chart is our visual culture. The line chart is a perfect representation of how things _have been going_. For instance, here are weekly sales in our store:
     """)
     return
 
 
 @app.cell
-def _(get_sales_forecasts, get_weekly_sales):
+def _(get_weekly_sales):
+    weeklies = get_weekly_sales()
+
+    historical_fig = go.Figure()
+
+    historical_fig.add_trace(go.Scatter(
+        x=weeklies['Order Date'][-26:],
+        y=weeklies['sales'][-26:],
+        mode='lines',
+        line=dict(color='black'),
+        name='Actuals'
+    ))
+
+    historical_fig.update_xaxes(
+        title="Week"
+    )
+
+    historical_fig.update_yaxes(
+        title="Aggregated Sales in US$"
+    )
+
+    mo.ui.plotly(historical_fig, config={"displayModeBar": False})
+    return (weeklies,)
+
+
+@app.cell(hide_code=True)
+def _():
+    mo.md(r"""
+    We might work with someone who says: we should predict what's going to happen. They might give us a 'forecast' of future weekly sales based on a machine learning model or statistical analysis of some kind. We'd want to make sure that the actual weekly and the forecast weekly sales are visually distinct from one another. To that, add a dividing line and use two different colors for the lines:
+    """)
+    return
+
+
+@app.cell
+def _(get_sales_forecasts, weeklies):
 
     forecasts = get_sales_forecasts()
-    weeklies = get_weekly_sales()
 
     forecast_fig = go.Figure()
 
@@ -291,9 +321,19 @@ def _(get_sales_forecasts, get_weekly_sales):
         name='Actuals'
     ))
 
+    forecast_fig.update_xaxes(
+        title="Week"
+    )
+
+    forecast_fig.update_yaxes(
+        title="Aggregated Sales in US$"
+    )
+
     forecast_fig.update_traces(hovertemplate="<b>Sales:</b> %{y:$.2f}")
     forecast_fig.add_vline(x=weeklies['Order Date'].max(), line_width=2, line_dash="dash", line_color="orange")
-    return forecasts, weeklies
+
+    mo.ui.plotly(forecast_fig, config={"displayModeBar": False})
+    return (forecasts,)
 
 
 @app.cell
@@ -301,7 +341,8 @@ def _():
     mo.md("""
     One of the challenges of forecasting though is that you can make a prediction, but you know that there's a chance it may not be right. To express this, we often use confidcence intervals to say how likely it is that the true number will be within a range.
 
-    In this chart we're saying that there's an 80% chance that the actual sales will be within the 80% range and a 50% chance that it will be within the 50% range.
+    In this chart we're saying that there's an 80% chance that the actual sales will be within the 80% range and a 50% chance that it will be within the 50% range. The wider the likelihood, the wider the possible values. It's like guessing how tall an newborn boy might be when as an adult. There's a 80% chance they'll be between 5'6 and 6'4, there's a 50% chance they'll be between 5'9 and 6'2. The narrower the range, the less likely they'll land within it. If we're guessing how tall that infant might be in 1 year, we can narrow our range more comfortably.
+
     The median forecast is just the middle, it's not the most likely per se, it's just the middle of our forecasts.
     As we go further in time, our forecasts become more and more uncertain, which makes sense. I can usually guess what the weather will be tomorrow but it's much harder to guess what it will be in a month or in 5 years.
     The uncertainty range helps us express that and tell the story of our forecasts and how they should be understood.
@@ -399,8 +440,19 @@ def _(forecasts, weeklies):
         line=dict(color='black'),
         name='Actuals'
     ))
+
+    forecast_w_prob_fig.update_xaxes(
+        title="Week"
+    )
+
+    forecast_w_prob_fig.update_yaxes(
+        title="Aggregated Sales in US$"
+    )
+
     forecast_w_prob_fig.add_vline(x=weeklies['Order Date'].max(), line_width=2, line_dash="dash", line_color="orange")
     forecast_w_prob_fig.update_traces(hovertemplate="<b>Sales:</b> %{y:$.2f}")
+
+    mo.ui.plotly(forecast_w_prob_fig, config={"displayModeBar": False})
     return
 
 
@@ -429,7 +481,23 @@ def _():
 
 
 @app.cell
-def _(get_cluster_centers, get_cluster_results):
+def _():
+    toggle_cluster_centers = mo.ui.switch(label="Toggle cluster centers", value=False)
+    x_dropdown = mo.ui.dropdown(options=['Order Count', 'Sales', 'Profit', 'Discounts'], label="X Value", value="Sales")
+    y_dropdown = mo.ui.dropdown(options=['Order Count', 'Sales', 'Profit', 'Discounts'], label="Y Value", value="Profit")
+    return toggle_cluster_centers, x_dropdown, y_dropdown
+
+
+@app.cell
+def _(toggle_cluster_centers):
+    _message = my_utils.callout_neutral("Drawing the cluster centers is an easy way to show how the clusters are similar from one another and similar.")
+
+    mo.hstack([_message,toggle_cluster_centers],gap=2,align="center",widths=[2,.75])
+    return
+
+
+@app.cell
+def _(get_cluster_centers, get_cluster_results, toggle_cluster_centers):
 
     clusters = get_cluster_results()
     centers = get_cluster_centers()
@@ -448,22 +516,23 @@ def _(get_cluster_centers, get_cluster_results):
                     color_discrete_map=color_map,
                     width=1000, height=600)
 
-    for _, row in centers.iterrows():
-        profit_x_orders.add_trace(
-            go.Scatter(
-                x=[row["Profit"]],
-                y=[row["Order Count"]],
-                mode="markers",
-                marker=dict(
-                    color=color_map[row["ClusterName"]],
-                    size=100,
-                    opacity=0.2,
-                    symbol="circle"
-                ),
-                name=f"Center {row['ClusterName']}",
-                showlegend=False
+    if toggle_cluster_centers.value:
+        for _, row in centers.iterrows():
+            profit_x_orders.add_trace(
+                go.Scatter(
+                    x=[row["Profit"]],
+                    y=[row["Order Count"]],
+                    mode="markers",
+                    marker=dict(
+                        color=color_map[row["ClusterName"]],
+                        size=100,
+                        opacity=0.2,
+                        symbol="circle"
+                    ),
+                    name=f"Center {row['ClusterName']}",
+                    showlegend=False
+                )
             )
-        )
 
     profit_x_orders.update_layout(plot_bgcolor='rgba(0,0,0,0)', 
                                     font=dict(size=14),
@@ -477,17 +546,23 @@ def _(get_cluster_centers, get_cluster_results):
 @app.cell
 def _():
     mo.md("""
-    Next we'll use a second scatterplot with our clusters to show how the Profit vs Percentage of Discounts breaks down:
+    When you have too much data, it's important to pick what tells the story, what's informative, and what isn't. Some of our clusters look similar when comparing their number of orders to profit but very different when comparing their profit to total sales value.
     """)
     return
 
 
 @app.cell
-def _(centers, clusters, color_map):
+def _(x_dropdown, y_dropdown):
+    mo.hstack([x_dropdown,y_dropdown],gap=1,align="center")
+    return
 
-    profit_x_discounts = px.scatter(clusters, 
-                    x='Profit', 
-                    y='Discounts', 
+
+@app.cell
+def _(centers, clusters, color_map, x_dropdown, y_dropdown):
+
+    x_y_scatter = px.scatter(clusters, 
+                    x=x_dropdown.value, 
+                    y=y_dropdown.value, 
                     color='ClusterName',
                     opacity=0.5,
                     title='Customer Types',
@@ -495,10 +570,10 @@ def _(centers, clusters, color_map):
                     width=1000, height=600)
 
     for _, row2 in centers.iterrows():
-        profit_x_discounts.add_trace(
+        x_y_scatter.add_trace(
             go.Scatter(
-                x=[row2["Profit"]],
-                y=[row2["Discounts"]],
+                x=[row2[x_dropdown.value]],
+                y=[row2[y_dropdown.value]],
                 mode="markers",
                 marker=dict(
                     color=color_map[row2["ClusterName"]],
@@ -511,11 +586,11 @@ def _(centers, clusters, color_map):
             )
         )
 
-    profit_x_discounts.update_layout(plot_bgcolor='rgba(0,0,0,0)', 
+    x_y_scatter.update_layout(plot_bgcolor='rgba(0,0,0,0)', 
                                      font=dict(size=14),
                                      margin=dict(t=100, b=50, l=50, r=50),
                                      legend_title_text="Cluster Name")
-    mo.ui.plotly(profit_x_discounts, config={"displayModeBar": False})
+    mo.ui.plotly(x_y_scatter, config={"displayModeBar": False})
     return
 
 
@@ -523,12 +598,11 @@ def _(centers, clusters, color_map):
 def _():
     mo.md(r"""
     The cluster + center combo tells the truth about our buyers, which is that they have rough categories but also there are outliers in each category. In some ways their behaviors overlap and in others each group is pretty distinct.
-    
+
     These kinds of complex charts should be used with care, they can be hard to read and usually need some story-telling to make them make sense, but they're powerful tools to tease apart complicated topics.
-          
+
     One strategy might be to use callout sections from this chart, another might be to follow it up with simpler charts or infographics that show the clusters without the busy-ness scatterplot points. Always do what helps you tell your story and the reader or listener understand it.
-          
-          """)
+    """)
     return
 
 
