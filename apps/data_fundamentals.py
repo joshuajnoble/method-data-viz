@@ -164,7 +164,8 @@ async def _(date_picker_filter, dropdown_filter, mo, my_utils, pd):
 
     filtered_df = filtered_df[(filtered_df['Order Date'].dt.date > date_picker_filter['start'].value) & (filtered_df['Order Date'].dt.date < date_picker_filter['end'].value)]
 
-    mo.ui.table(data=filtered_df, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None)
+    #mo.ui.table(data=filtered_df, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None)
+    mo.md(filtered_df.to_markdown())
     return (fundamentals,)
 
 
@@ -187,10 +188,12 @@ def _(my_utils):
 
 
 @app.cell(hide_code=True)
-def _(df_format_mapping, fundamentals, mo):
+def _(fundamentals, mo):
     sorting_df = fundamentals[["Order ID", "Order Date", "Ship Mode", "Product ID", "Sales"]].copy()
 
-    mo.ui.table(data=sorting_df.reset_index(drop=True), pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None, format_mapping=df_format_mapping)
+    mo.ui.table(data=sorting_df.reset_index(drop=True), pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None)
+
+    #mo.md(sorting_df.to_markdown())
     return
 
 
@@ -251,7 +254,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(df_format_mapping, fundamentals, mo):
+def _(fundamentals, mo):
     fundamentals.reset_index(inplace=True)
     features = fundamentals[["Order ID", "Sales", "Profit", "Items In Order"]]
     features["Cost"] = round(features['Sales'] - features['Profit'], 2)
@@ -275,7 +278,7 @@ def _(df_format_mapping, fundamentals, mo):
         show_data_types=False,
         show_download=False,
         selection=None,
-        format_mapping=df_format_mapping,
+        #format_mapping=df_format_mapping,
         style_cell=style_cell
     )
     return
@@ -376,6 +379,7 @@ async def _(mo, my_utils, px):
 
     yearly_sales = await my_utils.gh_pages_read_csv_into_df("yearly_sales.csv")
     yearly_sales.sort_values("year", inplace=True)
+    yearly_sales['year'] = yearly_sales['year'].astype('str')
     yearly_sales_fig_labeled = px.bar(yearly_sales, x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD ($)"})
 
     yearly_sales_fig_labeled = px.bar(yearly_sales, x='year', y='sales', labels={"year": "Financial Year","sales": "Total Sales in USD"})
