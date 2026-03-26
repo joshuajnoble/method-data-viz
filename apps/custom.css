@@ -130,3 +130,18 @@ h2 {
 [data-testid="notebook-actions-dropdown"] {
   display: none !important;
 }
+
+/* App shell styles (outside iframe) */
+.app-shell {
+  font-family: var(--marimo-text-font);
+}
+
+.app-shell .app-shell-drawer {
+  background-color: var(--card);
+  color: var(--card-foreground);
+}
+
+.app-shell .app-shell-contents-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
