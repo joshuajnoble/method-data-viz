@@ -214,6 +214,7 @@ def _copy_static_assets(output_dir: Path) -> None:
 
     asset_paths: List[Path] = [
         Path("custom.css"),
+        Path("head.html"),
         Path("apps/public"),
     ]
 

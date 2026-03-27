@@ -13,7 +13,11 @@
 import marimo
 
 __generated_with = "0.21.1"
-app = marimo.App(width="medium", css_file="custom.css")
+app = marimo.App(
+    width="medium",
+    css_file="custom.css",
+    html_head_file="head.html",
+)
 
 
 @app.cell

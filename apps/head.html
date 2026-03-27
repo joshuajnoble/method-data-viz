@@ -1,0 +1,17 @@
+<script>
+    // Grabs the <html> tag immediately 
+    const htmlTag = document.documentElement;
+
+    // Set up the persistent watcher
+    const observer = new MutationObserver(() => {
+        if (htmlTag.classList.contains('dark')) {
+            htmlTag.classList.remove('dark');
+        }
+    });
+
+    // Start watching the moment the page loads
+    observer.observe(htmlTag, { 
+        attributes: true, 
+        attributeFilter: ['class'] 
+    });
+</script>
