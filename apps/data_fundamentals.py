@@ -6,6 +6,7 @@
 #     "pandas",
 #     "numpy",
 #     "scipy",
+#     "itables"
 # ]
 # ///
 
@@ -62,6 +63,7 @@ def _():
     import marimo as mo
     import pandas as pd
     import plotly.express as px
+    from itables import to_html_datatable
 
     cell_width = 800
 
@@ -74,7 +76,7 @@ def _():
         "Per Unit Profit (Calculated)": "${:,.2f}",
         "Items In Order": "{:,.0f}",
     }
-    return df_format_mapping, mo, pd, px
+    return df_format_mapping, mo, pd, px, to_html_datatable
 
 
 @app.cell
@@ -198,12 +200,13 @@ def _(my_utils):
 
 
 @app.cell(hide_code=True)
-def _(fundamentals, mo):
+def _(fundamentals, mo, to_html_datatable):
     sorting_df = fundamentals[["Order ID", "Order Date", "Ship Mode", "Product ID", "Sales"]].copy()
 
-    mo.ui.table(data=sorting_df.reset_index(drop=True), pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None)
+    #mo.ui.table(data=sorting_df.reset_index(drop=True), pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None, format_mapping=df_format_mapping)
 
-    #mo.md(sorting_df.to_markdown())
+    html = to_html_datatable(sorting_df, connected=True)
+    mo.iframe(html)
     return
 
 
@@ -264,7 +267,7 @@ def _(mo):
 
 
 @app.cell(hide_code=True)
-def _(fundamentals, mo):
+def _(df_format_mapping, fundamentals, mo):
     fundamentals.reset_index(inplace=True)
     features = fundamentals[["Order ID", "Sales", "Profit", "Items In Order"]]
     features["Cost"] = round(features['Sales'] - features['Profit'], 2)
@@ -288,7 +291,7 @@ def _(fundamentals, mo):
         show_data_types=False,
         show_download=False,
         selection=None,
-        #format_mapping=df_format_mapping,
+        format_mapping=df_format_mapping,
         style_cell=style_cell
     )
     return
