@@ -34,7 +34,7 @@ Some of the demo data is from the [Superstore Sales dataset](https://community.t
 
 Each `.py` file in `apps/` is a marimo app that corresponds to one page of the site:
 
-TODO, update
+> **TODO:** update once more have been merged
 
 | File | Page |
 |------|------|
