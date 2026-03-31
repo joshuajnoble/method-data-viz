@@ -2,31 +2,31 @@
   {
     "path": "apps/data_fundamentals.py",
     "label": "Data Fundamentals",
-    "description": "Learn the foundational data types—discrete, continuous, and categorical—that underpin all data visualization and business insight."
+    "description": "TODO"
   },
   {
     "path": "apps/basic_principles.py",
     "label": "Basic Principles",
-    "description": "Master the core visual elements of effective charts: height comparisons, proper labeling, units, and clear value representation."
+    "description": "TODO"
   },
   {
     "path": "apps/viz_types.py",
     "label": "Chart Types",
-    "description": "Explore standard visualization types including bar, line, pie, and gauge charts. Experiment with how category count impacts clarity."
+    "description": "TODO"
   },
   {
     "path": "apps/segments_and_percentages.py",
     "label": "Parts and wholes",
-    "description": "Understand how to show what makes up a whole using pie charts, stacked bars, and area charts. Learn when to use each approach."
+    "description": "TODO"
   },
   {
     "path": "apps/distributions.py",
     "label": "Distributions",
-    "description": "See how values spread across a range and how often they occur. Master histograms and distribution patterns in your data."
+    "description": "TODO"
   },
   {
     "path": "apps/events_and_ts.py",
     "label": "Events and Time Series",
-    "description": "Visualize how data changes over time. Learn techniques for showing events, trends, and patterns in time-series data."
+    "description": "TODO"
   }
 ]
