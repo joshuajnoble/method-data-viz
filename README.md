@@ -82,13 +82,17 @@ This JSON file controls the order and display labels of pages in the sidebar. Ea
 
 ```json
 [
-  { "path": "apps/data_fundamentals.py", "label": "Data Fundamentals" },
-  { "path": "apps/basic_principles.py", "label": "Basic Principles" },
+  { "path": "apps/data_fundamentals.py", "label": "Data Fundamentals", "description": "Lorem" },
+  { "path": "apps/basic_principles.py", "label": "Basic Principles", "description": "Lorem" },
   ...
 ]
 ```
 
 Apps not listed here are excluded from the navigation. To add a new page, add the `.py` file to `apps/` and add an entry here.
+
+### OpenGraph Meta Tags
+
+The `app_shell.html.j2` template includes OpenGraph meta tags (`og:type`, `og:title`, `og:description`, `og:url`, `og:image`) so that shared links render rich previews when sharing. The values for these tags are derived from the entries in `apps_nav.json` and passed to the template by the build script.
 
 ### `_site/` Output
 
