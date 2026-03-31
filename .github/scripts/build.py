@@ -278,7 +278,7 @@ def _export(folder: Path, output_dir: Path) -> List[dict]:
     return app_data
 
 
-OG_BASE_URL = "https://joshuajnoble.github.io/method-data-viz"
+OG_BASE_URL = os.environ.get("OG_BASE_URL", "https://joshuajnoble.github.io/method-data-viz")
 OG_IMAGE_PATH = "apps/public/method_logo.png"
 
 

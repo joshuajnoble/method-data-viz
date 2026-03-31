@@ -17,6 +17,7 @@ concurrency:
 # Environment variables used by the workflow
 env:
   UV_SYSTEM_PYTHON: 1   # Use system Python with uv package manager
+  OG_BASE_URL: "https://joshuajnoble.github.io/method-data-viz"
 
 jobs:
   # The build job exports marimo notebooks to static HTML/WebAssembly
