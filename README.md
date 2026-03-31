@@ -92,7 +92,7 @@ Apps not listed here are excluded from the navigation. To add a new page, add th
 
 ### OpenGraph Meta Tags
 
-The `app_shell.html.j2` template includes OpenGraph meta tags (`og:type`, `og:title`, `og:description`, `og:url`, `og:image`) so that shared links render rich previews when sharing. The values for these tags are derived from the entries in `apps_nav.json` and passed to the template by the build script.
+The `app_shell.html.j2` template includes OpenGraph meta tags (`og:type`, `og:title`, `og:description`, `og:url`, `og:image`) so that shared links render rich previews when sharing. The values for these tags are derived from the entries in `apps_nav.json` and passed to the template by the build script. The base URL is declared in `.github/workflows/gh-pages/deploy.yml`.
 
 ### `_site/` Output
 
