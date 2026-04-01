@@ -49,6 +49,10 @@ Each `.py` file in `apps/` is a marimo app that corresponds to one page of the s
 
 Each app file starts with a `# /// script` block that declares its Python dependencies. This is the [PEP 723](https://peps.python.org/pep-0723/) inline metadata format. When marimo exports with `--sandbox`, it reads this block to know which packages to bundle into the WASM build. **It's important to note that any depndency required by the page must be added here**.
 
+### Importing a local package
+
+Due to WASM restrictions with awareness of the file directory, a codechunk can be found in the [Appendix](#appendix) with a deterministic approach to loading local functions in `apps/public/my_utils.py`. Placing this at the beginning of the notebook enables the use of `my_utils.*()` functions.
+
 ### Loading Data in WASM
 
 When an app runs locally, it can read files from disk normally. When it runs as WASM in the browser, there's no filesystem — files must be fetched over HTTP. The helpers `gh_pages_read_csv_into_df()` and `gh_pages_load_image()` in `apps/public/my_utils.py` handle this transparently: they check whether the app is running locally or over HTTP, and use either `pd.read_csv()` or Pyodide's `pyfetch` accordingly.
@@ -101,3 +105,51 @@ On push to `main`, the workflow in `.github/workflows/gh-pages-deploy.yml` runs 
 ### Local Build
 
 See the [Local Development](#local-development) section above for commands.
+
+## Appendix
+
+### Code for importing the `my_utils` functions
+
+This codechunk detects whether the notebook is being run through WASM or local dev (Python). If WASM, it executes a fetch request for the `my_utils.py` file and imports. If local dev, it loads the filepath locally and imports. The current solution is to copy/paste this code into each notebook.
+
+```python
+async def setup_wasm():
+    import sys
+    import types
+    import importlib.util
+    from pathlib import Path
+
+    module_name = "my_utils"
+
+    if sys.platform == "emscripten":
+        from pyodide.http import pyfetch
+
+        print("WASM detected: Fetching local modules...")
+        # needs to be ../public because of how the assets dir is created during build
+        response = await pyfetch("../public/my_utils.py")
+        if not response.ok:
+            print("Attempted to fetch:", response.url)
+            raise RuntimeError(f"Failed to load my_utils.py. Status: {response.status}")
+
+        source = await response.text()
+        module = types.ModuleType(module_name)
+        module.__file__ = "/virtual/my_utils.py"
+        exec(compile(source, module.__file__, "exec"), module.__dict__)
+        sys.modules[module_name] = module
+        my_utils = module
+        print("Successfully loaded my_utils.py!")
+    else:
+        # Local Python: load from apps/public/my_utils.py
+        module_path = Path("./apps/public/my_utils.py").resolve()
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Could not load module spec from {module_path}")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+        my_utils = module
+        print("Local Python environment detected. Loaded my_utils.py from public/.")
+
+    my_utils.run_plotly_defaults()
+    return (my_utils,)
+```
