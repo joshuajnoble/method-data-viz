@@ -67,7 +67,7 @@ def _():
     import marimo as mo
     import pandas as pd
     import plotly.express as px
-    from itables import to_html_datatable
+    from itables.widget import ITable
 
     cell_width = 800
 
@@ -80,7 +80,7 @@ def _():
         "Per Unit Profit (Calculated)": "${:,.2f}",
         "Items In Order": "{:,.0f}",
     }
-    return df_format_mapping, mo, pd, px, to_html_datatable
+    return ITable, df_format_mapping, mo, pd, px
 
 
 @app.cell
@@ -156,7 +156,7 @@ def _(mo):
 def _(mo):
     date_picker_filter = mo.md("{start} → {end}").batch(
         start=mo.ui.date(label="Start Date", value ="2012-01-01"),
-        end=mo.ui.date(label="End Date", value ="2013-01-01")
+        end=mo.ui.date(label="End Date", value ="2012-01-08")
     )
     dropdown_filter = mo.ui.dropdown(options=["All locations", "Charlotte", "London", "New York City", "Santa Clara", "Atlanta"], label="Choose Location", value="All locations")
 
@@ -166,7 +166,7 @@ def _(mo):
 
 
 @app.cell
-async def _(date_picker_filter, dropdown_filter, mo, my_utils, pd):
+async def _(ITable, date_picker_filter, dropdown_filter, my_utils, pd):
     #_ = _dropdown
     fundamentals = await my_utils.gh_pages_read_csv_into_df("data_fundamentals.csv")
     fundamentals['Order Date'] = pd.to_datetime(fundamentals['Order Date'])
@@ -181,7 +181,8 @@ async def _(date_picker_filter, dropdown_filter, mo, my_utils, pd):
     filtered_df = filtered_df[(filtered_df['Order Date'].dt.date > date_picker_filter['start'].value) & (filtered_df['Order Date'].dt.date < date_picker_filter['end'].value)]
 
     #mo.ui.table(data=filtered_df, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None)
-    mo.md(filtered_df.to_markdown())
+    #mo.md(filtered_df.to_markdown())
+    ITable(filtered_df)
     return (fundamentals,)
 
 
@@ -198,19 +199,39 @@ def _(mo):
 
 
 @app.cell
-def _(my_utils):
-    my_utils.callout_neutral("Click the field headers to sort the table below")
+def _(mo):
+    name_up = mo.ui.run_button(label="Name ⬆️", full_width=True)
+    name_down = mo.ui.run_button(label="Name ⬇️", full_width=True)
+
+    sales_up = mo.ui.run_button(label="Sales ⬆️", full_width=True)
+    sales_down = mo.ui.run_button(label="Sales  ⬇️", full_width=True)
+    return name_down, name_up, sales_down, sales_up
+
+
+@app.cell
+def _(mo, my_utils, name_down, name_up, sales_down, sales_up):
+    #my_utils.callout_neutral("Click the field headers to sort the table below")
+
+    buttons = mo.vstack([name_up, name_down, sales_up, sales_down])
+
+    mo.hstack([my_utils.callout_neutral("The buttons to the right sort the table below. Sorting names is done alphabetically, sorting numbers is done numerically."), buttons],gap=1,align="center")
     return
 
 
 @app.cell(hide_code=True)
-def _(fundamentals, mo, to_html_datatable):
-    sorting_df = fundamentals[["Order ID", "Order Date", "Ship Mode", "Product ID", "Sales"]].copy()
+def _(ITable, fundamentals, name_down, name_up, sales_down, sales_up):
+    sorting_df = fundamentals[["Customer Name", "Order Date", "Ship Mode", "Product ID", "Sales"]].copy()
 
-    #mo.ui.table(data=sorting_df.reset_index(drop=True), pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None, format_mapping=df_format_mapping)
+    if name_up.value:
+        sorting_df = sorting_df.sort_values(by='Customer Name', ascending=True)
+    elif name_down.value:
+        sorting_df = sorting_df.sort_values(by='Customer Name', ascending=False)
+    elif sales_up.value:
+        sorting_df = sorting_df.sort_values(by='Sales', ascending=True)
+    elif sales_down.value:
+        sorting_df = sorting_df.sort_values(by='Sales', ascending=False)
 
-    html = to_html_datatable(sorting_df, connected=True)
-    mo.iframe(html)
+    ITable(sorting_df, classes="display nowrap", style="table-layout:auto;width:100%;float:left", ordering=False, layout={'topEnd': None})
     return
 
 
