@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ title }} · marimo</title>
+  {% if description %}<meta name="description" content="{{ description }}">{% endif %}
+
+  <!-- OpenGraph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ title }}">
+  {% if description %}<meta property="og:description" content="{{ description }}">{% endif %}
+  {% if og_url %}<meta property="og:url" content="{{ og_url }}">{% endif %}
+  {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../custom.css">
 </head>

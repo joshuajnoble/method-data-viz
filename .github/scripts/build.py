@@ -38,6 +38,9 @@ def _generate_app_shell(
     embedded_path: str,
     nav_items: List[dict] | None = None,
     current_html_path: str = "",
+    description: str = "",
+    og_url: str = "",
+    og_image: str = "",
 ) -> bool:
     """Generate a Tailwind wrapper page that embeds an exported app."""
     try:
@@ -51,6 +54,9 @@ def _generate_app_shell(
             embedded_path=embedded_path,
             nav_items=nav_items or [],
             current_html_path=current_html_path,
+            description=description,
+            og_url=og_url,
+            og_image=og_image,
         )
 
         out_path = output_dir / shell_output_path
@@ -107,7 +113,8 @@ def _load_apps_nav(nav_file: Path) -> List[dict]:
             p = Path(path_val).as_posix()
             label = item.get("label")
             display_name = label if isinstance(label, str) and label.strip() else Path(p).stem.replace("_", " ").title()
-            entries.append({"source_path": p, "display_name": display_name})
+            description = item.get("description", "")
+            entries.append({"source_path": p, "display_name": display_name, "description": description})
             continue
 
         logger.warning(f"Skipping nav entry #{i}: expected string or object, got {type(item).__name__}")
@@ -136,6 +143,7 @@ def _build_apps_sidenav(apps_data: List[dict], nav_entries: List[dict]) -> List[
 
         merged = dict(app)
         merged["display_name"] = entry.get("display_name", app["display_name"])
+        merged["description"] = entry.get("description", "")
         ordered.append(merged)
 
     return ordered
@@ -270,6 +278,10 @@ def _export(folder: Path, output_dir: Path) -> List[dict]:
     return app_data
 
 
+OG_BASE_URL = os.environ.get("OG_BASE_URL", "https://joshuajnoble.github.io/method-data-viz")
+OG_IMAGE_PATH = "apps/public/method_logo.png"
+
+
 def main(
     output_dir: Union[str, Path] = "_site",
     app_shell_template: Union[str, Path] = "templates/app_shell.html.j2",
@@ -311,6 +323,9 @@ def main(
         ]
         current_href = _relative_href(current_shell, current_shell)
 
+        og_url = f"{OG_BASE_URL.rstrip('/')}/{current_shell}"
+        og_image = f"{OG_BASE_URL.rstrip('/')}/{OG_IMAGE_PATH}"
+
         ok = _generate_app_shell(
             output_dir=output_dir,
             shell_template_file=shell_template_file,
@@ -319,6 +334,9 @@ def main(
             embedded_path=embedded_path,
             nav_items=nav_items,
             current_html_path=current_href,
+            description=current.get("description", ""),
+            og_url=og_url,
+            og_image=og_image,
         )
         generated += int(ok)
 
