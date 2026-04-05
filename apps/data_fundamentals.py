@@ -13,7 +13,7 @@ import marimo as mo
 import plotly.express as px
 
 __generated_with = "0.19.7"
-app = mo.App(width="medium")
+app = mo.App(width="medium", css_file="custom.css")
 
 
 
