@@ -23,5 +23,10 @@
     "path": "apps/events_and_ts.py",
     "label": "Events and Time Series",
     "description": "TODO"
+  },
+    {
+    "path": "apps/external_resources.py",
+    "label": "More Resources",
+    "description": "TODO"
   }
 ]
