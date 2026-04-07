@@ -60,6 +60,14 @@ async with app.setup(hide_code=True):
 
 @app.cell
 def _():
+    mo.md("""
+    # Encodings aka 'that line means something'
+    """)
+    return
+
+
+@app.cell
+def _():
     mo.hstack([mo.md("**Use your titles to lead with the story**"), mo.md("\"Monthly Sales by Product, 2021-2025\" <br> vs. <br> \"March and April show seasonal drop in sales for Electronics every year, with 2024 being the worst\"")],gap=2,align="center",widths=[.3,.7])
     return
 
