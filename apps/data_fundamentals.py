@@ -6,7 +6,8 @@
 #     "pandas",
 #     "numpy",
 #     "scipy",
-#     "itables"
+#     "itables",
+#     "anywidget"
 # ]
 # ///
 
