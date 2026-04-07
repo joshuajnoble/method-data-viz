@@ -61,13 +61,13 @@ When an app runs locally, it can read files from disk normally. When it runs as 
 
 This file is imported by every app/page and provides functions for data loading (see above), Method color palette, `plotly` theme defaults/formatting, stylized callout boxes, and number formatting (ie: `1200` → `1.2K`).
 
-## Custom CSS
+## Custom CSS and `head.html`
 
 `custom.css` themes marimo's UI to the Method brand including fonts, brand colors, and callout styles.
 
 There are two copies of this file: one at the repo root (`custom.css`) and one in `apps/custom.css`. The root copy is used by the build script (copied into `_site/`) for the deployed site. The `apps/` copy is picked up by marimo when running apps locally during development. Both files should be kept in sync.
 
-> **TODO:** `head.html` for custom JS (not merged from other branch).
+`head.html` removes an enforced class of "dark" on elements via JavaScript. This class is applied when the system OS is set to dark mode and adds a black background to the body of the page (mismatch from custom CSS). The cause is the `itables` package and it cannot be explicitly turned off using a method of the package.
 
 ## Build & Deploy
 
