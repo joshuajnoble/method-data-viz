@@ -5,8 +5,8 @@
     "description": "TODO"
   },
   {
-    "path": "apps/basic_principles.py",
-    "label": "Basic Principles",
+    "path": "apps/encodings_accessibility.py",
+    "label": "Encoding and Explaining",
     "description": "TODO"
   },
   {
@@ -15,18 +15,18 @@
     "description": "TODO"
   },
   {
-    "path": "apps/segments_and_percentages.py",
-    "label": "Parts and wholes",
-    "description": "TODO"
-  },
-  {
-    "path": "apps/distributions.py",
-    "label": "Distributions",
+    "path": "apps/viz_tasks.py",
+    "label": "Visualization Tasks",
     "description": "TODO"
   },
   {
     "path": "apps/events_and_ts.py",
     "label": "Events and Time Series",
+    "description": "TODO"
+  },
+  {
+    "path": "apps/external_resources.py",
+    "label": "More Resources",
     "description": "TODO"
   }
 ]
