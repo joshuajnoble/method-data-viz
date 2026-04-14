@@ -5,8 +5,8 @@
     "description": "TODO"
   },
   {
-    "path": "apps/encodings_acccessibility.py",
-    "label": "Encoding Data",
+    "path": "apps/encodings_accessibility.py",
+    "label": "Encoding and Explaining",
     "description": "TODO"
   },
   {
@@ -24,7 +24,7 @@
     "label": "Events and Time Series",
     "description": "TODO"
   },
-    {
+  {
     "path": "apps/external_resources.py",
     "label": "More Resources",
     "description": "TODO"

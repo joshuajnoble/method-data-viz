@@ -39,8 +39,9 @@ Each `.py` file in `apps/` is a marimo app that corresponds to one page of the s
 | File | Page |
 |------|------|
 | `data_fundamentals.py` | Data Fundamentals |
-| `basic_principles.py` | Basic Principles |
+| `encodings_accessibility.py` | Encoding and Explaining |
 | `viz_types.py` | Chart Types |
+| `viz_tasks.py` | Visualization tasks |
 | `segments_and_percentages.py` | Parts and Wholes |
 | `distributions.py` | Distributions |
 | `events_and_ts.py` | Events and Time Series |
