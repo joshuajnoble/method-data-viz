@@ -60,52 +60,52 @@ async with app.setup(hide_code=True):
 
 
 @app.cell
-def _():
+async def _():
 
-    @mo.cache
-    def get_cluster_results():
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/superstore.csv"
-        path_to_csv = mo.notebook_location() / "public" / "clusters.csv"
-        clusters = pd.read_csv(path_to_csv)
-        return clusters
+    # @mo.cache
+    # def get_cluster_results():
+    #     path_to_csv = mo.notebook_location() / "public" / "clusters.csv"
+    #     clusters = pd.read_csv(path_to_csv)
+    #     return clusters
 
-    @mo.cache
-    def get_cluster_centers():
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales_by_segment.csv"
-        path_to_csv = mo.notebook_location() / "public" / "centers.csv"
-        centers = pd.read_csv(path_to_csv)
-        return centers
+    # @mo.cache
+    # def get_cluster_centers():
+    #     path_to_csv = mo.notebook_location() / "public" / "centers.csv"
+    #     centers = pd.read_csv(path_to_csv)
+    #     return centers
 
-    @mo.cache
-    def get_sales_forecasts():
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales_by_segment.csv"
-        path_to_csv = mo.notebook_location() / "public" / "sales_forecasts.csv"
-        centers = pd.read_csv(path_to_csv)
-        return centers
+    # @mo.cache
+    # def get_sales_forecasts():
+    #     path_to_csv = mo.notebook_location() / "public" / "sales_forecasts.csv"
+    #     centers = pd.read_csv(path_to_csv)
+    #     return centers
 
 
-    @mo.cache
-    def raw_sales():
+    # @mo.cache
+    # def raw_sales():
 
-        #path_to_csv = mo.notebook_location() / "public" / "raw_sales.csv"
-        path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/raw_sales.csv"
-        raw_sales = pd.read_csv(path_to_csv)
-        return raw_sales
+    #     path_to_csv = mo.notebook_location() / "public" / "raw_sales.csv"
+    #     raw_sales = pd.read_csv(path_to_csv)
+    #     return raw_sales
 
-    @mo.cache
-    def get_weekly_sales():
-        #path_to_csv = "https://raw.githubusercontent.com/joshuajnoble/method-data-viz/refs/heads/main/apps/public/weekly_sales_by_segment.csv"
-        path_to_csv = mo.notebook_location() / "public" / "weekly_sales.csv"
-        centers = pd.read_csv(path_to_csv)
-        return centers
+    # @mo.cache
+    # def get_weekly_sales():
+    #     path_to_csv = mo.notebook_location() / "public" / "weekly_sales.csv"
+    #     centers = pd.read_csv(path_to_csv)
+    #     return centers
 
-
+    # import data
+    clusters_df = await my_utils.gh_pages_read_csv_into_df("clusters.csv")
+    centers_df = await my_utils.gh_pages_read_csv_into_df("centers.csv")
+    sales_forecasts_df = await my_utils.gh_pages_read_csv_into_df("sales_forecasts.csv")
+    raw_sales_df = await my_utils.gh_pages_read_csv_into_df("raw_sales.csv")
+    weekly_sales_df = await my_utils.gh_pages_read_csv_into_df("weekly_sales.csv")
     return (
-        get_cluster_centers,
-        get_cluster_results,
-        get_sales_forecasts,
-        get_weekly_sales,
-        raw_sales,
+        centers_df,
+        clusters_df,
+        raw_sales_df,
+        sales_forecasts_df,
+        weekly_sales_df,
     )
 
 
@@ -128,7 +128,9 @@ def _():
     mo.md("""
     ## The Breakdown
 
-    Another story is "What is this made out of?"
+    Another story is "What is **Thing X** made up of?" Like, "what were the ages of the people who voted for Person X?" or "what kinds of computers are all the people shopping on our site buying?"
+
+          When we have features within data, we can use aggregations to figure out the distribution of features inside a category.
     """)
     return
 
@@ -142,10 +144,9 @@ def _():
 
 
 @app.cell
-def _(raw_sales):
-    raw = raw_sales()
+def _(raw_sales_df):
 
-    lin_counts, lin_bins = np.histogram(raw, bins=50)
+    lin_counts, lin_bins = np.histogram(raw_sales_df, bins=50)
 
     # Compute bin centers and widths
     lin_bin_centers = (lin_bins[:-1] + lin_bins[1:]) / 2
@@ -174,7 +175,7 @@ def _(raw_sales):
 
     lin_bin_fig.update_traces(hovertemplate="<b>%{y}</b> Sales between $%{customdata[0]:.2f} and $%{customdata[1]:.2f}<extra></extra>")
     mo.ui.plotly(lin_bin_fig, config={"displayModeBar": False})
-    return (raw,)
+    return
 
 
 @app.cell(hide_code=True)
@@ -186,10 +187,10 @@ def _():
 
 
 @app.cell
-def _(raw):
+def _(raw_sales_df):
 
     # Compute histogram in log space
-    log_x = np.log10(raw['Sales'])
+    log_x = np.log10(raw_sales_df['Sales'])
     counts, log_bins = np.histogram(log_x, bins=30)
 
     # Convert bin edges back to original scale
@@ -259,14 +260,13 @@ def _():
 
 
 @app.cell
-def _(get_weekly_sales):
-    weeklies = get_weekly_sales()
+def _(weekly_sales_df):
 
     historical_fig = go.Figure()
 
     historical_fig.add_trace(go.Scatter(
-        x=weeklies['Order Date'][-26:],
-        y=weeklies['sales'][-26:],
+        x=weekly_sales_df['Order Date'][-26:],
+        y=weekly_sales_df['sales'][-26:],
         mode='lines',
         line=dict(color='black'),
         name='Actuals'
@@ -281,7 +281,7 @@ def _(get_weekly_sales):
     )
 
     mo.ui.plotly(historical_fig, config={"displayModeBar": False})
-    return (weeklies,)
+    return
 
 
 @app.cell(hide_code=True)
@@ -293,15 +293,13 @@ def _():
 
 
 @app.cell
-def _(get_sales_forecasts, weeklies):
-
-    forecasts = get_sales_forecasts()
+def _(sales_forecasts_df, weekly_sales_df):
 
     forecast_fig = go.Figure()
 
     forecast_fig.add_trace(go.Scatter(
-        x=forecasts['ds'],
-        y=forecasts['p50'],
+        x=sales_forecasts_df['ds'],
+        y=sales_forecasts_df['p50'],
         mode='lines',
         line=dict(color='blue', width=2),
         name='Forecast',
@@ -314,8 +312,8 @@ def _(get_sales_forecasts, weeklies):
     ))
 
     forecast_fig.add_trace(go.Scatter(
-        x=weeklies['Order Date'][-26:],
-        y=weeklies['sales'][-26:],
+        x=weekly_sales_df['Order Date'][-26:],
+        y=weekly_sales_df['sales'][-26:],
         mode='lines',
         line=dict(color='black'),
         name='Actuals'
@@ -330,10 +328,10 @@ def _(get_sales_forecasts, weeklies):
     )
 
     forecast_fig.update_traces(hovertemplate="<b>Sales:</b> %{y:$.2f}")
-    forecast_fig.add_vline(x=weeklies['Order Date'].max(), line_width=2, line_dash="dash", line_color="orange")
+    forecast_fig.add_vline(x=weekly_sales_df['Order Date'].max(), line_width=2, line_dash="dash", line_color="orange")
 
     mo.ui.plotly(forecast_fig, config={"displayModeBar": False})
-    return (forecasts,)
+    return
 
 
 @app.cell
@@ -351,13 +349,13 @@ def _():
 
 
 @app.cell
-def _(forecasts, weeklies):
+def _(sales_forecasts_df, weekly_sales_df):
 
     forecast_w_prob_fig = go.Figure()
 
     forecast_w_prob_fig.add_trace(go.Scatter(
-        x=forecasts['ds'],
-        y=forecasts['p90'],
+        x=sales_forecasts_df['ds'],
+        y=sales_forecasts_df['p90'],
         mode = 'lines',
         fillcolor='rgba(0, 0, 255, 0.1)',
         line=dict(color="blue", width=0),
@@ -372,8 +370,8 @@ def _(forecasts, weeklies):
     ))
 
     forecast_w_prob_fig.add_trace(go.Scatter(
-        x=forecasts['ds'],
-        y=forecasts['p10'],
+        x=sales_forecasts_df['ds'],
+        y=sales_forecasts_df['p10'],
         fill='tonexty',
         fillcolor='rgba(0, 0, 255, 0.1)',
         line=dict(color="blue", width=0),
@@ -388,8 +386,8 @@ def _(forecasts, weeklies):
     ))
 
     forecast_w_prob_fig.add_trace(go.Scatter(
-        x=forecasts['ds'],
-        y=forecasts['p75'],
+        x=sales_forecasts_df['ds'],
+        y=sales_forecasts_df['p75'],
         mode = 'lines',
         fillcolor='rgba(0, 0, 255, 0.1)',
         line=dict(color="blue", width=0),
@@ -404,8 +402,8 @@ def _(forecasts, weeklies):
     ))
 
     forecast_w_prob_fig.add_trace(go.Scatter(
-        x=forecasts['ds'],
-        y=forecasts['p25'],
+        x=sales_forecasts_df['ds'],
+        y=sales_forecasts_df['p25'],
         mode = 'lines',
         fill='tonexty',
         fillcolor='rgba(0, 0, 255, 0.1)',
@@ -420,8 +418,8 @@ def _(forecasts, weeklies):
     ))
 
     forecast_w_prob_fig.add_trace(go.Scatter(
-        x=forecasts['ds'],
-        y=forecasts['p50'],
+        x=sales_forecasts_df['ds'],
+        y=sales_forecasts_df['p50'],
         mode='lines',
         line=dict(color='blue', width=2),
         name='Median forecast',
@@ -434,8 +432,8 @@ def _(forecasts, weeklies):
     ))
 
     forecast_w_prob_fig.add_trace(go.Scatter(
-        x=weeklies['Order Date'][-26:],
-        y=weeklies['sales'][-26:],
+        x=weekly_sales_df['Order Date'][-26:],
+        y=weekly_sales_df['sales'][-26:],
         mode='lines',
         line=dict(color='black'),
         name='Actuals'
@@ -449,7 +447,7 @@ def _(forecasts, weeklies):
         title="Aggregated Sales in US$"
     )
 
-    forecast_w_prob_fig.add_vline(x=weeklies['Order Date'].max(), line_width=2, line_dash="dash", line_color="orange")
+    forecast_w_prob_fig.add_vline(x=weekly_sales_df['Order Date'].max(), line_width=2, line_dash="dash", line_color="orange")
     forecast_w_prob_fig.update_traces(hovertemplate="<b>Sales:</b> %{y:$.2f}")
 
     mo.ui.plotly(forecast_w_prob_fig, config={"displayModeBar": False})
@@ -497,17 +495,13 @@ def _(toggle_cluster_centers):
 
 
 @app.cell
-def _(get_cluster_centers, get_cluster_results, toggle_cluster_centers):
-
-    clusters = get_cluster_results()
-    centers = get_cluster_centers()
-
+def _(centers_df, clusters_df, toggle_cluster_centers):
     cluster_colors = px.colors.qualitative.D3
-    cluster_ids = clusters["ClusterName"].unique()
+    cluster_ids = clusters_df["ClusterName"].unique()
 
     color_map = {cid: cluster_colors[i] for i, cid in enumerate(cluster_ids)}
 
-    profit_x_orders = px.scatter(clusters, 
+    profit_x_orders = px.scatter(clusters_df, 
                     x='Profit', 
                     y='Order Count', 
                     color='ClusterName',
@@ -517,7 +511,7 @@ def _(get_cluster_centers, get_cluster_results, toggle_cluster_centers):
                     width=1000, height=600)
 
     if toggle_cluster_centers.value:
-        for _, row in centers.iterrows():
+        for _, row in centers_df.iterrows():
             profit_x_orders.add_trace(
                 go.Scatter(
                     x=[row["Profit"]],
@@ -540,7 +534,7 @@ def _(get_cluster_centers, get_cluster_results, toggle_cluster_centers):
                                     legend_title_text="Cluster Name")
 
     mo.ui.plotly(profit_x_orders, config={"displayModeBar": False})
-    return centers, clusters, color_map
+    return (color_map,)
 
 
 @app.cell
@@ -558,9 +552,9 @@ def _(x_dropdown, y_dropdown):
 
 
 @app.cell
-def _(centers, clusters, color_map, x_dropdown, y_dropdown):
+def _(centers_df, clusters_df, color_map, x_dropdown, y_dropdown):
 
-    x_y_scatter = px.scatter(clusters, 
+    x_y_scatter = px.scatter(clusters_df, 
                     x=x_dropdown.value, 
                     y=y_dropdown.value, 
                     color='ClusterName',
@@ -569,7 +563,7 @@ def _(centers, clusters, color_map, x_dropdown, y_dropdown):
                     color_discrete_map=color_map,
                     width=1000, height=600)
 
-    for _, row2 in centers.iterrows():
+    for _, row2 in centers_df.iterrows():
         x_y_scatter.add_trace(
             go.Scatter(
                 x=[row2[x_dropdown.value]],
