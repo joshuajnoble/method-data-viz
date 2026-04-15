@@ -6,8 +6,8 @@
 #     "pandas",
 #     "numpy",
 #     "scipy",
-#     "itables",
-#     "anywidget"
+#     "anywidget",
+#     "tabulate"
 # ]
 # ///
 
@@ -68,7 +68,6 @@ def _():
     import marimo as mo
     import pandas as pd
     import plotly.express as px
-    from itables.widget import ITable
 
     cell_width = 800
 
@@ -235,7 +234,7 @@ def _(fundamentals, mo, name_down, name_up, sales_down, sales_up):
     sorting_df['Sales'] = "$" + sorting_df['Sales'].round(2).astype(str)
 
     #ITable(sorting_df, classes="display nowrap", style="table-layout:auto;width:100%;float:left", ordering=False, layout={'topEnd': None})
-    mo.md(sorting_df.to_markdown())
+    mo.ui.table(sorting_df, show_column_summaries=False)
     return
 
 
