@@ -97,15 +97,15 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    _img = mo.Html("<div style='font-size:2.12rem;'>💻 💻 💻 💻 💻</div>")
-    mo.hstack([_img,mo.md("**Discrete Data**: These are things that cannot be divided, such as the number of items that someone bought or the number of customers who purchased an item. Think of a laptop: practically speaking, half a laptop isn't a laptop any more. There's either one laptop or zero laptops.")], align="center", widths=[.25,1],gap = 2)
+    _img = mo.Html("<div style='font-size:2rem; text-align:center;'>💻 💻 💻 💻 💻</div>")
+    mo.hstack([_img,mo.md("**Discrete Data**: These are things that cannot be divided, such as the number of items that someone bought or the number of customers who purchased an item. Think of a laptop: practically speaking, half a laptop isn't a laptop any more. There's either one laptop or zero laptops.")], align="center", widths=[.3,1],gap = 2)
     return
 
 
 @app.cell
 def _(mo):
     _slider = mo.ui.slider(start=-20.0, stop=40.0, step=.1, value=10.3, label="Today's Temperature (°C)", full_width=True, show_value=True)
-    mo.hstack([_slider,mo.md("**Continuous Data**: These are things that can be divided into smaller and smaller units for more precision, like the weight of an item or exact instant that someone bought an item, though you don't typically see those in micrograms or nanoseconds.")],align="center", gap=2, justify="center",widths=[.25,1])
+    mo.hstack([_slider,mo.md("**Continuous Data**: These are things that can be divided into smaller and smaller units for more precision, like the weight of an item or exact instant that someone bought an item, though you don't typically see those in micrograms or nanoseconds.")],align="center", gap=2, justify="center",widths=[.3,1])
     return
 
 
@@ -119,15 +119,15 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    _img = mo.Html("<div style='font-size:2.12rem; text-align:center;'>🍎 🥝 🍇 🍊 🍉</div>")
-    mo.hstack([_img,mo.md("**Unordered Categorical:** These aren't inherently sortable. Staplers aren't before or after monitors. We can sort these but we're using a feature of the category, like the first letter of the name or the price, rather than something inherent to the category itself.")],align="center", gap=2, justify="center",widths=[.25,1])
+    _img = mo.Html("<div style='font-size:2rem; text-align:center;'>🍎 🥝 🍇 🍊 🍉</div>")
+    mo.hstack([_img,mo.md("**Unordered Categorical:** These aren't inherently sortable. Staplers aren't before or after monitors. We can sort these but we're using a feature of the category, like the first letter of the name or the price, rather than something inherent to the category itself.")],align="center", gap=2, justify="center",widths=[.3,1])
     return
 
 
 @app.cell
 def _(mo):
-    _img = mo.Html("<div style='font-size:2.12rem; font-weight:bold; text-align:center;'>S→M→L→XL</div>")
-    mo.hstack([_img,mo.md("**Ordered Categorical:** That's something like comparing t-shirt sizes: Small, Medium, Large, Extra-Large. We may not know a number associated with these categories but we know that Small is less than Large and Extra-Large is bigger than Medium.")],align="center", gap=2, justify="start",widths=[.25,1])
+    _img = mo.Html("<div style='font-size:2rem; font-weight:bold; text-align:center;'>S→M→L→XL</div>")
+    mo.hstack([_img,mo.md("**Ordered Categorical:** That's something like comparing t-shirt sizes: Small, Medium, Large, Extra-Large. We may not know a number associated with these categories but we know that Small is less than Large and Extra-Large is bigger than Medium.")],align="center", gap=2, justify="start",widths=[.3,1])
     return
 
 
