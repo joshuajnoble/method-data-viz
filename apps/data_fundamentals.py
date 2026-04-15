@@ -13,7 +13,7 @@
 
 import marimo
 
-__generated_with = "0.21.1"
+__generated_with = "0.23.1"
 app = marimo.App(
     width="medium",
     css_file="custom.css",
@@ -140,10 +140,20 @@ def _(mo):
       If humans could automatically parse the cells in an Excel, we'd never use charts, but that's just not how our brains work. There are many many kinds of things that people do with data but it's important to understand the most common because that's what most of us need to communicate and to understand.
 
       One nice thing about living in a world of charts is that most of these things are really familiar to us, even if the terms aren't. You've already seen these dozens of times because you've already seen and perfectly understood charts that use them.
+    """)
+    return
 
-      **If you can read a chart, you can mentally do the data work that went into making it.**
 
-      When we work with data, usually we are picking one field of some data and using to inform our view of other fields. When a sale happened can be as informative and what it purchased or how the total sale amount.
+@app.cell(hide_code=True)
+def _(mo, my_utils):
+    mo.hstack([my_utils.callout_info("If you can read a chart, you can do the data work that went into making it."), mo.md("Literally the point of charts is to help us do data work in our heads. Whether that's doing complicated grouping or aggregating or filtering or just tracking changes. Charts are ways to help us do Excel or Google Sheets kinds of things in a way that's faster, more pleasant, and easier to use in a conversation.")], widths=[0.5,1], gap=2)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md("""
+    When we work with data, usually we are picking one field of some data and using to inform our view of other fields. When a sale happened can be as informative and what it purchased or how the total sale amount.
 
     ## Filtering
 
@@ -212,7 +222,7 @@ def _(mo):
 def _(mo, my_utils, name_down, name_up, sales_down, sales_up):
     #my_utils.callout_neutral("Click the field headers to sort the table below")
 
-    buttons = mo.vstack([name_up, name_down, sales_up, sales_down])
+    buttons = mo.vstack([mo.vstack([name_up, name_down]), mo.vstack([sales_up, sales_down])])
 
     mo.hstack([my_utils.callout_neutral("The buttons to the right sort the table below. Sorting names is done alphabetically, sorting numbers is done numerically."), buttons],gap=1,align="center")
     return
