@@ -81,7 +81,7 @@ def _():
         "Per Unit Profit (Calculated)": "${:,.2f}",
         "Items In Order": "{:,.0f}",
     }
-    return ITable, df_format_mapping, mo, pd, px
+    return df_format_mapping, mo, pd, px
 
 
 @app.cell
@@ -167,7 +167,7 @@ def _(mo):
 
 
 @app.cell
-async def _(ITable, date_picker_filter, dropdown_filter, my_utils, pd):
+async def _(date_picker_filter, dropdown_filter, mo, my_utils, pd):
     #_ = _dropdown
     fundamentals = await my_utils.gh_pages_read_csv_into_df("data_fundamentals.csv")
     fundamentals['Order Date'] = pd.to_datetime(fundamentals['Order Date'])
@@ -181,9 +181,9 @@ async def _(ITable, date_picker_filter, dropdown_filter, my_utils, pd):
 
     filtered_df = filtered_df[(filtered_df['Order Date'].dt.date > date_picker_filter['start'].value) & (filtered_df['Order Date'].dt.date < date_picker_filter['end'].value)]
 
-    #mo.ui.table(data=filtered_df, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None)
-    #mo.md(filtered_df.to_markdown())
-    ITable(filtered_df)
+    # mo.ui.table(data=filtered_df, pagination=True, show_column_summaries=False, show_data_types=False, show_download=False, selection=None)
+    mo.md(filtered_df.to_markdown())
+    #ITable(filtered_df)
     return (fundamentals,)
 
 
@@ -220,7 +220,7 @@ def _(mo, my_utils, name_down, name_up, sales_down, sales_up):
 
 
 @app.cell(hide_code=True)
-def _(ITable, fundamentals, name_down, name_up, sales_down, sales_up):
+def _(fundamentals, mo, name_down, name_up, sales_down, sales_up):
     sorting_df = fundamentals[["Customer Name", "Order Date", "Ship Mode", "Product ID", "Sales"]].copy()
 
     if name_up.value:
@@ -232,7 +232,10 @@ def _(ITable, fundamentals, name_down, name_up, sales_down, sales_up):
     elif sales_down.value:
         sorting_df = sorting_df.sort_values(by='Sales', ascending=False)
 
-    ITable(sorting_df, classes="display nowrap", style="table-layout:auto;width:100%;float:left", ordering=False, layout={'topEnd': None})
+    sorting_df['Sales'] = "$" + sorting_df['Sales'].round(2).astype(str)
+
+    #ITable(sorting_df, classes="display nowrap", style="table-layout:auto;width:100%;float:left", ordering=False, layout={'topEnd': None})
+    mo.md(sorting_df.to_markdown())
     return
 
 
@@ -247,7 +250,7 @@ def _(mo):
     - **Find the least expensive items to ship that are consumer electronics.**
     - **Find the average order amount in December vs April.**
 
-    By combining different operations, we can use visualization to explore for ourselves and communicate to others.
+    By combining different operations, we can use visualization to explore for ourselves and communicate what we've learned to others.
     """)
     return
 
@@ -266,8 +269,8 @@ def _(fundamentals, mo, multiselect_aggregate):
 
     mo.md(
         f"""
-        - **Number of Sales:** {count}
-        - **Total Sales:** ${total:,.0f}
+        ##**Aggregated Number of Sales:** {count}
+        ##**Aggregated Total Sales:** ${total:,.0f}
         """
     )
     return
