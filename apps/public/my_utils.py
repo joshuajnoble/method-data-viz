@@ -70,9 +70,9 @@ async def gh_pages_read_csv_into_df(filename: str) -> pd.DataFrame:
         repo_prefix = f"/{first_segment}" if first_segment else ""
 
         candidates = [
-            str(window.URL.new(f"public/{filename}", href).href),
-            str(window.URL.new(f"./public/{filename}", href).href),
-            str(window.URL.new(f"../public/{filename}", href).href),
+            str(root.URL.new(f"public/{filename}", href).href),
+            str(root.URL.new(f"./public/{filename}", href).href),
+            str(root.URL.new(f"../public/{filename}", href).href),
             f"{origin}{repo_prefix}/apps/public/{filename}",
             f"{origin}{repo_prefix}/public/{filename}",
             f"{origin}/apps/public/{filename}",
