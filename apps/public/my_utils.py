@@ -56,11 +56,14 @@ async def gh_pages_read_csv_into_df(filename: str) -> pd.DataFrame:
     if sys.platform == "emscripten":
         from pyodide.http import pyfetch
         from io import StringIO
-        from js import window
+        import js
 
-        href = str(window.location.href)
-        origin = str(window.location.origin)
-        pathname = str(window.location.pathname)
+        root = js.globalThis
+        loc = root.location
+
+        href = str(loc.href)
+        origin = str(loc.origin)
+        pathname = str(loc.pathname)
 
         # e.g. "/data_viz_principles/apps/..."
         first_segment = pathname.strip("/").split("/")[0] if pathname.strip("/") else ""
