@@ -20,11 +20,12 @@ app = marimo.App(
     html_head_file="head.html",
 )
 
-
+# ...existing code...
 @app.cell
 async def setup_wasm():
     import sys
     import types
+    import linecache
     import importlib.util
     from pathlib import Path
 
@@ -34,7 +35,6 @@ async def setup_wasm():
         from pyodide.http import pyfetch
 
         print("WASM detected: Fetching local modules...")
-        # needs to be ../public because of how the assets dir is created during build
         response = await pyfetch("../public/my_utils.py")
         if not response.ok:
             print("Attempted to fetch:", response.url)
@@ -43,12 +43,21 @@ async def setup_wasm():
         source = await response.text()
         module = types.ModuleType(module_name)
         module.__file__ = "/virtual/my_utils.py"
+        module.__source__ = source
+
+        # Let inspect/linecache resolve source from memory
+        linecache.cache[module.__file__] = (
+            len(source),
+            None,
+            source.splitlines(keepends=True),
+            module.__file__,
+        )
+
         exec(compile(source, module.__file__, "exec"), module.__dict__)
         sys.modules[module_name] = module
         my_utils = module
         print("Successfully loaded my_utils.py!")
     else:
-        # Local Python: load from apps/public/my_utils.py
         module_path = Path("./apps/public/my_utils.py").resolve()
         spec = importlib.util.spec_from_file_location(module_name, module_path)
         if spec is None or spec.loader is None:
@@ -56,12 +65,19 @@ async def setup_wasm():
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
         spec.loader.exec_module(module)
+        module.__source__ = module_path.read_text(encoding="utf-8")
         my_utils = module
         print("Local Python environment detected. Loaded my_utils.py from public/.")
 
     my_utils.run_plotly_defaults()
-    return (my_utils,)
 
+    # p = Path(my_utils.__file__)
+    # if p.exists():
+    #     print(p.read_text(encoding="utf-8"))
+    # else:
+    #     print(getattr(my_utils, "__source__", "source not available"))
+
+    return (my_utils,)
 
 @app.cell
 def _():
@@ -70,7 +86,6 @@ def _():
     import plotly.express as px
 
     cell_width = 800
-
     df_format_mapping = {
         "Order Date": "{:%Y-%m-%d}",
         "Sales": "${:,.2f}",

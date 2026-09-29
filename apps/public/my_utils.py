@@ -8,6 +8,9 @@ import marimo as mo
 import pandas as pd
 import plotly.io as pio
 from decimal import Decimal
+import sys
+from pathlib import Path
+
 
 def _callout(kind: str, content: str):
     css_class = f"callout-{kind}"
@@ -25,28 +28,69 @@ def callout_danger(content: str):
 def callout_warning(content: str):
     return _callout("warning", content)
 
-async def gh_pages_read_csv_into_df(filename: str) -> pd.DataFrame:
-    filepath = mo.notebook_location() / "public" / filename
-    if "http" not in str(mo.notebook_location()):
-        return pd.read_csv(
-            filepath, 
-            index_col=0
-        )
-    from pyodide.http import pyfetch
-    from io import StringIO
-    response = await pyfetch(filepath)
-    data = await response.text()
-    return pd.read_csv(StringIO(data))
+# async def gh_pages_read_csv_into_df(filename: str) -> pd.DataFrame:
+#     filepath = mo.notebook_location() / "public" / filename
+#     if "http" not in str(mo.notebook_location()):
+#         return pd.read_csv(
+#             filepath, 
+#             index_col=0
+#         )
+#     from pyodide.http import pyfetch
+#     from io import StringIO
+#     response = await pyfetch(str(filepath))
+#     data = await response.text()
+#     return pd.read_csv(StringIO(data))
 
-async def gh_pages_load_image(filename: str) -> pd.DataFrame:
-    filepath = mo.notebook_location() / "public" / filename
-    if "http" not in str(mo.notebook_location()):
-        return mo.image(filepath)
-    from pyodide.http import pyfetch
-    from io import BytesIO
-    response = await pyfetch(filepath)
-    data = await response.bytes()
-    return mo.image(BytesIO(data))
+# async def gh_pages_load_image(filename: str) -> pd.DataFrame:
+#     filepath = mo.notebook_location() / "public" / filename
+#     if "http" not in str(mo.notebook_location()):
+#         return mo.image(filepath)
+#     from pyodide.http import pyfetch
+#     from io import BytesIO
+#     response = await pyfetch(str(filepath))
+#     data = await response.bytes()
+#     return mo.image(BytesIO(data))
+
+async def gh_pages_read_csv_into_df(filename: str) -> pd.DataFrame:
+    # Browser/WASM
+    if sys.platform == "emscripten":
+        from pyodide.http import pyfetch
+        from io import StringIO
+
+        url = str(f"/apps/public/{filename}")  # force plain Python string
+
+        # url = window.URL.new(
+        #     f"./apps/public/{filename}",
+        #     window.location.href
+        # ).href
+
+        response = await pyfetch(url)
+        if not response.ok:
+            raise RuntimeError(f"Failed to fetch {url}: {response.status}")
+        data = await response.text()
+        return pd.read_csv(StringIO(data), index_col=0)
+
+    # Local Python
+    filepath = Path(__file__).resolve().parent / filename
+    return pd.read_csv(filepath, index_col=0)
+
+
+async def gh_pages_load_image(filename: str):
+    # Browser/WASM
+    if sys.platform == "emscripten":
+        from pyodide.http import pyfetch
+        from io import BytesIO
+
+        url = str(f"/apps/public/{filename}")  # force plain Python string
+        response = await pyfetch(url)
+        if not response.ok:
+            raise RuntimeError(f"Failed to fetch {url}: {response.status}")
+        data = await response.bytes()
+        return mo.image(BytesIO(data))
+
+    # Local Python
+    filepath = Path(__file__).resolve().parent / filename
+    return mo.image(filepath)
 
 COLOR_PALETTE = [
     "#4442e3", # 1. Brand Blue
