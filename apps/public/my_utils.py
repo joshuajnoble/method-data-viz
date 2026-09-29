@@ -104,12 +104,42 @@ async def gh_pages_load_image(filename: str):
         from pyodide.http import pyfetch
         from io import BytesIO
 
-        url = str(f"./public/{filename}")  # force plain Python string
-        response = await pyfetch(url)
-        if not response.ok:
-            raise RuntimeError(f"Failed to fetch {url}: {response.status}")
-        data = await response.bytes()
-        return mo.image(BytesIO(data))
+        import js
+
+        root = js.globalThis
+        loc = root.location
+
+        href = str(loc.href)
+        origin = str(loc.origin)
+        pathname = str(loc.pathname)
+
+        # e.g. "/data_viz_principles/apps/..."
+        first_segment = pathname.strip("/").split("/")[0] if pathname.strip("/") else ""
+        repo_prefix = f"/{first_segment}" if first_segment else ""
+
+        candidates = [
+            str(root.URL.new(f"public/{filename}", href).href),
+            str(root.URL.new(f"./public/{filename}", href).href),
+            str(root.URL.new(f"../public/{filename}", href).href),
+            f"{origin}{repo_prefix}/apps/public/{filename}",
+            f"{origin}{repo_prefix}/public/{filename}",
+            f"{origin}/apps/public/{filename}",
+            f"{origin}/public/{filename}",
+        ]
+
+        seen = set()
+        for url in candidates:
+            if url in seen:
+                continue
+            seen.add(url)
+            response = await pyfetch(url)
+            if response.ok:
+                data = await response.bytes()
+                return mo.image(BytesIO(data))
+
+        raise RuntimeError(
+            "Failed to fetch CSV. Tried:\n" + "\n".join(candidates)
+        )
 
     # Local Python
     filepath = Path(__file__).resolve().parent / filename
