@@ -57,7 +57,7 @@ async def gh_pages_read_csv_into_df(filename: str) -> pd.DataFrame:
         from pyodide.http import pyfetch
         from io import StringIO
 
-        url = str(f"/apps/public/{filename}")  # force plain Python string
+        url = str(f"./public/{filename}")  # force plain Python string
 
         # url = window.URL.new(
         #     f"./apps/public/{filename}",
@@ -81,7 +81,7 @@ async def gh_pages_load_image(filename: str):
         from pyodide.http import pyfetch
         from io import BytesIO
 
-        url = str(f"/apps/public/{filename}")  # force plain Python string
+        url = str(f"./public/{filename}")  # force plain Python string
         response = await pyfetch(url)
         if not response.ok:
             raise RuntimeError(f"Failed to fetch {url}: {response.status}")
