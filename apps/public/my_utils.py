@@ -56,19 +56,39 @@ async def gh_pages_read_csv_into_df(filename: str) -> pd.DataFrame:
     if sys.platform == "emscripten":
         from pyodide.http import pyfetch
         from io import StringIO
+        from js import window
 
-        url = str(f"../public/{filename}")  # force plain Python string
+        href = str(window.location.href)
+        origin = str(window.location.origin)
+        pathname = str(window.location.pathname)
 
-        # url = window.URL.new(
-        #     f"./apps/public/{filename}",
-        #     window.location.href
-        # ).href
+        # e.g. "/data_viz_principles/apps/..."
+        first_segment = pathname.strip("/").split("/")[0] if pathname.strip("/") else ""
+        repo_prefix = f"/{first_segment}" if first_segment else ""
 
-        response = await pyfetch(url)
-        if not response.ok:
-            raise RuntimeError(f"Failed to fetch {url}: {response.status}")
-        data = await response.text()
-        return pd.read_csv(StringIO(data), index_col=0)
+        candidates = [
+            str(window.URL.new(f"public/{filename}", href).href),
+            str(window.URL.new(f"./public/{filename}", href).href),
+            str(window.URL.new(f"../public/{filename}", href).href),
+            f"{origin}{repo_prefix}/apps/public/{filename}",
+            f"{origin}{repo_prefix}/public/{filename}",
+            f"{origin}/apps/public/{filename}",
+            f"{origin}/public/{filename}",
+        ]
+
+        seen = set()
+        for url in candidates:
+            if url in seen:
+                continue
+            seen.add(url)
+            response = await pyfetch(url)
+            if response.ok:
+                data = await response.text()
+                return pd.read_csv(StringIO(data), index_col=0)
+
+        raise RuntimeError(
+            "Failed to fetch CSV. Tried:\n" + "\n".join(candidates)
+        )
 
     # Local Python
     filepath = Path(__file__).resolve().parent / filename
